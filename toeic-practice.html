@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>多益練習室</title>
+<style>
+  :root{
+    --desk:#2E3A3B; --card:#FBF7EC; --rule:#BFD4E4; --red:#C9503C;
+    --ink:#2B2B2B; --ok:#3E6B4F; --chip:#3D4B4C; --chip-on:#E8DFC8;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{background:var(--desk);min-height:100vh;font-family:-apple-system,"PingFang TC","Noto Sans TC",sans-serif;
+    color:#E9E4D6;display:flex;flex-direction:column;align-items:center;padding:14px 14px 30px}
+  .wrap{width:100%;max-width:560px}
+  header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+  header h1{font-size:17px;font-weight:600;letter-spacing:1px}
+  header .count{font-size:12px;opacity:.6}
+  .tabs{display:flex;gap:6px;margin-bottom:14px}
+  .tab{flex:1;border:1px solid #566868;background:var(--chip);color:#CFC9B8;border-radius:9px;
+    padding:9px 0;font-size:14px;cursor:pointer;text-align:center}
+  .tab.on{background:var(--chip-on);color:#2E3A3B;border-color:var(--chip-on);font-weight:600}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;padding-bottom:8px}
+  .chip{flex:0 0 auto;border:1px solid #566868;background:var(--chip);color:#CFC9B8;border-radius:999px;
+    padding:6px 13px;font-size:13px;cursor:pointer}
+  .chip.on{background:var(--chip-on);color:#2E3A3B;border-color:var(--chip-on);font-weight:600}
+  /* flashcards */
+  .cardwrap{perspective:1200px;margin-top:4px}
+  .card{position:relative;width:100%;aspect-ratio:5/3.1;max-height:330px;transform-style:preserve-3d;
+    transition:transform .45s cubic-bezier(.2,.7,.3,1);cursor:pointer}
+  .card.flip{transform:rotateX(180deg)}
+  @media (prefers-reduced-motion: reduce){.card{transition:none}}
+  .face{position:absolute;inset:0;backface-visibility:hidden;background-color:var(--card);
+    background-image:linear-gradient(to bottom, transparent 0 46px, var(--red) 46px 48px, transparent 48px),
+      repeating-linear-gradient(to bottom, transparent 0 29px, var(--rule) 29px 30px);
+    border-radius:10px;box-shadow:0 8px 22px rgba(0,0,0,.38);color:var(--ink);
+    display:flex;flex-direction:column;justify-content:center;align-items:center;padding:52px 26px 22px;text-align:center}
+  .face.back{transform:rotateX(180deg)}
+  .hole{position:absolute;top:12px;left:18px;width:16px;height:16px;border-radius:50%;background:var(--desk);
+    box-shadow:0 1px 2px rgba(0,0,0,.4) inset}
+  .tag{position:absolute;top:14px;right:16px;font-size:11px;color:#9A9484}
+  .review-flag{position:absolute;top:12px;right:16px;font-size:11px;color:var(--red);font-weight:700;display:none}
+  .card.marked .review-flag{display:block}.card.marked .tag{display:none}
+  .word{font-family:Georgia,serif;font-size:33px;font-weight:600;line-height:1.15}
+  .pos{font-size:13px;color:#8D8776;margin-top:6px;font-style:italic}
+  .zh{font-size:29px;font-weight:600}
+  .example{font-size:14px;color:#5C5749;margin-top:14px;line-height:1.55;font-family:Georgia,serif;max-width:92%}
+  .hint{position:absolute;bottom:12px;font-size:11px;color:#ABA48F;left:0;right:0;text-align:center}
+  .actions{display:flex;gap:8px;margin-top:16px}
+  .btn{flex:1;border:none;border-radius:9px;padding:13px 0;font-size:15px;font-weight:600;cursor:pointer;color:#FBF7EC}
+  .btn:active{transform:scale(.97)}
+  .btn.know{background:var(--ok)}.btn.again{background:var(--red)}
+  .btn.speak{flex:0 0 54px;background:#4A5A5B;font-size:19px}
+  .nav{display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-size:13px}
+  .nav button{background:none;border:1px solid #566868;color:#CFC9B8;border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer}
+  /* quiz */
+  .qcard{background:var(--card);color:var(--ink);border-radius:10px;padding:20px 18px;box-shadow:0 8px 22px rgba(0,0,0,.3)}
+  .qmeta{font-size:12px;color:#8D8776;margin-bottom:10px;display:flex;justify-content:space-between}
+  .qtext{font-family:Georgia,serif;font-size:16px;line-height:1.65;margin-bottom:16px;white-space:pre-wrap}
+  .opt{display:block;width:100%;text-align:left;background:#F1EBDC;border:1.5px solid #DDD5C2;border-radius:8px;
+    padding:11px 13px;margin-bottom:8px;font-size:15px;font-family:Georgia,serif;cursor:pointer;color:var(--ink)}
+  .opt.correct{background:#DCEBDF;border-color:var(--ok);font-weight:700}
+  .opt.wrong{background:#F3DBD5;border-color:var(--red)}
+  .opt:disabled{cursor:default;opacity:1}
+  .explain{margin-top:12px;padding:12px;background:#EFE7D2;border-left:3px solid var(--red);border-radius:0 8px 8px 0;
+    font-size:14px;line-height:1.6;display:none}
+  .qnav{display:flex;justify-content:space-between;margin-top:14px}
+  .qnav button{background:var(--chip);border:1px solid #566868;color:#E9E4D6;border-radius:8px;padding:10px 18px;font-size:14px;cursor:pointer}
+  .passage{background:var(--card);color:var(--ink);border-radius:10px;padding:18px;font-family:Georgia,serif;
+    font-size:14.5px;line-height:1.7;white-space:pre-wrap;margin-bottom:14px;box-shadow:0 6px 16px rgba(0,0,0,.25)}
+  /* stats */
+  .statbox{background:var(--card);color:var(--ink);border-radius:10px;padding:18px;margin-bottom:12px}
+  .statbox h3{font-size:14px;margin-bottom:10px;color:#5C5749}
+  .bar{height:8px;background:#E3DCC8;border-radius:4px;overflow:hidden;margin:4px 0 10px}
+  .bar>div{height:100%;background:var(--ok)}
+  .statline{font-size:13.5px;display:flex;justify-content:space-between;margin-top:6px}
+  .wronglist{font-size:13.5px;line-height:1.8;color:#7A4438}
+  .copybtn{width:100%;border:none;border-radius:9px;padding:14px 0;font-size:15px;font-weight:600;
+    background:var(--chip-on);color:#2E3A3B;cursor:pointer;margin-top:4px}
+  .note{font-size:12px;opacity:.55;text-align:center;margin-top:10px;line-height:1.6}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><h1>多益練習室</h1><div class="count" id="count"></div></header>
+<div class="tabs">
+  <button class="tab on" data-t="cards">單字卡</button>
+  <button class="tab" data-t="grammar">文法</button>
+  <button class="tab" data-t="reading">閱讀</button>
+  <button class="tab" data-t="stats">成績</button>
+</div>
+
+<!-- 單字卡 -->
+<section id="sec-cards">
+  <div class="chips" id="groupChips"></div>
+  <div class="chips" style="margin:2px 0 12px">
+    <button class="chip on" id="modeEZ">英 → 中</button>
+    <button class="chip" id="modeZE">中 → 英</button>
+    <button class="chip" id="reviewOnly">只看需複習</button>
+  </div>
+  <div class="cardwrap" id="cardwrap">
+    <div class="card" id="card">
+      <div class="face front"><div class="hole"></div><div class="tag" id="tagF"></div><div class="review-flag">需複習 ★</div>
+        <div id="frontMain" class="word"></div><div id="frontSub" class="pos"></div>
+        <div class="hint">點卡片翻面</div></div>
+      <div class="face back"><div class="hole"></div><div class="tag" id="tagB"></div><div class="review-flag">需複習 ★</div>
+        <div id="backMain" class="zh"></div><div id="backEx" class="example"></div></div>
+    </div>
+  </div>
+  <div class="note hidden" id="emptyCards">這個範圍沒有標記「需複習」的單字。</div>
+  <div class="actions" id="actionsCards">
+    <button class="btn speak" id="speakBtn">🔊</button>
+    <button class="btn know" id="knowBtn">認得</button>
+    <button class="btn again" id="againBtn">需複習</button>
+  </div>
+  <div class="nav"><button id="prevBtn">上一張</button><span id="posInd" style="opacity:.65"></span><button id="shuffleBtn">洗牌</button></div>
+</section>
+
+<!-- 文法 -->
+<section id="sec-grammar" class="hidden">
+  <div class="chips" id="gFilter" style="margin-bottom:6px"></div>
+  <div class="chips" id="gBatch" style="margin-bottom:12px"></div>
+  <div class="qcard">
+    <div class="qmeta"><span id="gType"></span><span id="gProg"></span></div>
+    <div class="qtext" id="gText"></div>
+    <div id="gOpts"></div>
+    <div class="explain" id="gExplain"></div>
+    <div class="qnav"><button id="gPrev">上一題</button><button id="gNext">下一題</button></div>
+  </div>
+</section>
+
+<!-- 閱讀 -->
+<section id="sec-reading" class="hidden">
+  <div class="chips" id="rPick" style="margin-bottom:12px"></div>
+  <div class="passage" id="rPassage"></div>
+  <div id="rQs"></div>
+</section>
+
+<!-- 成績 -->
+<section id="sec-stats" class="hidden">
+  <div class="statbox"><h3>文法 — 各題型正確率</h3><div id="statTypes"></div></div>
+  <div class="statbox"><h3>答錯過的題目</h3><div class="wronglist" id="wrongList">還沒有紀錄。</div></div>
+  <button class="copybtn" id="copyBtn">複製結果給 Claude</button>
+  <div class="note">我沒辦法直接看到你在這裡的作答，<br>做完按上面的按鈕，把結果貼回聊天室給我。</div>
+  <button class="copybtn" id="resetBtn" style="background:#4A5A5B;color:#E9E4D6;margin-top:10px">清除所有作答紀錄</button>
+</section>
+</div>
+
+<script>
+/* ============ 資料 ============ */
+const WORDS=[
+ {en:"consecutive",pos:"adj.",zh:"連續的",ex:"for the third consecutive year",g:1},
+ {en:"relocate",pos:"v.",zh:"搬遷、調職",ex:"The company will relocate its headquarters to Taipei.",g:1},
+ {en:"accommodation",pos:"n.",zh:"住宿",ex:"Accommodation expenses will be reimbursed.",g:1},
+ {en:"affordable",pos:"adj.",zh:"負擔得起的",ex:"The city offers affordable public transport.",g:1},
+ {en:"conduct",pos:"v.",zh:"進行（調查、會議）",ex:"The survey was conducted in March.",g:1},
+ {en:"respondent",pos:"n.",zh:"受訪者",ex:"Over 7,000 respondents completed the questionnaire.",g:1},
+ {en:"rank",pos:"v.",zh:"名列、排名",ex:"Spain ranked sixth overall.",g:1},
+ {en:"settle in",pos:"phr.",zh:"安頓下來",ex:"It took me a month to settle in.",g:1},
+ {en:"disposable income",pos:"n.",zh:"可支配所得",ex:"Expats are happy with their disposable income.",g:1},
+ {en:"infrastructure",pos:"n.",zh:"基礎建設",ex:"The country invested heavily in infrastructure.",g:1},
+ {en:"deadline",pos:"n.",zh:"截止期限",ex:"The deadline for submissions is Friday.",g:2},
+ {en:"postpone",pos:"v.",zh:"延期",ex:"The meeting has been postponed until next week.",g:2},
+ {en:"attend",pos:"v.",zh:"出席",ex:"All managers must attend the workshop.",g:2},
+ {en:"available",pos:"adj.",zh:"有空的、可取得的",ex:"The conference room is available after 3 p.m.",g:2},
+ {en:"invoice",pos:"n.",zh:"發票、請款單",ex:"Please pay the invoice within 30 days.",g:2},
+ {en:"confirm",pos:"v.",zh:"確認",ex:"I am writing to confirm your reservation.",g:2},
+ {en:"estimate",pos:"n./v.",zh:"估價（單）、估計",ex:"The contractor provided a cost estimate.",g:2},
+ {en:"inquiry",pos:"n.",zh:"詢問",ex:"Thank you for your inquiry about our services.",g:2},
+ {en:"renew",pos:"v.",zh:"續約、更新",ex:"Don't forget to renew your membership.",g:2},
+ {en:"warranty",pos:"n.",zh:"保固",ex:"The laptop comes with a two-year warranty.",g:2},
+ {en:"agenda",pos:"n.",zh:"議程",ex:"Please review the agenda before the meeting.",g:3},
+ {en:"reschedule",pos:"v.",zh:"改期",ex:"We need to reschedule the interview to Thursday.",g:3},
+ {en:"participant",pos:"n.",zh:"參加者",ex:"All participants will receive a certificate.",g:3},
+ {en:"venue",pos:"n.",zh:"場地",ex:"The venue can hold up to 200 people.",g:3},
+ {en:"itinerary",pos:"n.",zh:"行程表",ex:"Your flight itinerary is attached.",g:3},
+ {en:"reserve",pos:"v.",zh:"預訂",ex:"I reserved a table for six.",g:3},
+ {en:"notify",pos:"v.",zh:"通知",ex:"Please notify us of any schedule changes.",g:3},
+ {en:"approximately",pos:"adv.",zh:"大約",ex:"The seminar lasts approximately two hours.",g:3},
+ {en:"in advance",pos:"phr.",zh:"事先",ex:"Tickets must be purchased in advance.",g:3},
+ {en:"cancellation",pos:"n.",zh:"取消",ex:"A cancellation fee may apply.",g:3},
+ {en:"supervisor",pos:"n.",zh:"主管",ex:"Please report the issue to your supervisor.",g:4},
+ {en:"colleague",pos:"n.",zh:"同事",ex:"My colleagues helped me finish the report.",g:4},
+ {en:"department",pos:"n.",zh:"部門",ex:"She was transferred to the sales department.",g:4},
+ {en:"promotion",pos:"n.",zh:"升遷；促銷",ex:"He received a promotion after two years.",g:4},
+ {en:"retire",pos:"v.",zh:"退休",ex:"Mr. Lin will retire at the end of March.",g:4},
+ {en:"resign",pos:"v.",zh:"辭職",ex:"She resigned from her position last week.",g:4},
+ {en:"temporary",pos:"adj.",zh:"暫時的",ex:"We hired temporary staff for the busy season.",g:4},
+ {en:"permanent",pos:"adj.",zh:"永久的、正式的",ex:"The temporary role may become permanent.",g:4},
+ {en:"evaluate",pos:"v.",zh:"評估",ex:"Managers evaluate employee performance yearly.",g:4},
+ {en:"qualification",pos:"n.",zh:"資格、條件",ex:"Applicants must meet all qualifications.",g:4},
+ {en:"shipment",pos:"n.",zh:"貨物、裝運",ex:"The shipment will arrive on Tuesday.",g:5},
+ {en:"delayed",pos:"adj.",zh:"延誤的",ex:"Your order has been delayed by two days.",g:5},
+ {en:"refund",pos:"n./v.",zh:"退款",ex:"We will issue a full refund.",g:5},
+ {en:"expense",pos:"n.",zh:"費用、開銷",ex:"Travel expenses must be approved first.",g:5},
+ {en:"budget",pos:"n.",zh:"預算",ex:"The project went over budget.",g:5},
+ {en:"purchase",pos:"n./v.",zh:"購買",ex:"Keep your receipt to prove the purchase.",g:5},
+ {en:"supplier",pos:"n.",zh:"供應商",ex:"We signed a contract with a new supplier.",g:5},
+ {en:"inventory",pos:"n.",zh:"庫存",ex:"We check inventory at the end of each month.",g:5},
+ {en:"discount",pos:"n./v.",zh:"折扣",ex:"Members receive a 10% discount.",g:5},
+ {en:"receipt",pos:"n.",zh:"收據",ex:"Please attach the original receipt.",g:5},
+ {en:"reimburse",pos:"v.",zh:"報銷、償還",ex:"The company will reimburse your travel costs.",g:5},
+ {en:"in charge of",pos:"phr.",zh:"負責",ex:"She is in charge of the new branch.",g:5},
+ {en:"complaint",pos:"n.",zh:"客訴、抱怨",ex:"We received a complaint about the delivery.",g:6},
+ {en:"satisfaction",pos:"n.",zh:"滿意度",ex:"Customer satisfaction has improved this quarter.",g:6},
+ {en:"subscribe",pos:"v.",zh:"訂閱",ex:"Subscribe to our newsletter for weekly updates.",g:6},
+ {en:"campaign",pos:"n.",zh:"活動、宣傳戰",ex:"The advertising campaign starts in September.",g:6},
+ {en:"launch",pos:"v./n.",zh:"推出、上市",ex:"The company will launch a new product line.",g:6},
+ {en:"feedback",pos:"n.",zh:"意見回饋",ex:"Please share your feedback in the survey.",g:6},
+ {en:"loyalty",pos:"n.",zh:"忠誠度",ex:"Our loyalty program offers points on every purchase.",g:6},
+ {en:"competitor",pos:"n.",zh:"競爭對手",ex:"Our competitors lowered their prices last month.",g:6},
+ {en:"distribute",pos:"v.",zh:"配送、分發",ex:"Flyers will be distributed at the entrance.",g:6},
+ {en:"brochure",pos:"n.",zh:"宣傳手冊",ex:"Take a brochure from the front desk.",g:6},
+ {en:"boarding pass",pos:"n.",zh:"登機證",ex:"Please have your boarding pass ready.",g:7},
+ {en:"baggage",pos:"n.",zh:"行李",ex:"Baggage claim is on the lower level.",g:7},
+ {en:"departure",pos:"n.",zh:"出發、離站",ex:"The departure time has been changed.",g:7},
+ {en:"accompany",pos:"v.",zh:"陪同",ex:"Children must be accompanied by an adult.",g:7},
+ {en:"facility",pos:"n.",zh:"設施",ex:"The hotel facilities include a gym and a pool.",g:7},
+ {en:"maintenance",pos:"n.",zh:"維修保養",ex:"The elevator is closed for maintenance.",g:7},
+ {en:"occupancy",pos:"n.",zh:"住房率、使用人數",ex:"Maximum occupancy is 50 people.",g:7},
+ {en:"complimentary",pos:"adj.",zh:"免費招待的",ex:"Guests receive a complimentary breakfast.",g:7},
+ {en:"vacancy",pos:"n.",zh:"空房；職缺",ex:"There are no vacancies this weekend.",g:7},
+ {en:"proceed",pos:"v.",zh:"前往、繼續進行",ex:"Please proceed to Gate 12.",g:7},
+ {en:"reimbursement",pos:"n.",zh:"報銷、退款",ex:"Your reimbursement request was approved.",g:8},
+ {en:"submit",pos:"v.",zh:"提交",ex:"Submit the form before the deadline.",g:8},
+ {en:"approve",pos:"v.",zh:"核准",ex:"The director approved the budget.",g:8},
+ {en:"regardless of",pos:"phr.",zh:"不論、不管",ex:"The rule applies regardless of seniority.",g:8},
+ {en:"attach",pos:"v.",zh:"附上",ex:"I have attached the receipt to this email.",g:8},
+ {en:"eligible",pos:"adj.",zh:"符合資格的",ex:"Only full-time staff are eligible for the bonus.",g:8},
+ {en:"exceed",pos:"v.",zh:"超過",ex:"Costs must not exceed the approved budget.",g:8},
+ {en:"deduct",pos:"v.",zh:"扣除",ex:"Taxes are deducted from your salary.",g:8},
+ {en:"allowance",pos:"n.",zh:"津貼",ex:"Staff receive a monthly travel allowance.",g:8},
+ {en:"process",pos:"v.",zh:"處理",ex:"It takes five days to process a claim.",g:8},
+ {en:"agreement",pos:"n.",zh:"協議、合約",ex:"Both sides signed the agreement.",g:9},
+ {en:"negotiate",pos:"v.",zh:"協商",ex:"We negotiated better payment terms.",g:9},
+ {en:"terms",pos:"n.",zh:"條款",ex:"Please review the terms carefully.",g:9},
+ {en:"extend",pos:"v.",zh:"延長",ex:"The contract was extended by one year.",g:9},
+ {en:"amend",pos:"v.",zh:"修訂",ex:"The policy was amended last month.",g:9},
+ {en:"comply with",pos:"phr.",zh:"遵守",ex:"All staff must comply with safety rules.",g:9},
+ {en:"deadline extension",pos:"n.",zh:"延期",ex:"She requested a deadline extension.",g:9},
+ {en:"minutes",pos:"n.",zh:"會議紀錄",ex:"The minutes of the meeting were circulated.",g:9},
+ {en:"unanimous",pos:"adj.",zh:"全體一致的",ex:"The decision was unanimous.",g:9},
+ {en:"postponement",pos:"n.",zh:"延期",ex:"The postponement was announced yesterday.",g:9},
+ {en:"profitable",pos:"adj.",zh:"有獲利的",ex:"The branch became profitable last year.",g:10},
+ {en:"profitably",pos:"adv.",zh:"有獲利地",ex:"The company has operated profitably since 1998.",g:10},
+ {en:"sufficient",pos:"adj.",zh:"足夠的",ex:"We have sufficient funds for the project.",g:10},
+ {en:"insufficient",pos:"adj.",zh:"不足的",ex:"The proposal was rejected due to insufficient information.",g:10},
+ {en:"considerable",pos:"adj.",zh:"相當大的",ex:"The change caused considerable delay.",g:10},
+ {en:"considerably",pos:"adv.",zh:"相當大幅地",ex:"Sales increased considerably this quarter.",g:10},
+ {en:"substantial",pos:"adj.",zh:"大量的、可觀的",ex:"They made a substantial investment.",g:10},
+ {en:"significantly",pos:"adv.",zh:"顯著地",ex:"Costs dropped significantly after the merger.",g:10},
+ {en:"efficiently",pos:"adv.",zh:"有效率地",ex:"The team works efficiently under pressure.",g:10},
+ {en:"accordingly",pos:"adv.",zh:"因此、相應地",ex:"Prices will be adjusted accordingly.",g:10},
+ {en:"implement",pos:"v.",zh:"實施、執行",ex:"The new system will be implemented in June.",g:11},
+ {en:"anticipate",pos:"v.",zh:"預期",ex:"We anticipate strong demand this quarter.",g:11},
+ {en:"acquire",pos:"v.",zh:"取得、收購",ex:"The firm acquired a smaller competitor.",g:11},
+ {en:"expand",pos:"v.",zh:"擴張",ex:"They plan to expand into Asian markets.",g:11},
+ {en:"decline",pos:"v./n.",zh:"下降；婉拒",ex:"Sales declined by 8% last quarter.",g:11},
+ {en:"maintain",pos:"v.",zh:"維持",ex:"We must maintain current service levels.",g:11},
+ {en:"require",pos:"v.",zh:"要求、需要",ex:"The position requires three years of experience.",g:11},
+ {en:"ensure",pos:"v.",zh:"確保",ex:"Please ensure all doors are locked.",g:11},
+ {en:"address",pos:"v.",zh:"處理、著手解決",ex:"We need to address these complaints quickly.",g:11},
+ {en:"determine",pos:"v.",zh:"判定、決定",ex:"The technician determined the cause of the damage.",g:11},
+ {en:"assembly",pos:"n.",zh:"組裝",ex:"The assembly line was shut down for repairs.",g:12},
+ {en:"defective",pos:"adj.",zh:"有瑕疵的",ex:"Defective units must be returned to the factory.",g:12},
+ {en:"inspection",pos:"n.",zh:"檢查、稽核",ex:"The annual safety inspection is due in May.",g:12},
+ {en:"replacement",pos:"n.",zh:"替換品",ex:"We will send a replacement at no charge.",g:12},
+ {en:"durable",pos:"adj.",zh:"耐用的",ex:"The new material is more durable than the old one.",g:12},
+ {en:"install",pos:"v.",zh:"安裝",ex:"A technician will install the equipment on Tuesday.",g:12},
+ {en:"malfunction",pos:"n./v.",zh:"故障",ex:"The scanner malfunctioned during the demonstration.",g:12},
+ {en:"specification",pos:"n.",zh:"規格",ex:"Please review the technical specifications.",g:12},
+ {en:"warehouse",pos:"n.",zh:"倉庫",ex:"The goods are stored in the main warehouse.",g:12},
+ {en:"prior to",pos:"phr.",zh:"在…之前",ex:"Prior to the meeting, please review the agenda.",g:12},
+ {en:"lease",pos:"n./v.",zh:"租約；租賃",ex:"The office lease expires in December.",g:13},
+ {en:"tenant",pos:"n.",zh:"房客、承租人",ex:"Tenants must give 60 days' notice before moving out.",g:13},
+ {en:"landlord",pos:"n.",zh:"房東",ex:"The landlord agreed to repaint the walls.",g:13},
+ {en:"property",pos:"n.",zh:"房產、物業",ex:"The company owns several properties downtown.",g:13},
+ {en:"renovate",pos:"v.",zh:"翻修",ex:"The lobby will be renovated next spring.",g:13},
+ {en:"spacious",pos:"adj.",zh:"寬敞的",ex:"The new office is bright and spacious.",g:13},
+ {en:"utilities",pos:"n.",zh:"水電瓦斯等費用",ex:"Rent includes utilities and internet.",g:13},
+ {en:"deposit",pos:"n.",zh:"押金、訂金",ex:"A two-month deposit is required.",g:13},
+ {en:"adjacent",pos:"adj.",zh:"鄰近的",ex:"Parking is available in the adjacent building.",g:13},
+ {en:"commute",pos:"n./v.",zh:"通勤",ex:"The new location shortens most employees' commute.",g:13}
+];
+const GROUPS=[{id:0,label:"全部 132 字"},{id:1,label:"組別 1（0822）"},{id:2,label:"組別 2（0822-2）"},{id:3,label:"組別 3（0829）"},{id:4,label:"組別 4（人事）"},{id:5,label:"組別 5（採購財務）"},{id:6,label:"組別 6（行銷客服）"},{id:7,label:"組別 7（差旅設施）"},{id:8,label:"組別 8（報帳流程）"},{id:9,label:"組別 9（合約會議）"},{id:10,label:"組別 10（形副詞）"},{id:11,label:"組別 11（商務動詞）"},{id:12,label:"組別 12（生產品管）"},{id:13,label:"組別 13（租賃搬遷）"}];
+
+const GQ=[
+ {id:"G1-1",t:"介連",q:"The annual report must be submitted ______ Friday.",o:["by","until","on to","at"],a:0,
+  e:"by + 時間點＝期限之前。until 表持續動作，交件是一次性動作。"},
+ {id:"G1-2",t:"詞性",q:"Ms. Chen was praised for ______ the project ahead of schedule.",o:["complete","completing","completed","completion"],a:1,
+  e:"介系詞 for 後接動名詞；後面有受詞 the project，只有 V-ing 可以接。"},
+ {id:"G1-3",t:"介連",q:"______ the weather was bad, the outdoor event proceeded as planned.",o:["Despite","Although","Because","However"],a:1,
+  e:"空格後是完整句子 → 用連接詞 Although。Despite 是介系詞只能接名詞。"},
+ {id:"G1-4",t:"詞性",q:"All employees are required to attend the ______ training session.",o:["mandatory","mandate","mandatorily","mandating"],a:0,
+  e:"the ___ + 名詞 → 用形容詞。-ory 是形容詞字尾。"},
+ {id:"G1-5",t:"搭配",q:"The new policy will take ______ next month.",o:["affect","effect","effective","effectively"],a:1,
+  e:"take effect 固定片語＝生效。affect 是動詞、effect 是名詞。"},
+ {id:"G1-6",t:"文法",q:"Applicants ______ resumes are received by May 1 will be contacted.",o:["who","whose","which","whom"],a:1,
+  e:"後面接名詞 resumes 表所有格關係（申請者「的」履歷）→ whose。"},
+ {id:"G2-1",t:"詞性",q:"The manager asked the team to respond to customer inquiries ______.",o:["prompt","promptly","promptness","prompted"],a:1,
+  e:"修飾動詞 respond → 用副詞 promptly。"},
+ {id:"G2-2",t:"介連",q:"______ heavy rain, the delivery arrived on time.",o:["Although","Because","Despite","Since"],a:2,
+  e:"空格後只有名詞片語 heavy rain → 用介系詞 Despite。跟 G1-3 相反方向。"},
+ {id:"G2-3",t:"介連",q:"The contract must be signed ______ both parties before the end of the month.",o:["by","until","with","at"],a:0,
+  e:"被動語態的動作者用 by：be signed by both parties。"},
+ {id:"G2-4",t:"詞性",q:"Employees interested in the position should submit an ______ by email.",o:["apply","applicant","application","applicable"],a:2,
+  e:"an ___ → 名詞。applicant 是「人」，這裡交的是「申請書」application。"},
+ {id:"G2-5",t:"介連",q:"The store offers a full refund ______ customers return items within 14 days.",o:["despite","unless","if","during"],a:2,
+  e:"語意是「如果 14 天內退回就全額退費」→ if。unless＝如果不，語意相反。"},
+ {id:"G2-6",t:"搭配",q:"Ms. Park will take ______ of the marketing department starting next month.",o:["charge","charged","charging","charges"],a:0,
+  e:"take charge of 固定片語＝接管、負責。"},
+ {id:"G3-1",t:"搭配",q:"Attendees should register ______ because seats are limited.",o:["in advance","at once time","on ahead","for early"],a:0,
+  e:"in advance 固定片語＝事先。其他三個都是不存在的搭配。"},
+ {id:"G3-2",t:"詞性",q:"The seminar was ______ attended, with over 300 participants.",o:["wide","widely","width","widen"],a:1,
+  e:"修飾過去分詞 attended → 副詞 widely。widely attended＝出席踴躍。"},
+ {id:"G3-3",t:"文法",q:"______ you have any questions, please contact the organizer directly.",o:["Despite","Should","Unless","Whether"],a:1,
+  e:"Should you have... = If you should have... 的倒裝，正式書信常見。"},
+ {id:"G3-4",t:"介連",q:"The keynote speech will begin ______ 10 a.m. in the main hall.",o:["in","on","at","by"],a:2,
+  e:"時刻用 at（at 10 a.m.）；日期用 on、月份年份用 in。"},
+ {id:"G3-5",t:"詞性",q:"Due to a scheduling conflict, the workshop has been ______ until October.",o:["postpone","postponing","postponed","postponement"],a:2,
+  e:"has been + p.p. 被動完成式 → postponed。"},
+ {id:"G3-6",t:"介連",q:"Participants are asked to turn off their phones ______ the presentation.",o:["while","during","when","meanwhile"],a:1,
+  e:"後面是名詞 the presentation → 介系詞 during。while 要接句子。"},
+ {id:"G4-1",t:"介連",q:"______ the delay, all passengers reached their destination safely.",o:["Although","Despite","Because","While"],a:1,
+  e:"後面只有名詞 the delay → 介系詞 Despite。"},
+ {id:"G4-2",t:"介連",q:"______ the machine was still under warranty, the repair was free of charge.",o:["Despite","During","Because","Because of"],a:2,
+  e:"後面是完整句子 → 連接詞 Because。Because of 是介系詞，只接名詞。"},
+ {id:"G4-3",t:"介連",q:"Employees may not use personal phones ______ working hours.",o:["while","when","during","although"],a:2,
+  e:"後面是名詞 working hours → during。"},
+ {id:"G4-4",t:"介連",q:"______ the manager approves the budget, the project cannot begin.",o:["Unless","If","Despite","During"],a:0,
+  e:"unless＝if not。「除非核准，否則不能開始」。用 If 會語意矛盾。"},
+ {id:"G4-5",t:"介連",q:"The office will remain open ______ the renovation work continues on the upper floors.",o:["despite","during","while","because of"],a:2,
+  e:"陷阱題：renovation work 看起來像名詞，但後面有動詞 continues，整個是句子 → while。"},
+ {id:"G4-6",t:"介連",q:"______ bad weather conditions, the flight was delayed for two hours.",o:["Although","Because","Since","Because of"],a:3,
+  e:"後面只有名詞片語 → Because of。跟 G4-2 對照：Because 接句子。"},
+ {id:"G4-7",t:"介連",q:"Visitors must wear ID badges ______ they are inside the building.",o:["during","while","despite","in spite of"],a:1,
+  e:"後面是句子 they are inside → while。"},
+ {id:"G4-8",t:"介連",q:"The event will be held outdoors ______ it rains, in which case it will move to the main hall.",o:["unless","if","despite","during"],a:0,
+  e:"「除非下雨，否則在戶外」→ unless。後半句 in which case 是提示。"},
+ {id:"G5-1",t:"介連",q:"______ the rising cost of materials, the company raised its prices.",o:["Although","Because","Because of","While"],a:2,
+  e:"the rising cost of materials 沒有動詞 → 名詞片語 → Because of。"},
+ {id:"G5-2",t:"介連",q:"______ several delays, the shipment arrived before the deadline.",o:["Despite","Although","Even though","Because"],a:0,
+  e:"several delays 沒有動詞 → Despite。Although/Even though 都要接句子。"},
+ {id:"G5-3",t:"介連",q:"______ the annual inventory check, the warehouse will be closed to visitors.",o:["While","During","Although","Since"],a:1,
+  e:"the annual inventory check 是名詞片語 → During。"},
+ {id:"G5-4",t:"介連",q:"______ its high price, the software has become popular among small businesses.",o:["Because","In spite of","Since","Whereas"],a:1,
+  e:"its high price 沒有動詞 → In spite of（＝Despite）。",},
+ {id:"G5-5",t:"介連",q:"______ the supplier failed to deliver on time, we canceled the contract.",o:["Because of","Despite","Because","In spite of"],a:2,
+  e:"the supplier failed... 有主詞有動詞 → 連接詞 Because。跟 G5-1 正好相反，一起看。"},
+ {id:"G5-6",t:"介連",q:"______ a shortage of staff, the store extended its opening hours last month.",o:["Although","Despite","Because","While"],a:1,
+  e:"a shortage of staff 是名詞片語（of 片語不是動詞）→ Despite。"},
+ {id:"G5-7",t:"詞性",q:"The accounting team reviewed the ______ carefully before approving them.",o:["expensive","expenses","expensively","expend"],a:1,
+  e:"the ___ 且後面 them 指複數 → 名詞複數 expenses。"},
+ {id:"G5-8",t:"詞性",q:"All purchases must be ______ documented for reimbursement.",o:["proper","properly","property","propriety"],a:1,
+  e:"修飾過去分詞 documented → 副詞 properly。"},
+ {id:"G5-9",t:"搭配",q:"Ms. Wu is in ______ of the company's overseas suppliers.",o:["charge","control","command","order"],a:0,
+  e:"in charge of 固定片語＝負責。注意跟 take charge of 是同一個字。"},
+ {id:"G5-10",t:"文法",q:"The invoice ______ last week has not been paid yet.",o:["issue","issued","issuing","issues"],a:1,
+  e:"分詞修飾：發票「被」開立 → 過去分詞 issued（= which was issued）。"},
+ {id:"G6-1",t:"介連",q:"______ the positive feedback, the company decided to discontinue the product.",o:["Although","Despite","Because","While"],a:1,
+  e:"the positive feedback 是名詞片語 → Despite。"},
+ {id:"G6-2",t:"文法",q:"The marketing team will ______ the new campaign next Monday.",o:["launch","launching","launched","to launch"],a:0,
+  e:"will + 原形動詞 → launch。"},
+ {id:"G6-3",t:"詞性",q:"Customers who subscribe today will receive a free ______ by mail.",o:["brochure","brochures'","brochured","brochuring"],a:0,
+  e:"a free ___ → 單數名詞 brochure。"},
+ {id:"G6-4",t:"介連",q:"______ our competitors raised their prices, we chose to keep ours unchanged.",o:["Despite","In spite of","While","During"],a:2,
+  e:"our competitors raised... 是完整句子 → While。其他三個都是介系詞。"},
+ {id:"G6-5",t:"詞性",q:"All complaints must be handled ______ within 48 hours.",o:["profession","professional","professionally","professionalism"],a:2,
+  e:"修飾動詞 handled → 副詞 professionally。"},
+ {id:"G6-6",t:"搭配",q:"The survey results will be distributed ______ all department heads by Friday.",o:["to","for","with","at"],a:0,
+  e:"distribute A to B 固定用法。"},
+ {id:"G7-1",t:"詞性",q:"The hotel offers a wide ______ of services to business travelers.",o:["vary","various","variety","variously"],a:2,
+  e:"a wide ___ of → 名詞 variety。a variety of＝各式各樣的。"},
+ {id:"G7-2",t:"文法",q:"Passengers ______ to Gate 12 should board immediately.",o:["proceed","proceeded","proceeding","to proceed"],a:2,
+  e:"分詞修飾：乘客「主動」前往 → 現在分詞 proceeding（= who are proceeding）。跟 G5-10 的被動 issued 對照。"},
+ {id:"G7-3",t:"介連",q:"______ the ongoing maintenance, the north entrance will stay open.",o:["Although","Despite","Because","While"],a:1,
+  e:"the ongoing maintenance 沒有動詞（ongoing 是形容詞）→ Despite。"},
+ {id:"G7-4",t:"詞性",q:"Children under 12 must be ______ by an adult at all times.",o:["accompany","accompanied","accompanying","accompaniment"],a:1,
+  e:"must be + p.p. 被動 → accompanied。小孩「被」陪同。"},
+ {id:"G7-5",t:"搭配",q:"All guests are entitled ______ a complimentary breakfast.",o:["to","for","with","of"],a:0,
+  e:"be entitled to 固定搭配＝有權享有。"},
+ {id:"G7-6",t:"文法",q:"Neither the manager ______ the assistant was available for comment.",o:["or","nor","and","but"],a:1,
+  e:"neither...nor 固定配對。動詞 was 也配合最近的單數主詞 the assistant。"},
+ {id:"G7-7",t:"詞性",q:"The renovation was completed ______ than originally planned.",o:["quick","quickly","more quickly","most quickly"],a:2,
+  e:"後面有 than → 比較級。修飾動詞用副詞比較級 more quickly。"},
+ {id:"G7-8",t:"介連",q:"Guests may use the pool ______ they are staying at the hotel.",o:["during","while","despite","in spite of"],a:1,
+  e:"they are staying 是句子 → while。（複習：while 永遠接句子）"},
+ {id:"G8-1",t:"詞性",q:"The accounting department requires ______ receipts for all claims.",o:["origin","original","originally","originality"],a:1,
+  e:"修飾名詞 receipts → 形容詞 original。"},
+ {id:"G8-2",t:"文法",q:"Expenses ______ after the deadline will not be reimbursed.",o:["submit","submitted","submitting","submits"],a:1,
+  e:"分詞修飾被動：費用「被」提交 → submitted。跟 G7-2 的主動 proceeding 對照。"},
+ {id:"G8-3",t:"搭配",q:"Taxi fares are covered only ______ public transportation is unavailable.",o:["when","during","despite","because of"],a:0,
+  e:"後面是句子 → when。during / despite / because of 都是介系詞。"},
+ {id:"G8-4",t:"詞性",q:"The reimbursement ______ was processed within a week.",o:["request","requested","requesting","requestful"],a:0,
+  e:"The ___ was processed → 需要名詞當主詞。reimbursement request＝報帳申請，名詞當形容詞修飾名詞。"},
+ {id:"G8-5",t:"文法",q:"Neither the receipt ______ the report was attached to the email.",o:["or","nor","and","also"],a:1,
+  e:"neither...nor 配對。"},
+ {id:"G8-6",t:"介連",q:"______ he was on leave for two weeks, Mr. Devlin submitted his report late.",o:["Because of","Despite","Because","In spite of"],a:2,
+  e:"he was on leave 是句子 → Because。"},
+ {id:"G8-7",t:"詞性",q:"The new policy applies to all employees, ______ of their department.",o:["regard","regardless","regarding","regarded"],a:1,
+  e:"regardless of＝不論。固定用法，記整組。"},
+ {id:"G8-8",t:"搭配",q:"Please make sure the form is filled ______ completely before submitting.",o:["out","of","into","along"],a:0,
+  e:"fill out a form＝填寫表格。"},
+ {id:"G9-1",t:"詞性",q:"Only full-time employees are ______ for the annual bonus.",o:["elect","eligible","eligibility","elegantly"],a:1,
+  e:"be ___ for → 形容詞 eligible。eligibility 是名詞。"},
+ {id:"G9-2",t:"文法",q:"The total cost must not ______ the approved budget.",o:["exceed","exceeds","exceeding","exceeded"],a:0,
+  e:"must not + 原形動詞 → exceed。"},
+ {id:"G9-3",t:"搭配",q:"All contractors must comply ______ the safety regulations.",o:["to","with","for","on"],a:1,
+  e:"comply with 固定搭配＝遵守。"},
+ {id:"G9-4",t:"詞性",q:"The committee reached a ______ decision to extend the contract.",o:["unanimous","unanimously","unanimity","unanimousness"],a:0,
+  e:"a ___ decision → 形容詞 unanimous。"},
+ {id:"G9-5",t:"文法",q:"The agreement, ______ was signed in May, expires next year.",o:["that","which","what","who"],a:1,
+  e:"逗號後的非限定關係子句只能用 which，不能用 that。這是多益常考的細節。"},
+ {id:"G9-6",t:"介連",q:"______ the terms were amended, both parties signed the agreement.",o:["Despite","After","Because of","In spite of"],a:1,
+  e:"the terms were amended 是句子 → 連接詞 After。"},
+ {id:"G9-7",t:"詞性",q:"Please review the attached document and return it ______.",o:["prompt","promptly","promptness","prompted"],a:1,
+  e:"修飾動詞 return → 副詞 promptly。"},
+ {id:"G9-8",t:"搭配",q:"The manager asked the team to take ______ of the minutes during the meeting.",o:["note","notes","noting","noted"],a:1,
+  e:"take notes＝做筆記，固定用複數。"},
+ {id:"G10-1",t:"文法",q:"By the time the auditor arrived, the team ______ the report.",o:["finishes","has finished","had finished","will finish"],a:2,
+  e:"過去完成式：兩個過去動作，先發生的用 had + p.p.。By the time 是強烈提示。"},
+ {id:"G10-2",t:"詞性",q:"The company has operated ______ since its founding in 1998.",o:["profit","profitable","profitably","profitability"],a:2,
+  e:"修飾動詞 operated → 副詞 profitably。"},
+ {id:"G10-3",t:"文法",q:"If the shipment ______ tomorrow, we can meet the deadline.",o:["arrive","arrives","will arrive","arriving"],a:1,
+  e:"條件句 if 子句用現在式代替未來式，主詞 the shipment 單數 → arrives。"},
+ {id:"G10-4",t:"介連",q:"The office will be relocated ______ the end of the quarter.",o:["by","until","during","while"],a:0,
+  e:"by + 時間點＝在…之前完成。until 表持續，搬遷是一次性動作。（複習 G1-1）"},
+ {id:"G10-5",t:"搭配",q:"We are looking forward ______ working with your team.",o:["to","for","on","at"],a:0,
+  e:"look forward to + V-ing。這個 to 是介系詞不是不定詞，所以後面接動名詞。"},
+ {id:"G10-6",t:"詞性",q:"The proposal was rejected due to ______ information.",o:["insufficient","insufficiently","insufficiency","suffice"],a:0,
+  e:"修飾名詞 information → 形容詞 insufficient。"},
+ {id:"G10-7",t:"文法",q:"Each of the applicants ______ required to submit two references.",o:["are","is","were","being"],a:1,
+  e:"Each of + 複數名詞，動詞仍用單數 is。多益常用 of 片語製造混淆。"},
+ {id:"G10-8",t:"介連",q:"______ receiving your confirmation, we will reserve the venue.",o:["Although","Upon","While","Because"],a:1,
+  e:"Upon + V-ing＝一…就…。後面是動名詞不是句子，所以要用介系詞 Upon。"},
+ {id:"G11-1",t:"文法",q:"By the time the shipment arrived, the store ______ the sale.",o:["ends","has ended","had ended","will end"],a:2,
+  e:"過去完成式：兩個過去動作，先發生的用 had + p.p.。By the time 就是提示。（同 G10-1）"},
+ {id:"G11-2",t:"文法",q:"If the client ______ the contract, we will begin work immediately.",o:["sign","signs","will sign","signing"],a:1,
+  e:"條件句：if 子句用現在式代替未來式，主詞單數 → signs。（同 G10-3）"},
+ {id:"G11-3",t:"文法",q:"Each of the departments ______ its own budget.",o:["have","has","having","are having"],a:1,
+  e:"Each of + 複數，動詞用單數 has。別被 departments 騙。（同 G10-7）"},
+ {id:"G11-4",t:"文法",q:"The manager had already left ______ the auditor called.",o:["when","during","despite","upon"],a:0,
+  e:"後面是句子 the auditor called → 連接詞 when。同時複習過去完成式的搭配。"},
+ {id:"G11-5",t:"文法",q:"Unless the weather ______, the outdoor event will proceed.",o:["worsen","worsens","will worsen","worsening"],a:1,
+  e:"unless 子句同樣用現在式代替未來式，主詞 the weather 單數 → worsens。"},
+ {id:"G11-6",t:"文法",q:"Neither of the proposals ______ acceptable to the board.",o:["are","were","was","have been"],a:2,
+  e:"Neither of + 複數，動詞用單數 was。跟 Each of 同一條規則。"},
+ {id:"G11-7",t:"詞性",q:"Sales have increased ______ since the new campaign began.",o:["consider","considerable","considerably","consideration"],a:2,
+  e:"修飾動詞 increased → 副詞 considerably。這組字在新的單字組別 10 裡。"},
+ {id:"G11-8",t:"詞性",q:"The company made a ______ investment in new equipment.",o:["substantial","substantially","substance","substantiate"],a:0,
+  e:"a ___ investment → 形容詞 substantial。"},
+ {id:"G12-1",t:"介連",q:"______ the heavy traffic, the delivery van arrived on schedule.",o:["Although","Despite","Because","While"],a:1,
+  e:"the heavy traffic 是名詞片語 → Despite。"},
+ {id:"G12-2",t:"搭配",q:"The report must be submitted ______ the end of the day on Friday.",o:["until","by","since","during"],a:1,
+  e:"期限用 by。until 表持續動作。"},
+ {id:"G12-3",t:"文法",q:"Each of the branch offices ______ its own inventory system.",o:["maintain","maintains","maintaining","have maintained"],a:1,
+  e:"Each of + 複數，動詞用單數 maintains。"},
+ {id:"G12-4",t:"文法",q:"The documents ______ yesterday have not been reviewed.",o:["receive","received","receiving","receives"],a:1,
+  e:"分詞修飾被動：文件「被」收到 → received。"},
+ {id:"G12-5",t:"詞性",q:"Costs have risen ______ over the past two quarters.",o:["significant","significantly","significance","signify"],a:1,
+  e:"修飾動詞 risen → 副詞 significantly。"},
+ {id:"G12-6",t:"介連",q:"______ the contract was signed, work began immediately.",o:["Despite","Because of","After","In spite of"],a:2,
+  e:"the contract was signed 是句子 → 連接詞 After。"},
+ {id:"G12-7",t:"搭配",q:"All applicants must comply ______ the submission guidelines.",o:["to","with","for","on"],a:1,
+  e:"comply with 固定搭配。"},
+ {id:"G12-8",t:"文法",q:"By the time the technician arrived, the system ______ down for three hours.",o:["is","has been","had been","will be"],a:2,
+  e:"By the time + 過去 → 主要子句用過去完成式 had been。"},
+ {id:"G12-9",t:"詞性",q:"The proposal was rejected because of ______ supporting data.",o:["insufficient","insufficiently","insufficiency","suffice"],a:0,
+  e:"修飾名詞 data → 形容詞 insufficient。"},
+ {id:"G12-10",t:"介連",q:"Visitors are not permitted in the laboratory ______ the experiment is in progress.",o:["during","while","despite","in spite of"],a:1,
+  e:"the experiment is in progress 是句子 → while。"},
+ {id:"G12-11",t:"文法",q:"Neither the supervisor ______ the assistant was informed of the change.",o:["or","nor","and","but"],a:1,
+  e:"neither...nor 固定配對。"},
+ {id:"G12-12",t:"文法",q:"If the client ______ the revised terms, we can proceed.",o:["accept","accepts","will accept","accepting"],a:1,
+  e:"if 子句用現在式代替未來式，主詞單數 → accepts。"},
+ {id:"G12-13",t:"文法",q:"The seminar, ______ was held in Osaka, attracted 400 participants.",o:["that","which","what","who"],a:1,
+  e:"逗號後的非限定關係子句只能用 which，不能用 that。"},
+ {id:"G12-14",t:"搭配",q:"We look forward to ______ with your team next quarter.",o:["work","working","worked","works"],a:1,
+  e:"look forward to + V-ing。這個 to 是介系詞。"},
+ {id:"G12-15",t:"介連",q:"Employees ______ badges must report to security.",o:["without","unless","although","while"],a:0,
+  e:"後面是名詞 badges → 介系詞 without。其他三個都是連接詞。"},
+ {id:"G12-16",t:"介連",q:"______ receiving your deposit, we will confirm the booking.",o:["Although","Upon","While","Because"],a:1,
+  e:"Upon + V-ing＝一…就…。"},
+ {id:"G12-17",t:"詞性",q:"The manager asked the team to work more ______ under the new deadline.",o:["efficient","efficiently","efficiency","efficiencies"],a:1,
+  e:"修飾動詞 work → 副詞 efficiently。"},
+ {id:"G12-18",t:"介連",q:"______ its high cost, the software has been widely adopted.",o:["Because","Since","In spite of","Whereas"],a:2,
+  e:"its high cost 是名詞片語 → In spite of。"},
+ {id:"G12-19",t:"詞性",q:"Only employees who have worked here for two ______ years are eligible.",o:["consecutive","consecutively","consecution","consecrate"],a:0,
+  e:"修飾名詞 years → 形容詞 consecutive。"},
+ {id:"G12-20",t:"文法",q:"The total expense must not ______ the approved budget.",o:["exceed","exceeds","exceeding","exceeded"],a:0,
+  e:"must not + 原形動詞 → exceed。"},
+ {id:"G12-21",t:"搭配",q:"Please fill ______ the form and return it to reception.",o:["in to","out","up on","away"],a:1,
+  e:"fill out a form＝填寫表格。"},
+ {id:"G12-22",t:"文法",q:"______ of the two proposals was approved by the board.",o:["Both","Neither","All","Several"],a:1,
+  e:"動詞 was 是單數，且只有兩個提案 → Neither。"},
+ {id:"G12-23",t:"搭配",q:"The new policy will take ______ on October 1.",o:["affect","effect","effective","effectively"],a:1,
+  e:"take effect＝生效。"},
+ {id:"G12-24",t:"文法",q:"Unless the supplier ______ the deadline, we will cancel the order.",o:["meet","meets","will meet","meeting"],a:1,
+  e:"unless 子句用現在式代替未來式，主詞單數 → meets。"},
+ {id:"G13-1",t:"詞性",q:"Any ______ items should be returned to the supplier.",o:["defect","defective","defectively","defectiveness"],a:1,
+  e:"修飾名詞 items → 形容詞 defective。"},
+ {id:"G13-2",t:"介連",q:"______ to the inspection, all machines must be shut down.",o:["Prior","Before","Although","During"],a:0,
+  e:"prior to 是固定介系詞片語＝在…之前。Before 單獨用時不接 to。"},
+ {id:"G13-3",t:"文法",q:"The equipment ______ last month has already malfunctioned twice.",o:["install","installed","installing","installs"],a:1,
+  e:"分詞修飾被動：設備「被」安裝 → installed。"},
+ {id:"G13-4",t:"文法",q:"Neither of the replacement units ______ arrived yet.",o:["have","has","were","are"],a:1,
+  e:"Neither of + 複數 → 動詞單數 has。"},
+ {id:"G13-5",t:"詞性",q:"The new casing is considerably more ______ than the previous model.",o:["durable","durably","durability","endure"],a:0,
+  e:"more ___ than 比較級，修飾主詞 casing → 形容詞 durable。"},
+ {id:"G13-6",t:"介連",q:"______ the warehouse was fully stocked, several orders were delayed.",o:["Despite","Even though","In spite of","Prior to"],a:1,
+  e:"the warehouse was fully stocked 是句子 → 連接詞 Even though。"},
+ {id:"G13-7",t:"搭配",q:"The technician will be responsible ______ installing the new system.",o:["for","to","of","with"],a:0,
+  e:"be responsible for 固定搭配＝負責。（注意跟 be in charge of 的介系詞不同）"},
+ {id:"G13-8",t:"文法",q:"By the time the inspector arrived, the team ______ the defective units.",o:["removes","has removed","had removed","will remove"],a:2,
+  e:"By the time + 過去 → 過去完成式 had removed。"},
+ {id:"G14-1",t:"詞性",q:"The new office is much more ______ than our current one.",o:["space","spacious","spaciously","spaciousness"],a:1,
+  e:"more ___ than 比較級，描述主詞 office → 形容詞 spacious。"},
+ {id:"G14-2",t:"介連",q:"______ the lease expires in December, we must decide by October.",o:["Because","Because of","Due to","Despite"],a:0,
+  e:"the lease expires 是句子 → 連接詞 Because。Because of / Due to 只接名詞。"},
+ {id:"G14-3",t:"搭配",q:"Tenants are required to give written notice ______ advance.",o:["on","at","in","by"],a:2,
+  e:"in advance＝事先，固定片語。"},
+ {id:"G14-4",t:"文法",q:"The building ______ next to the station was renovated last year.",o:["locate","located","locating","locates"],a:1,
+  e:"分詞修飾被動：大樓「被座落」在… → located。be located 是固定說法。"},
+ {id:"G14-5",t:"文法",q:"Neither the landlord nor the tenants ______ satisfied with the repairs.",o:["is","was","were","has been"],a:2,
+  e:"neither A nor B 動詞跟最靠近的 B 一致：the tenants 複數 → were。跟 Neither of（一律單數）不同，這個容易混。"},
+ {id:"G14-6",t:"詞性",q:"Parking is available in the ______ building.",o:["adjacent","adjacently","adjacency","adjoin"],a:0,
+  e:"the ___ building → 形容詞 adjacent。"},
+ {id:"G14-7",t:"介連",q:"______ the renovation, employees will work from the second floor.",o:["While","During","When","Although"],a:1,
+  e:"the renovation 是名詞 → During。While 要接句子。"},
+ {id:"G14-8",t:"文法",q:"If the landlord ______ the deposit by Friday, we will contact a lawyer.",o:["doesn't return","won't return","didn't return","not return"],a:0,
+  e:"if 子句用現在式代替未來式，否定句 → doesn't return。"},
+ {id:"G14-9",t:"搭配",q:"The rent includes all utilities ______ electricity.",o:["except","expect","excepting of","exception"],a:0,
+  e:"except＝除了…之外。expect（預期）是拼字陷阱。"},
+ {id:"G14-10",t:"詞性",q:"Most employees reported that their commute had become ______ shorter.",o:["notice","noticeable","noticeably","noticing"],a:2,
+  e:"修飾形容詞 shorter → 副詞 noticeably。"}
+];
+
+const RQ=[
+ {id:"R1",title:"海外派駐計畫（公告 email）",
+  p:"To: All Staff\nFrom: Human Resources\nSubject: Overseas Assignment Program\n\nWe are pleased to announce that applications for the 2027 Overseas Assignment Program are now open. Selected employees will relocate to one of our branch offices in Panama City, Dubai, or Madrid for a period of twelve months.\n\nThe company will cover accommodation and provide a monthly living allowance. Participants must have worked at the company for at least two consecutive years and obtain approval from their department manager.\n\nInterested employees should submit an application form to HR by September 15. Interviews will be conducted in early October, and results will be announced by the end of the month.",
+  qs:[
+   {id:"R1-1",q:"What is the purpose of this notice?",o:["To announce a new branch office","To invite applications for a program","To report survey results","To introduce a new manager"],a:1,e:"主旨題：全文在宣布計畫開放申請。"},
+   {id:"R1-2",q:"What is NOT provided by the company?",o:["Housing","A living allowance","Language training","A twelve-month placement"],a:2,e:"NOT 題：文中只提到住宿和津貼，沒提語言訓練。"},
+   {id:"R1-3",q:"What must applicants do first?",o:["Contact the branch office","Pass an interview in September","Submit a form by the deadline","Work abroad for two years"],a:2,e:"流程題：9/15 前交表 → 10 月面試。第一步是交表。"}
+  ]},
+ {id:"R2",title:"保固爭議（客服 email）",
+  p:"Dear Mr. Reyes,\n\nThank you for your inquiry about your recent order. We confirm that the wireless keyboard you purchased is covered by a two-year warranty.\n\nHowever, after reviewing the photos you sent, our technician determined that the damage was caused by liquid spilled on the device. Unfortunately, this type of damage is not covered under the warranty terms.\n\nWe would like to offer you a 30% discount on a replacement keyboard. If you wish to accept this offer, please reply to this email by August 30. The discount cannot be combined with other promotions.\n\nSincerely,\nTechNova Customer Service",
+  qs:[
+   {id:"R2-1",q:"Why did Mr. Reyes contact TechNova?",o:["To cancel an order","To ask about a damaged product","To renew a warranty","To request a catalog"],a:1,e:"從回信推斷來信目的：詢問損壞產品的保固。"},
+   {id:"R2-2",q:"Why was the warranty claim rejected?",o:["The warranty had expired","The receipt was missing","The damage was caused by liquid","The product was purchased abroad"],a:2,e:"細節題：liquid spilled on the device。"},
+   {id:"R2-3",q:"What is Mr. Reyes advised to do by August 30?",o:["Return the keyboard to a store","Send photos of the damage","Reply to accept a discount offer","Purchase an extended warranty"],a:2,e:"細節題：8/30 前回信接受折扣。"}
+  ]},
+ {id:"R3",title:"會議中心維護（公告）",
+  p:"NOTICE — Riverside Convention Center\nAnnual Facility Maintenance\n\nThe Riverside Convention Center will be closed from September 8 to September 12 for annual maintenance. During this period, all scheduled events will be moved to our partner venue, Harborview Hall, located ten minutes away by shuttle bus.\n\nEvent organizers do not need to take any action; our staff will contact each organizer individually to confirm new room assignments. Attendees should check the event website for updated location details.\n\nA free shuttle bus will run every 15 minutes between the two venues during the maintenance period. We apologize for any inconvenience and thank you for your understanding.",
+  qs:[
+   {id:"R3-1",q:"What is the purpose of this notice?",o:["To advertise a new convention center","To announce a temporary closure","To cancel all September events","To introduce a new shuttle service"],a:1,e:"主旨題：宣布暫時關閉與因應措施。"},
+   {id:"R3-2",q:"What are event organizers asked to do?",o:["Contact the center by September 8","Reserve rooms at Harborview Hall","Nothing; staff will contact them","Reschedule their events to October"],a:2,e:"NOT/否定細節：do not need to take any action。"},
+   {id:"R3-3",q:"How often will the shuttle bus run?",o:["Every 10 minutes","Every 15 minutes","Every 30 minutes","Once an hour"],a:1,e:"細節題：every 15 minutes。"}
+  ]},
+ {id:"R4",title:"停電通知（memo）",
+  p:"MEMO\n\nTo: All Department Staff\nFrom: Facilities Management\n\nBecause of scheduled electrical work, the third floor will be without power this Saturday from 8 a.m. to 2 p.m. Although the outage affects only one floor, employees on all floors should save their work and shut down computers before leaving on Friday.\n\nDuring the outage, the elevators will remain in service. Should you need weekend building access, please notify security in advance.",
+  qs:[
+   {id:"R4-1",q:"Why will the third floor lose power?",o:["A storm damaged the building","Electrical work is scheduled","The building is closing permanently","Elevators are being replaced"],a:1,e:"細節題：Because of scheduled electrical work。"},
+   {id:"R4-2",q:"What should employees do on Friday?",o:["Work from home","Move to another floor","Shut down their computers","Contact facilities management"],a:2,e:"細節題：shut down computers before leaving on Friday。"},
+   {id:"R4-3",q:"這篇裡出現了 Because of / Although / During / Should you 四個考點。哪一個後面接的是「完整句子」？",o:["Because of","During","Although","以上皆非"],a:2,e:"Although the outage affects only one floor —— 有主詞 the outage、動詞 affects。另外兩個後面都接名詞。"}
+  ]},
+ {id:"R5",title:"Q4 行銷活動（主管 email）",
+  p:"To: Marketing Team\nFrom: Nadia Okafor, Director\nSubject: Q4 Campaign Update\n\nTeam,\n\nDespite the tight budget, our Q4 campaign has been approved. The launch date is set for October 5.\n\nWhile the design team finalizes the brochures, I need the rest of you to focus on the customer loyalty segment. Because our competitors launched similar programs last quarter, we cannot afford further delays.\n\nPlease send me your section drafts by September 20. Unless I hear otherwise, I will assume everyone can meet this deadline.\n\nThanks,\nNadia",
+  qs:[
+   {id:"R5-1",q:"What has been approved?",o:["A budget increase","The Q4 campaign","A new competitor analysis","An October holiday schedule"],a:1,e:"細節題：our Q4 campaign has been approved。"},
+   {id:"R5-2",q:"What is the design team currently doing?",o:["Meeting with competitors","Finalizing the brochures","Sending drafts to Nadia","Launching the campaign"],a:1,e:"細節題：While the design team finalizes the brochures。"},
+   {id:"R5-3",q:"What should team members do if they cannot meet the deadline?",o:["Nothing; the deadline is flexible","Contact the design team","Inform Nadia","Request a budget increase"],a:2,e:"Unless I hear otherwise＝除非我聽到別的說法，所以做不到要主動通知 Nadia。考的就是 unless。"}
+  ]},
+ {id:"R6",title:"飯店設施公告 ＋ 住客來信（雙篇）",
+  p:"【文章一】NOTICE — Lakeside Hotel\n\nDear Guests,\n\nOur fitness center and swimming pool will be closed for maintenance from March 3 to March 7. While the work is in progress, guests may use the facilities at the Northside Gym, located two blocks away, at no extra charge. Please show your room key at the front desk of the gym.\n\nComplimentary breakfast will continue to be served in the lobby from 6:30 to 10:00 a.m. as usual.\n\n【文章二】\nTo: Front Desk, Lakeside Hotel\nFrom: Karin Alvi\nSubject: Question about my stay\n\nHello,\n\nI will be checking in on March 5 and staying for four nights. I read the notice about the pool closure. Since I usually swim early in the morning, could you tell me what time the Northside Gym opens?\n\nAlso, I would like to request a late checkout on my final day if a room is available.\n\nThank you,\nKarin Alvi",
+  qs:[
+   {id:"R6-1",q:"What is the purpose of the notice?",o:["To announce a price increase","To inform guests of a temporary closure","To advertise a new gym","To change breakfast hours"],a:1,e:"主旨題：健身房和泳池維修暫停開放。"},
+   {id:"R6-2",q:"What must guests show at the Northside Gym?",o:["A receipt","A membership card","Their room key","A boarding pass"],a:2,e:"細節題：show your room key。"},
+   {id:"R6-3",q:"On which date will Ms. Alvi check out?",o:["March 7","March 8","March 9","March 5"],a:2,e:"跨文章推論：3/5 入住住四晚 → 3/9 退房。多益雙篇最愛考這種算日期。"},
+   {id:"R6-4",q:"Will Ms. Alvi be affected by the closure?",o:["No, she arrives after it ends","Yes, for part of her stay","No, she does not use the pool","Yes, for her entire stay"],a:1,e:"跨文章推論：關閉到 3/7，她 3/5 入住住到 3/9 → 只有前三天受影響。"}
+  ]},
+ {id:"R7",title:"研討會報名 ＋ 確認信（雙篇）",
+  p:"【文章一】\nNorthbridge Business Forum — Registration\n\nEarly-bird rate (until June 10): $120\nStandard rate (June 11 – July 1): $180\nOn-site registration: $220\n\nAll rates include lunch and conference materials. Members of the Northbridge Chamber of Commerce receive an additional 25% discount on any rate. Registration closes July 1; no refunds after that date.\n\n【文章二】\nTo: t.okonkwo@brightpath.com\nFrom: registration@northbridgeforum.org\nSubject: Registration Confirmed\n\nDear Ms. Okonkwo,\n\nThank you for registering on June 8. As a Chamber member, your discount has been applied. Your total is $90.\n\nPlease note that the afternoon workshop you selected has reached capacity. We have moved you to the morning session, which begins at 9:00 a.m. instead of 1:00 p.m. If this does not suit your schedule, reply to this email before June 25 and we will issue a refund.\n\nWe look forward to seeing you.",
+  qs:[
+   {id:"R7-1",q:"Which rate did Ms. Okonkwo pay before her discount?",o:["$120","$180","$220","$90"],a:0,e:"跨文章：她 6/8 報名，在 6/10 前 → early-bird $120。$120 打七五折＝$90，跟確認信的金額吻合。"},
+   {id:"R7-2",q:"Why was Ms. Okonkwo's session changed?",o:["She requested a change","The workshop was full","The speaker canceled","She registered too late"],a:1,e:"細節題：has reached capacity＝額滿。"},
+   {id:"R7-3",q:"What can Ms. Okonkwo do if the new time does not work?",o:["Attend on-site instead","Request a refund by June 25","Switch to another workshop","Nothing; no refunds are given"],a:1,e:"細節題：6/25 前回信可退費。注意文章一說 7/1 後不退費，但這是主辦方主動提供的例外。"},
+   {id:"R7-4",q:"What is indicated about the morning session?",o:["It costs extra","It starts four hours earlier than the afternoon one","It is only for Chamber members","It does not include lunch"],a:1,e:"推論題：9:00 a.m. 對 1:00 p.m.，差四小時。這種要自己算的題目多益很愛出。"}
+  ]},
+ {id:"R8",title:"出差報帳規定 ＋ 員工來信（雙篇）",
+  p:"【文章一】\nTRAVEL EXPENSE POLICY (revised)\n\n1. All expense reports must be submitted within 30 days of the trip's end date.\n2. Original receipts are required for any expense over $25.\n3. Meals are reimbursed up to $60 per day.\n4. Taxi fares are covered only when public transportation is unavailable.\n\nReports submitted after the 30-day window will not be reimbursed unless approved by a department director.\n\n【文章二】\nTo: Accounting\nFrom: Marcus Devlin\nSubject: Expense report — Osaka trip\n\nHi,\n\nI have attached my report for the Osaka trip, which ended on April 12. I am submitting this a little late because I was on leave for two weeks after returning.\n\nMost items are straightforward, but I took a taxi from the airport at 11:30 p.m. when the trains had stopped running. I have the receipt. One dinner came to $72, so I understand only part of that will be covered.\n\nPlease let me know if you need anything else.\n\nMarcus",
+  qs:[
+   {id:"R8-1",q:"What is the deadline for Mr. Devlin's report?",o:["April 12","May 12","April 30","May 30"],a:1,e:"跨文章計算：行程 4/12 結束 + 30 天 → 5/12。"},
+   {id:"R8-2",q:"Why does Mr. Devlin mention his taxi ride?",o:["To request a larger reimbursement","To show it met the policy's condition","To complain about the trains","To ask for a receipt"],a:1,e:"推論題：規定說只有大眾運輸不可用時才給付；他說火車停駛，就是在證明符合條件。"},
+   {id:"R8-3",q:"How much of the $72 dinner will be reimbursed?",o:["$72","$60","$25","Nothing"],a:1,e:"跨文章：每日餐費上限 $60。"},
+   {id:"R8-4",q:"What might Mr. Devlin need in order to be reimbursed?",o:["A new receipt","Approval from a department director","A revised policy","A second report"],a:1,e:"推論題：他遲交了，規定說逾期需部門主管核准。他沒明講，要你自己接起來。"}
+  ]},
+ {id:"R9",title:"停車場封閉（公告）",
+  p:"To: All Staff\nFrom: Facilities\nSubject: Parking Garage Closure\n\nStarting Monday, September 14, the underground parking garage will be closed for structural repairs. The work is expected to take three weeks.\n\nDuring the closure, employees may park at the Fifth Street lot at no charge. Parking passes are not required there, but you must display your employee ID on the dashboard. Spaces are limited, so we encourage staff to use public transportation when possible.\n\nEmployees with accessibility needs should contact Facilities before September 10 so that reserved spaces can be arranged.",
+  qs:[
+   {id:"R9-1",q:"What will happen on September 14?",o:["A new garage will open","The garage will close for repairs","Parking fees will increase","Employee IDs will be reissued"],a:1,e:"細節題。"},
+   {id:"R9-2",q:"What must employees do at the Fifth Street lot?",o:["Purchase a parking pass","Register with Facilities","Display their employee ID","Pay a daily fee"],a:2,e:"細節題：display your employee ID。注意 passes are NOT required 是干擾。"},
+   {id:"R9-3",q:"Who should contact Facilities before September 10?",o:["All employees","Employees with accessibility needs","Visitors","Public transportation users"],a:1,e:"細節題。"}
+  ]},
+ {id:"R10",title:"辦公用品大量訂購 ＋ 客戶詢問（雙篇）",
+  p:"【文章一】\nGreenLeaf Office Supplies — Bulk Order Discounts\n\nOrders under $500        no discount\nOrders $500 - $1,499     10% off\nOrders $1,500 - $2,999   15% off\nOrders $3,000 and above  20% off\n\nStandard delivery takes 5 business days. Express delivery (2 business days) is available for an additional $45. Corporate account holders receive free express delivery on all orders above $1,000.\n\n【文章二】\nTo: orders@greenleaf.com\nFrom: r.tanaka@meridiancorp.com\nSubject: Order inquiry\n\nHello,\n\nI would like to place an order totaling approximately $1,800 for our Tokyo office. We opened a corporate account with you last year.\n\nWe need the items to arrive by Friday, September 18. Today is Monday the 14th. Could you confirm whether this is possible and what the final cost will be?\n\nThank you,\nRina Tanaka",
+  qs:[
+   {id:"R10-1",q:"What discount will Ms. Tanaka's order receive?",o:["No discount","10%","15%","20%"],a:2,e:"跨文章：$1,800 落在 $1,500-$2,999 級距 → 15%。"},
+   {id:"R10-2",q:"How much will Ms. Tanaka pay for express delivery?",o:["$45","$90","Nothing","It depends on weight"],a:2,e:"要同時滿足兩個條件：公司帳戶 + 金額超過 $1,000 → 免費快遞。"},
+   {id:"R10-3",q:"Can the order arrive by September 18 with standard delivery?",o:["Yes, with two days to spare","No, standard delivery would arrive on the 21st","Yes, exactly on time","The passage does not say"],a:1,e:"計算題：9/14 週一出發，標準運送 5 個工作天 → 9/21。來不及。"},
+   {id:"R10-4",q:"Why did Ms. Tanaka mention her corporate account?",o:["To request a larger discount","Because it affects her delivery cost","To open a second account","To change her billing address"],a:1,e:"推論題：她需要快遞才趕得上，提帳戶是要確認免不免運費。"}
+  ]},
+ {id:"R11",title:"社區中心課程 ＋ 退課申請（雙篇）",
+  p:"【文章一】\nNOTICE — Harborview Community Center\nFall Class Registration\n\nRegistration for fall classes opens August 25 and closes September 12. Classes begin September 21.\n\nMembers: $80 per course\nNon-members: $110 per course\n\nAnyone registering for two or more courses receives a $20 discount on the total. Refunds are available up to one week before classes begin. After that date, credit toward a future term will be issued instead.\n\n【文章二】\nTo: info@harborviewcc.org\nFrom: DPark@mailhive.net\nSubject: Withdrawal from pottery class\n\nHello,\n\nI registered for two courses on September 2 — pottery and conversational Spanish. Unfortunately, my work schedule has changed and I will not be able to attend the pottery class.\n\nI am a center member. Would it be possible to withdraw from pottery? I am writing on September 16.\n\nThanks,\nDaniel Park",
+  qs:[
+   {id:"R11-1",q:"How much did Mr. Park pay at registration?",o:["$160","$140","$180","$200"],a:1,e:"計算題：會員 $80 × 2 = $160，兩門以上折 $20 → $140。"},
+   {id:"R11-2",q:"Will Mr. Park receive a refund?",o:["Yes, a full refund","Yes, a partial refund","No, he will receive credit instead","No, nothing will be issued"],a:2,e:"跨文章：課程 9/21 開始，退費截止是開課前一週 = 9/14。他 9/16 才寫信。"},
+   {id:"R11-3",q:"Why can Mr. Park not receive what he asked for?",o:["He is not a member","He wrote after the refund deadline","He registered too late","Pottery classes are non-refundable"],a:1,e:"同上，過了退費期限。會員身分不影響退費規則。"},
+   {id:"R11-4",q:"When was the last day to receive a refund?",o:["September 12","September 14","September 16","September 21"],a:1,e:"9/21 往前推一週 = 9/14。注意 9/12 是報名截止日，不是退費截止日。"}
+  ]},
+ {id:"R12",title:"設備故障：保固條款 ＋ 客訴信 ＋ 技師回覆（三篇）",
+  p:"【文章一】Vantra Industrial — Warranty Terms\n\nAll equipment is covered for 24 months from the date of installation. The warranty covers parts and labor for manufacturing defects.\n\nNot covered:\n- Damage from improper use or unauthorized modification\n- Routine maintenance and consumable parts\n- Equipment installed by non-certified technicians\n\nService requests are processed within 3 business days. Customers with a Priority Service Plan receive next-day response.\n\n【文章二】\nTo: service@vantra.com\nFrom: p.almeida@northfieldmfg.com\nSubject: Unit VX-400 malfunction\n\nHello,\n\nOur VX-400 packaging unit has stopped working. It was installed on March 3 of last year by your certified team. We have a Priority Service Plan.\n\nThe unit shut down during a normal production run. No modifications have been made. We have followed the maintenance schedule in the manual.\n\nWe need this resolved quickly — the line has been down since yesterday.\n\nPaulo Almeida\n\n【文章三】\nTo: p.almeida@northfieldmfg.com\nFrom: service@vantra.com\nSubject: Re: Unit VX-400 malfunction\n\nDear Mr. Almeida,\n\nA technician has been assigned and will arrive tomorrow morning.\n\nBased on your description, the issue appears to be a failed drive belt. Please note that drive belts are classified as consumable parts. The technician will confirm on site.\n\nIf the diagnosis is confirmed, the part itself will be billed to you, though the labor will be covered.",
+  qs:[
+   {id:"R12-1",q:"Why will a technician arrive the next morning?",o:["The unit is still under warranty","Mr. Almeida has a Priority Service Plan","The damage was caused by misuse","The line has been down for a week"],a:1,e:"跨文章：優先服務方案＝隔日回應。一般是 3 個工作天。"},
+   {id:"R12-2",q:"Is the VX-400 still under warranty?",o:["No, it expired after 12 months","Yes, installation was about 18 months ago","No, it was installed by a non-certified team","The passage does not say"],a:1,e:"跨文章計算：保固 24 個月，去年 3 月安裝 → 還在保固內。"},
+   {id:"R12-3",q:"Why will Mr. Almeida be charged for the part?",o:["The warranty has expired","Drive belts are consumable parts","The unit was modified","He does not have a service plan"],a:1,e:"跨文章：保固不含消耗性零件，而傳動皮帶被歸類為消耗品。"},
+   {id:"R12-4",q:"What does Mr. Almeida emphasize in his email?",o:["That he wants a refund","That none of the warranty exclusions apply to him","That the technician was not certified","That he will cancel his service plan"],a:1,e:"推論題：他特別提「認證團隊安裝、沒改裝、有照保養」——正是在逐條排除保固不涵蓋的情況。"},
+   {id:"R12-5",q:"What will the technician do first?",o:["Replace the drive belt","Confirm the diagnosis on site","Issue a refund","Install a new unit"],a:1,e:"細節題：The technician will confirm on site。"}
+  ]},
+ {id:"R13",title:"辦公室搬遷：物件廣告 ＋ 內部 email（雙篇）",
+  p:"【文章一】\nFOR LEASE — Riverside Tower, 8th Floor\n\n450 square meters, fully renovated. Spacious open layout with two meeting rooms. Adjacent to Riverside Station (2-minute walk).\n\nMonthly rent: $9,000 (utilities included, except electricity)\nDeposit: two months' rent\nMinimum lease: 3 years\nAvailable from: November 1\n\nContact: Harlow Properties, 555-0192\n\n【文章二】\nTo: Management Team\nFrom: Grace Lin, Operations\nSubject: Riverside Tower\n\nHi all,\n\nI toured Riverside Tower yesterday and think it fits our needs. Our current lease ends October 31, so the timing works well. The space is about 50% larger than what we have now, which leaves room for the new hires planned for next year.\n\nMy only concern is the lease length. We were hoping for two years so we would have flexibility after the expansion. I will ask Harlow whether that condition can be negotiated.\n\nPlease send me any questions before Thursday.\n\nGrace",
+  qs:[
+   {id:"R13-1",q:"How much deposit would the company pay?",o:["$9,000","$18,000","$27,000","$4,500"],a:1,e:"計算題：押金兩個月 × $9,000 ＝ $18,000。"},
+   {id:"R13-2",q:"Why does Ms. Lin think the timing works well?",o:["The rent is lower in November","The space is available right after their current lease ends","The renovation will be finished soon","New employees start in November"],a:1,e:"跨文章：現約 10/31 到期，新辦公室 11/1 起可租，無縫接軌。"},
+   {id:"R13-3",q:"What is NOT included in the rent?",o:["Water","Internet","Electricity","Meeting rooms"],a:2,e:"細節：utilities included, except electricity。"},
+   {id:"R13-4",q:"Which condition does Ms. Lin want to change?",o:["The monthly rent","The deposit amount","The minimum lease period","The move-in date"],a:2,e:"跨文章：廣告寫最少 3 年，她希望 2 年。"},
+   {id:"R13-5",q:"What is suggested about the company?",o:["It is reducing staff","It plans to grow","It is relocating overseas","It owns Riverside Tower"],a:1,e:"推論題：提到明年新進人員、expansion → 公司在擴張。"}
+  ]}
+];
+
+/* ============ 狀態與儲存 ============ */
+let marks={}, quiz={};   // quiz[qid] = {r:0, w:0}
+async function load(){
+  try{const m=await window.storage.get("toeic-marks");if(m&&m.value)marks=JSON.parse(m.value);}catch(e){}
+  try{const q=await window.storage.get("toeic-quiz");if(q&&q.value)quiz=JSON.parse(q.value);}catch(e){}
+}
+async function saveMarks(){try{await window.storage.set("toeic-marks",JSON.stringify(marks));}catch(e){}}
+async function saveQuiz(){try{await window.storage.set("toeic-quiz",JSON.stringify(quiz));}catch(e){}}
+function record(qid,ok){
+  if(!quiz[qid])quiz[qid]={r:0,w:0};
+  ok?quiz[qid].r++:quiz[qid].w++;
+  saveQuiz();
+}
+const $=id=>document.getElementById(id);
+
+/* ============ 分頁 ============ */
+document.querySelectorAll(".tab").forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
+    t.classList.add("on");
+    ["cards","grammar","reading","stats"].forEach(s=>$("sec-"+s).classList.toggle("hidden",s!==t.dataset.t));
+    if(t.dataset.t==="stats")renderStats();
+  };
+});
+
+/* ============ 單字卡 ============ */
+let group=0,mode="EZ",reviewOnly=false,idx=0,deck=[];
+const card=$("card");
+function buildDeck(shuffle){
+  deck=WORDS.map((w,i)=>({...w,i})).filter(w=>(group===0||w.g===group)&&(!reviewOnly||marks[w.i]));
+  if(shuffle)for(let i=deck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]];}
+  if(idx>=deck.length)idx=0;
+}
+function renderCards(){
+  const has=deck.length>0;
+  $("cardwrap").classList.toggle("hidden",!has);
+  $("actionsCards").classList.toggle("hidden",!has);
+  $("emptyCards").classList.toggle("hidden",has);
+  $("count").textContent=`單字 ${deck.length} 張`;
+  $("posInd").textContent=has?`${idx+1} / ${deck.length}`:"";
+  if(!has)return;
+  const w=deck[idx];
+  card.classList.remove("flip");
+  card.classList.toggle("marked",!!marks[w.i]);
+  $("tagF").textContent="組別 "+w.g;$("tagB").textContent="組別 "+w.g;
+  const ez=mode==="EZ";
+  $("frontMain").textContent=ez?w.en:w.zh; $("frontMain").className=ez?"word":"zh";
+  $("frontSub").textContent=ez?w.pos:"";
+  $("backMain").textContent=ez?w.zh:w.en; $("backMain").className=ez?"zh":"word";
+  $("backEx").textContent=w.ex;
+}
+GROUPS.forEach(g=>{
+  const b=document.createElement("button");
+  b.className="chip"+(g.id===0?" on":"");b.textContent=g.label;
+  b.onclick=()=>{group=g.id;idx=0;[...$("groupChips").children].forEach(c=>c.classList.remove("on"));b.classList.add("on");buildDeck();renderCards();};
+  $("groupChips").appendChild(b);
+});
+card.onclick=()=>card.classList.toggle("flip");
+$("speakBtn").onclick=e=>{e.stopPropagation();const w=deck[idx];if(!w)return;
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(w.en);u.lang="en-US";u.rate=.92;speechSynthesis.speak(u);}catch(err){}};
+$("knowBtn").onclick=async()=>{const w=deck[idx];if(w&&marks[w.i]){delete marks[w.i];await saveMarks();}if(deck.length){idx=(idx+1)%deck.length;renderCards();}};
+$("againBtn").onclick=async()=>{const w=deck[idx];if(w){marks[w.i]=1;await saveMarks();}if(deck.length){idx=(idx+1)%deck.length;renderCards();}};
+$("prevBtn").onclick=()=>{if(deck.length){idx=(idx-1+deck.length)%deck.length;renderCards();}};
+$("shuffleBtn").onclick=()=>{idx=0;buildDeck(true);renderCards();};
+$("modeEZ").onclick=()=>{mode="EZ";$("modeEZ").classList.add("on");$("modeZE").classList.remove("on");renderCards();};
+$("modeZE").onclick=()=>{mode="ZE";$("modeZE").classList.add("on");$("modeEZ").classList.remove("on");renderCards();};
+$("reviewOnly").onclick=()=>{reviewOnly=!reviewOnly;$("reviewOnly").classList.toggle("on",reviewOnly);idx=0;buildDeck();renderCards();};
+
+/* ============ 文法 ============ */
+let gFilterType="全部",gFilterBatch="全部",gIdx=0,gList=[];
+const GTYPES=["全部","詞性","介連","搭配","文法"];
+const GBATCH=[
+ {k:"全部",label:"全部批次"},
+ {k:"G1",label:"第1批 0822"},
+ {k:"G2",label:"第2批 0822-2"},
+ {k:"G3",label:"第3批 0829"},
+ {k:"G4",label:"第4批 介連特訓"},
+ {k:"G5",label:"第5批 介連特訓2"},
+ {k:"G6",label:"第6批 0831"},
+ {k:"G7",label:"第7批 混合"},
+ {k:"G8",label:"第8批 出差報帳"},
+ {k:"G9",label:"第9批 合約會議"},
+ {k:"G10",label:"第10批 進階文法"},
+ {k:"G11",label:"第11批 進階複習"},
+ {k:"G12",label:"第12批 機上總複習"},
+ {k:"G13",label:"第13批 生產品管"},
+ {k:"G14",label:"第14批 租賃搬遷"}
+];
+GBATCH.forEach(g=>{
+  const b=document.createElement("button");
+  b.className="chip"+(g.k==="全部"?" on":"");b.textContent=g.label;
+  b.onclick=()=>{gFilterBatch=g.k;gIdx=0;[...$("gBatch").children].forEach(c=>c.classList.remove("on"));b.classList.add("on");buildG();renderG();};
+  $("gBatch").appendChild(b);
+});
+GTYPES.forEach(t=>{
+  const b=document.createElement("button");
+  b.className="chip"+(t==="全部"?" on":"");b.textContent=t==="介連"?"介系詞/連接詞":t;
+  b.onclick=()=>{gFilterType=t;gIdx=0;[...$("gFilter").children].forEach(c=>c.classList.remove("on"));b.classList.add("on");buildG();renderG();};
+  $("gFilter").appendChild(b);
+});
+function buildG(){
+  gList=GQ.filter(q=>(gFilterType==="全部"||q.t===gFilterType)&&(gFilterBatch==="全部"||q.id.startsWith(gFilterBatch+"-")));
+  if(gIdx>=gList.length)gIdx=0;
+}
+function renderG(){
+  const q=gList[gIdx];
+  if(!q){
+    $("gType").textContent="";$("gProg").textContent="0 / 0";
+    $("gText").textContent="這個組合沒有題目（例如某批次裡沒有這個題型）。換一個篩選試試。";
+    $("gOpts").innerHTML="";$("gExplain").style.display="none";
+    return;
+  }
+  $("gType").textContent=`題型：${q.t==="介連"?"介系詞/連接詞":q.t}　(${q.id})`;
+  $("gProg").textContent=`${gIdx+1} / ${gList.length}`;
+  $("gText").textContent=q.q;
+  $("gExplain").style.display="none";
+  const box=$("gOpts");box.innerHTML="";
+  const L=["A","B","C","D"];
+  q.o.forEach((opt,i)=>{
+    const b=document.createElement("button");
+    b.className="opt";b.textContent=`(${L[i]}) ${opt}`;
+    b.onclick=()=>{
+      if(box.dataset.done)return;
+      box.dataset.done="1";
+      const ok=i===q.a;
+      record(q.id,ok);
+      b.classList.add(ok?"correct":"wrong");
+      if(!ok)box.children[q.a].classList.add("correct");
+      $("gExplain").textContent=q.e;
+      $("gExplain").style.display="block";
+      [...box.children].forEach(c=>c.disabled=true);
+    };
+    box.appendChild(b);
+  });
+  delete box.dataset.done;
+}
+$("gPrev").onclick=()=>{if(gIdx>0){gIdx--;renderG();}};
+$("gNext").onclick=()=>{if(gIdx<gList.length-1){gIdx++;renderG();}};
+
+/* ============ 閱讀 ============ */
+let rIdx=0;
+RQ.forEach((p,i)=>{
+  const b=document.createElement("button");
+  b.className="chip"+(i===0?" on":"");b.textContent=`第 ${i+1} 篇`;
+  b.onclick=()=>{rIdx=i;[...$("rPick").children].forEach(c=>c.classList.remove("on"));b.classList.add("on");renderR();};
+  $("rPick").appendChild(b);
+});
+function renderR(){
+  const p=RQ[rIdx];
+  $("rPassage").textContent=p.p;
+  const box=$("rQs");box.innerHTML="";
+  const L=["A","B","C","D"];
+  p.qs.forEach((q,qi)=>{
+    const div=document.createElement("div");
+    div.className="qcard";div.style.marginBottom="12px";
+    div.innerHTML=`<div class="qmeta"><span>Q${qi+1}</span><span>${q.id}</span></div><div class="qtext">${q.q}</div>`;
+    const ob=document.createElement("div");
+    q.o.forEach((opt,i)=>{
+      const b=document.createElement("button");
+      b.className="opt";b.textContent=`(${L[i]}) ${opt}`;
+      b.onclick=()=>{
+        if(ob.dataset.done)return;
+        ob.dataset.done="1";
+        const ok=i===q.a;
+        record(q.id,ok);
+        b.classList.add(ok?"correct":"wrong");
+        if(!ok)ob.children[q.a].classList.add("correct");
+        ex.textContent=q.e;ex.style.display="block";
+        [...ob.children].forEach(c=>c.disabled=true);
+      };
+      ob.appendChild(b);
+    });
+    const ex=document.createElement("div");ex.className="explain";
+    div.appendChild(ob);div.appendChild(ex);
+    box.appendChild(div);
+  });
+}
+
+/* ============ 成績 ============ */
+function renderStats(){
+  const types={};
+  GQ.forEach(q=>{
+    const s=quiz[q.id];if(!s)return;
+    if(!types[q.t])types[q.t]={r:0,w:0};
+    types[q.t].r+=s.r;types[q.t].w+=s.w;
+  });
+  const tbox=$("statTypes");tbox.innerHTML="";
+  const names={"詞性":"詞性判斷","介連":"介系詞/連接詞","搭配":"固定搭配","文法":"其他文法"};
+  let any=false;
+  Object.entries(types).forEach(([t,s])=>{
+    any=true;
+    const total=s.r+s.w,pct=total?Math.round(s.r/total*100):0;
+    tbox.insertAdjacentHTML("beforeend",
+      `<div class="statline"><span>${names[t]||t}</span><span>${s.r}/${total}（${pct}%）</span></div><div class="bar"><div style="width:${pct}%"></div></div>`);
+  });
+  if(!any)tbox.innerHTML='<div style="font-size:13px;color:#8D8776">還沒作答過文法題。</div>';
+  const wrongs=[...GQ,...RQ.flatMap(p=>p.qs)].filter(q=>quiz[q.id]&&quiz[q.id].w>0);
+  $("wrongList").innerHTML=wrongs.length
+    ? wrongs.map(q=>`${q.id}　錯 ${quiz[q.id].w} 次${quiz[q.id].r?`（後來對 ${quiz[q.id].r} 次）`:""}`).join("<br>")
+    : "還沒有錯題紀錄。";
+}
+$("copyBtn").onclick=async()=>{
+  const lines=["【多益練習室成績回報】"];
+  const done=Object.keys(quiz).length;
+  if(!done){lines.push("尚未作答。");}
+  else{
+    const g=GQ.filter(q=>quiz[q.id]);
+    const r=RQ.flatMap(p=>p.qs).filter(q=>quiz[q.id]);
+    const sum=a=>a.reduce((s,q)=>{const x=quiz[q.id];return[s[0]+x.r,s[1]+x.w]},[0,0]);
+    if(g.length){const[cr,cw]=sum(g);lines.push(`文法：對${cr} 錯${cw}`);}
+    if(r.length){const[cr,cw]=sum(r);lines.push(`閱讀：對${cr} 錯${cw}`);}
+    const wrongs=[...GQ,...RQ.flatMap(p=>p.qs)].filter(q=>quiz[q.id]&&quiz[q.id].w>0);
+    if(wrongs.length)lines.push("錯題："+wrongs.map(q=>`${q.id}${"t"in q?`(${q.t})`:""}x${quiz[q.id].w}`).join(", "));
+    const marked=WORDS.filter((w,i)=>marks[i]);
+    if(marked.length)lines.push("需複習單字："+marked.map(w=>w.en).join(", "));
+  }
+  const txt=lines.join("\n");
+  try{await navigator.clipboard.writeText(txt);$("copyBtn").textContent="已複製！貼到聊天室給我";}
+  catch(e){
+    const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);
+    ta.select();document.execCommand("copy");ta.remove();
+    $("copyBtn").textContent="已複製！貼到聊天室給我";
+  }
+  setTimeout(()=>$("copyBtn").textContent="複製結果給 Claude",2500);
+};
+$("resetBtn").onclick=async()=>{
+  if(!confirm("確定要清除所有作答紀錄？（單字複習標記會保留）"))return;
+  quiz={};await saveQuiz();renderStats();
+};
+
+/* ============ 啟動 ============ */
+(async()=>{
+  await load();
+  buildDeck();renderCards();
+  buildG();renderG();
+  renderR();
+})();
+</script>
+</body>
+</html>
