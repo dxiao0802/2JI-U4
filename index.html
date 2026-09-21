@@ -78,6 +78,23 @@
   .copybtn{width:100%;border:none;border-radius:9px;padding:14px 0;font-size:15px;font-weight:600;
     background:var(--chip-on);color:#2E3A3B;cursor:pointer;margin-top:4px}
   .note{font-size:12px;opacity:.55;text-align:center;margin-top:10px;line-height:1.6}
+  .keyhint{font-size:12px;opacity:.6;text-align:center;margin-top:12px;line-height:1.8}
+  .keyhint kbd,.kb-key{display:inline-block;min-width:26px;padding:2px 8px;border-radius:6px;background:#1F2828;
+    border:1px solid #566868;border-bottom-width:3px;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#E9E4D6}
+  .kb-toggle{display:block;margin:12px auto 0;background:none;border:1px solid #566868;color:#CFC9B8;border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer}
+  .kb-panel{margin-top:12px;background:#243030;border:1px solid #566868;border-radius:10px;padding:14px}
+  .kb-panel h3{font-size:14px;margin-bottom:4px}
+  .kb-panel .sub{font-size:12px;opacity:.55;margin-bottom:12px}
+  .kb-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-top:1px solid #34403F}
+  .kb-row:first-of-type{border-top:none}
+  .kb-key{cursor:pointer;min-width:90px;text-align:center;padding:6px 12px;font-size:13px;transition:.15s}
+  .kb-key:hover{border-color:var(--chip-on)}
+  .kb-key.listening{background:var(--chip-on);color:#2E3A3B;border-color:var(--chip-on);animation:blink 1s infinite}
+  @keyframes blink{50%{opacity:.55}}
+  @media (prefers-reduced-motion: reduce){.kb-key.listening{animation:none}}
+  .kb-actions{display:flex;gap:8px;margin-top:12px}
+  .kb-actions button{flex:1;background:var(--chip);border:1px solid #566868;color:#E9E4D6;border-radius:8px;padding:9px 0;font-size:13px;cursor:pointer}
+  .kb-msg{font-size:12px;color:#E8B4A8;min-height:16px;margin-top:8px;text-align:center}
   .hidden{display:none!important}
 </style>
 </head>
@@ -115,6 +132,15 @@
     <button class="btn again" id="againBtn">需複習</button>
   </div>
   <div class="nav"><button id="prevBtn">上一張</button><span id="posInd" style="opacity:.65"></span><button id="shuffleBtn">洗牌</button></div>
+  <div class="keyhint" id="keyHint"></div>
+  <button class="kb-toggle" id="kbToggle">⌨ 按鍵設定</button>
+  <div class="kb-panel hidden" id="kbPanel">
+    <h3>按鍵設定</h3>
+    <div class="sub">點右邊的按鍵，再按下你要的新按鍵。Esc 取消。重複的按鍵會自動互換。</div>
+    <div id="kbRows"></div>
+    <div class="kb-msg" id="kbMsg"></div>
+    <div class="kb-actions"><button id="kbReset">恢復預設</button><button id="kbClose">完成</button></div>
+  </div>
 </section>
 
 <!-- 文法 -->
@@ -899,9 +925,96 @@ $("resetBtn").onclick=async()=>{
   quiz={};await saveQuiz();renderStats();
 };
 
+/* ============ 鍵盤快捷鍵 ============ */
+const KB_ACTIONS=[
+  {id:"know",label:"認得"},
+  {id:"again",label:"需複習"},
+  {id:"speak",label:"念一遍"},
+  {id:"flip",label:"翻面"},
+  {id:"prev",label:"上一張"}
+];
+const KB_DEFAULT={know:"Space",again:"ShiftLeft",speak:"ArrowUp",flip:"ArrowRight",prev:"ArrowLeft"};
+let keymap={...KB_DEFAULT}, listeningFor=null;
+const KEY_NAMES={Space:"空白鍵",ShiftLeft:"左 Shift",ShiftRight:"右 Shift",ControlLeft:"左 Ctrl",ControlRight:"右 Ctrl",
+  AltLeft:"左 Alt",AltRight:"右 Alt",ArrowUp:"↑",ArrowDown:"↓",ArrowLeft:"←",ArrowRight:"→",Enter:"Enter",
+  Backspace:"Backspace",Tab:"Tab",CapsLock:"Caps Lock",MetaLeft:"左 ⌘/Win",MetaRight:"右 ⌘/Win"};
+function keyName(code){
+  if(KEY_NAMES[code])return KEY_NAMES[code];
+  if(code.startsWith("Key"))return code.slice(3);
+  if(code.startsWith("Digit"))return code.slice(5);
+  if(code.startsWith("Numpad"))return "數字鍵 "+code.slice(6);
+  return code;
+}
+async function loadKeys(){
+  try{
+    const r=await window.storage.get("toeic-keys");
+    if(r&&r.value){
+      const saved=JSON.parse(r.value);
+      // 舊版預設翻面是 ↓，改成 → （→ 沒被佔用時才改）
+      if(saved.flip==="ArrowDown"&&!Object.values(saved).includes("ArrowRight")){saved.flip="ArrowRight";}
+      keymap={...KB_DEFAULT,...saved};
+    }
+  }catch(e){}
+}
+async function saveKeys(){try{await window.storage.set("toeic-keys",JSON.stringify(keymap));}catch(e){}}
+function renderKeyHint(){
+  $("keyHint").innerHTML=KB_ACTIONS.map(a=>`<kbd>${keyName(keymap[a.id])}</kbd> ${a.label}`).join("　");
+}
+function renderKbRows(){
+  $("kbRows").innerHTML="";
+  KB_ACTIONS.forEach(a=>{
+    const row=document.createElement("div");row.className="kb-row";
+    const k=document.createElement("span");
+    k.className="kb-key"+(listeningFor===a.id?" listening":"");
+    k.textContent=listeningFor===a.id?"按下新按鍵…":keyName(keymap[a.id]);
+    k.onclick=()=>{listeningFor=a.id;$("kbMsg").textContent="";renderKbRows();};
+    row.innerHTML=`<span>${a.label}</span>`;row.appendChild(k);
+    $("kbRows").appendChild(row);
+  });
+}
+$("kbToggle").onclick=()=>{$("kbPanel").classList.toggle("hidden");listeningFor=null;renderKbRows();$("kbToggle").blur();};
+$("kbClose").onclick=()=>{$("kbPanel").classList.add("hidden");listeningFor=null;};
+$("kbReset").onclick=async()=>{keymap={...KB_DEFAULT};listeningFor=null;await saveKeys();renderKbRows();renderKeyHint();$("kbMsg").textContent="已恢復預設。";};
+
+function doAction(id){
+  if(id==="know")$("knowBtn").click();
+  else if(id==="again")$("againBtn").click();
+  else if(id==="speak")$("speakBtn").click();
+  else if(id==="flip")card.classList.toggle("flip");
+  else if(id==="prev")$("prevBtn").click();
+}
+document.addEventListener("keydown",async e=>{
+  // 設定模式：抓新按鍵
+  if(listeningFor){
+    e.preventDefault();
+    if(e.code==="Escape"){listeningFor=null;renderKbRows();return;}
+    const other=Object.keys(keymap).find(k=>k!==listeningFor&&keymap[k]===e.code);
+    if(other){
+      keymap[other]=keymap[listeningFor];
+      $("kbMsg").textContent=`「${KB_ACTIONS.find(a=>a.id===other).label}」原本用這個鍵，已互換成 ${keyName(keymap[other])}。`;
+    }else $("kbMsg").textContent="";
+    keymap[listeningFor]=e.code;listeningFor=null;
+    await saveKeys();renderKbRows();renderKeyHint();
+    return;
+  }
+  // 只在單字卡分頁、且卡片有顯示時生效
+  if($("sec-cards").classList.contains("hidden"))return;
+  if($("cardwrap").classList.contains("hidden"))return;
+  if(e.repeat)return;
+  const act=Object.keys(keymap).find(k=>keymap[k]===e.code);
+  if(!act)return;
+  e.preventDefault();
+  if(document.activeElement&&document.activeElement!==document.body)document.activeElement.blur();
+  doAction(act);
+});
+document.addEventListener("keyup",e=>{
+  if(!$("sec-cards").classList.contains("hidden")&&Object.values(keymap).includes(e.code))e.preventDefault();
+});
+
 /* ============ 啟動 ============ */
 (async()=>{
   await load();
+  await loadKeys();renderKeyHint();
   buildDeck();renderCards();
   buildG();renderG();
   renderR();
