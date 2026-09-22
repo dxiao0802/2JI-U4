@@ -94,6 +94,14 @@
   @media (prefers-reduced-motion: reduce){.kb-key.listening{animation:none}}
   .kb-actions{display:flex;gap:8px;margin-top:12px}
   .kb-actions button{flex:1;background:var(--chip);border:1px solid #566868;color:#E9E4D6;border-radius:8px;padding:9px 0;font-size:13px;cursor:pointer}
+  .t-word{font-family:Georgia,serif;font-size:40px;font-weight:600;text-align:center;padding:36px 0 30px;color:var(--ink)}
+  .t-prog{height:6px;background:#3D4B4C;border-radius:3px;overflow:hidden;margin-bottom:12px}
+  .t-prog>div{height:100%;background:var(--chip-on);transition:width .15s}
+  .t-meta{display:flex;justify-content:space-between;font-size:12px;opacity:.6;margin-bottom:8px}
+  .t-intro{font-size:14px;line-height:1.8;color:var(--ink)}
+  .t-intro b{color:var(--red)}
+  .t-est{font-size:26px;font-weight:700;margin:4px 0 2px}
+  .t-warn{font-size:13px;color:var(--red);line-height:1.6;margin-top:8px}
   .kb-msg{font-size:12px;color:#E8B4A8;min-height:16px;margin-top:8px;text-align:center}
   .hidden{display:none!important}
 </style>
@@ -105,6 +113,7 @@
   <button class="tab on" data-t="cards">單字卡</button>
   <button class="tab" data-t="grammar">文法</button>
   <button class="tab" data-t="reading">閱讀</button>
+  <button class="tab" data-t="test">測驗</button>
   <button class="tab" data-t="stats">成績</button>
 </div>
 
@@ -161,6 +170,33 @@
   <div class="chips" id="rPick" style="margin-bottom:12px"></div>
   <div class="passage" id="rPassage"></div>
   <div id="rQs"></div>
+</section>
+
+<!-- 測驗 -->
+<section id="sec-test" class="hidden">
+  <div id="tStart">
+    <div class="qcard t-intro">
+      <h3 style="margin-bottom:8px">單字量測驗</h3>
+      從高中 Level 1～6 和多益商務字各抽 15 個，加上 8 個<b>不存在的假字</b>，共 113 題，大約 5～7 分鐘。<br><br>
+      看到字，<b>一秒內想得出中文意思</b>才按「會」。想不出來、只覺得眼熟、不確定，一律按「不會」。<br>
+      對假字按「會」的次數會用來校正結果，亂按分數反而會被扣。<br><br>
+      測完你不會的字會自動加進單字卡的「測驗不會的字」組別，並標成需複習。
+    </div>
+    <button class="copybtn" id="tBegin" style="margin-top:12px">開始測驗</button>
+    <div id="tLast" style="margin-top:12px"></div>
+  </div>
+  <div id="tRun" class="hidden">
+    <div class="t-meta"><span id="tCount"></span><span>按鍵：<span id="tKeys"></span></span></div>
+    <div class="t-prog"><div id="tBar" style="width:0%"></div></div>
+    <div class="qcard"><div class="t-word" id="tWord"></div></div>
+    <div class="actions">
+      <button class="btn speak" id="tSpeak">🔊</button>
+      <button class="btn know" id="tYes">會</button>
+      <button class="btn again" id="tNo">不會</button>
+    </div>
+    <div class="nav"><button id="tUndo">上一題</button><span></span><button id="tQuit">放棄</button></div>
+  </div>
+  <div id="tResult" class="hidden"></div>
 </section>
 
 <!-- 成績 -->
@@ -337,9 +373,39 @@ const WORDS=[
  {en:"host",pos:"v./n.",zh:"主辦；主持人",ex:"The firm will host a reception for clients.",g:16},
  {en:"attendance",pos:"n.",zh:"出席人數；出席",ex:"Attendance was higher than expected.",g:16},
  {en:"sponsor",pos:"n./v.",zh:"贊助商；贊助",ex:"The event is sponsored by three local banks.",g:16},
- {en:"RSVP",pos:"v.",zh:"回覆是否出席",ex:"Please RSVP by Friday.",g:16}
+ {en:"RSVP",pos:"v.",zh:"回覆是否出席",ex:"Please RSVP by Friday.",g:16},
+ {en:"publish",pos:"v.",zh:"出版、發表",ex:"The report will be published next month.",g:17},
+ {en:"edition",pos:"n.",zh:"版本、版次",ex:"The latest edition includes a new chapter.",g:17},
+ {en:"article",pos:"n.",zh:"文章",ex:"She wrote an article for a trade magazine.",g:17},
+ {en:"editor",pos:"n.",zh:"編輯",ex:"Send your draft to the editor by Friday.",g:17},
+ {en:"press release",pos:"n.",zh:"新聞稿",ex:"The company issued a press release this morning.",g:17},
+ {en:"advertisement",pos:"n.",zh:"廣告",ex:"The advertisement ran in three newspapers.",g:17},
+ {en:"circulation",pos:"n.",zh:"發行量",ex:"The magazine has a circulation of 50,000.",g:17},
+ {en:"coverage",pos:"n.",zh:"報導；保險範圍",ex:"The event received wide media coverage.",g:17},
+ {en:"subscription",pos:"n.",zh:"訂閱",ex:"Your subscription expires in June.",g:17},
+ {en:"audience",pos:"n.",zh:"觀眾、受眾",ex:"The ad targets a younger audience.",g:17},
+ {en:"benefits",pos:"n.",zh:"員工福利",ex:"Full-time staff receive health and dental benefits.",g:18},
+ {en:"pension",pos:"n.",zh:"退休金",ex:"Employees contribute 5% to the pension plan.",g:18},
+ {en:"paid leave",pos:"n.",zh:"有薪假",ex:"Staff are entitled to 15 days of paid leave.",g:18},
+ {en:"payroll",pos:"n.",zh:"薪資發放、薪資名冊",ex:"Payroll is processed on the 25th.",g:18},
+ {en:"orientation",pos:"n.",zh:"新人訓練",ex:"New hires attend a two-day orientation.",g:18},
+ {en:"recruit",pos:"v.",zh:"招募",ex:"We plan to recruit ten engineers.",g:18},
+ {en:"candidate",pos:"n.",zh:"應徵者、候選人",ex:"Three candidates were invited to interview.",g:18},
+ {en:"reference",pos:"n.",zh:"推薦人；參考",ex:"Please provide two professional references.",g:18},
+ {en:"probation",pos:"n.",zh:"試用期",ex:"The probation period lasts three months.",g:18},
+ {en:"workload",pos:"n.",zh:"工作量",ex:"The new system reduced our workload.",g:18},
+ {en:"construction",pos:"n.",zh:"施工、建造",ex:"Construction will begin in April.",g:19},
+ {en:"detour",pos:"n.",zh:"繞道",ex:"Drivers should follow the posted detour.",g:19},
+ {en:"commuter",pos:"n.",zh:"通勤者",ex:"Commuters faced delays this morning.",g:19},
+ {en:"fare",pos:"n.",zh:"車資、票價",ex:"Bus fares will increase by 10%.",g:19},
+ {en:"route",pos:"n.",zh:"路線",ex:"The new route saves about 15 minutes.",g:19},
+ {en:"blueprint",pos:"n.",zh:"藍圖、設計圖",ex:"The architect reviewed the blueprints.",g:19},
+ {en:"contractor",pos:"n.",zh:"承包商",ex:"The contractor finished ahead of schedule.",g:19},
+ {en:"permit",pos:"n./v.",zh:"許可證；允許",ex:"A building permit is required.",g:19},
+ {en:"sustainable",pos:"adj.",zh:"永續的",ex:"The office uses sustainable materials.",g:19},
+ {en:"emission",pos:"n.",zh:"排放",ex:"The factory cut its emissions by 20%.",g:19}
 ];
-const GROUPS=[{id:0,label:"全部 162 字"},{id:1,label:"組別 1（0822）"},{id:2,label:"組別 2（0822-2）"},{id:3,label:"組別 3（0829）"},{id:4,label:"組別 4（人事）"},{id:5,label:"組別 5（採購財務）"},{id:6,label:"組別 6（行銷客服）"},{id:7,label:"組別 7（差旅設施）"},{id:8,label:"組別 8（報帳流程）"},{id:9,label:"組別 9（合約會議）"},{id:10,label:"組別 10（形副詞）"},{id:11,label:"組別 11（商務動詞）"},{id:12,label:"組別 12（生產品管）"},{id:13,label:"組別 13（租賃搬遷）"},{id:14,label:"組別 14（銀行金融）"},{id:15,label:"組別 15（IT辦公）"},{id:16,label:"組別 16（餐飲活動）"}];
+const GROUPS=[{id:0,label:"全部 192 字"},{id:1,label:"組別 1（0822）"},{id:2,label:"組別 2（0822-2）"},{id:3,label:"組別 3（0829）"},{id:4,label:"組別 4（人事）"},{id:5,label:"組別 5（採購財務）"},{id:6,label:"組別 6（行銷客服）"},{id:7,label:"組別 7（差旅設施）"},{id:8,label:"組別 8（報帳流程）"},{id:9,label:"組別 9（合約會議）"},{id:10,label:"組別 10（形副詞）"},{id:11,label:"組別 11（商務動詞）"},{id:12,label:"組別 12（生產品管）"},{id:13,label:"組別 13（租賃搬遷）"},{id:14,label:"組別 14（銀行金融）"},{id:15,label:"組別 15（IT辦公）"},{id:16,label:"組別 16（餐飲活動）"},{id:17,label:"組別 17（媒體出版）"},{id:18,label:"組別 18（人資福利）"},{id:19,label:"組別 19（交通建設）"}];
 
 const GQ=[
  {id:"G1-1",t:"介連",q:"The annual report must be submitted ______ Friday.",o:["by","until","on to","at"],a:0,
@@ -695,11 +761,31 @@ const RQ=[
   ]}
 ];
 
+/* ============ 單字量測驗題庫 ============ */
+const LT_LEVELS=[
+ {k:"L1",label:"高中 Level 1",size:1100},{k:"L2",label:"高中 Level 2",size:1100},
+ {k:"L3",label:"高中 Level 3",size:1100},{k:"L4",label:"高中 Level 4",size:1100},
+ {k:"L5",label:"高中 Level 5",size:1100},{k:"L6",label:"高中 Level 6",size:1100},
+ {k:"BIZ",label:"多益商務字",size:1000}
+];
+const LT_WORDS={
+ L1:[["answer","v./n.","回答"],["busy","adj.","忙碌的"],["careful","adj.","小心的"],["dinner","n.","晚餐"],["early","adj./adv.","早的"],["floor","n.","地板；樓層"],["happen","v.","發生"],["idea","n.","主意"],["kitchen","n.","廚房"],["letter","n.","信；字母"],["money","n.","錢"],["nothing","pron.","沒有東西"],["price","n.","價格"],["story","n.","故事"],["weather","n.","天氣"]],
+ L2:[["accept","v.","接受"],["borrow","v.","借入"],["choice","n.","選擇"],["decide","v.","決定"],["examine","v.","檢查"],["famous","adj.","有名的"],["gather","v.","聚集"],["hurry","v.","趕快"],["include","v.","包含"],["knowledge","n.","知識"],["local","adj.","當地的"],["medicine","n.","藥"],["offer","v./n.","提供"],["public","adj.","公共的"],["repair","v.","修理"]],
+ L3:[["ability","n.","能力"],["attitude","n.","態度"],["compare","v.","比較"],["delay","v./n.","延誤"],["emergency","n.","緊急狀況"],["frequent","adj.","頻繁的"],["identify","v.","辨認"],["instance","n.","例子"],["majority","n.","大多數"],["observe","v.","觀察"],["participate","v.","參加"],["promote","v.","促進；升遷"],["recommend","v.","推薦"],["reliable","adj.","可靠的"],["suitable","adj.","適合的"]],
+ L4:[["adequate","adj.","足夠的"],["alternative","n./adj.","替代方案"],["assume","v.","假定"],["authority","n.","權威；當局"],["circumstance","n.","情況"],["consequence","n.","後果"],["distinguish","v.","區分"],["flexible","adj.","有彈性的"],["fundamental","adj.","基本的"],["inevitable","adj.","不可避免的"],["obtain","v.","取得"],["precise","adj.","精確的"],["relevant","adj.","相關的"],["substitute","n./v.","替代"],["vital","adj.","極重要的"]],
+ L5:[["accumulate","v.","累積"],["allocate","v.","分配"],["ambiguous","adj.","模稜兩可的"],["comprehensive","adj.","全面的"],["compulsory","adj.","強制的"],["deteriorate","v.","惡化"],["diminish","v.","減少"],["feasible","adj.","可行的"],["incentive","n.","誘因"],["prominent","adj.","顯著的；著名的"],["subsequent","adj.","後續的"],["versatile","adj.","多用途的"],["coherent","adj.","連貫的"],["exclusive","adj.","獨家的"],["spontaneous","adj.","自發的"]],
+ L6:[["arbitrary","adj.","任意的"],["contemplate","v.","深思"],["discrepancy","n.","差異、不一致"],["hierarchy","n.","階層"],["impartial","adj.","公正的"],["lucrative","adj.","賺錢的"],["meticulous","adj.","一絲不苟的"],["notorious","adj.","惡名昭彰的"],["prerequisite","n.","先決條件"],["scrutiny","n.","詳細檢查"],["tentative","adj.","暫定的"],["unprecedented","adj.","前所未有的"],["aggravate","v.","加重、惡化"],["anecdote","n.","軼事"],["exquisite","adj.","精緻的"]],
+ BIZ:[["procurement","n.","採購"],["quarterly","adj.","每季的"],["merger","n.","合併"],["liability","n.","責任；負債"],["audit","n./v.","稽核"],["retailer","n.","零售商"],["vendor","n.","供應商、攤販"],["amenity","n.","便利設施"],["voucher","n.","優惠券、憑證"],["courier","n.","快遞"],["logistics","n.","物流"],["overtime","n.","加班"],["headquarters","n.","總部"],["stakeholder","n.","利害關係人"],["outsource","v.","外包"]]
+};
+const LT_FAKES=["brillent","plorkish","dentrify","fastidate","crovulent","mensible","tromage","sprudent"];
+
 /* ============ 狀態與儲存 ============ */
-let marks={}, quiz={};   // quiz[qid] = {r:0, w:0}
+let marks={}, quiz={}, testWords=[], lastTest=null;   // quiz[qid] = {r:0, w:0}
 async function load(){
   try{const m=await window.storage.get("toeic-marks");if(m&&m.value)marks=JSON.parse(m.value);}catch(e){}
   try{const q=await window.storage.get("toeic-quiz");if(q&&q.value)quiz=JSON.parse(q.value);}catch(e){}
+  try{const t=await window.storage.get("toeic-testwords");if(t&&t.value)testWords=JSON.parse(t.value);}catch(e){}
+  try{const l=await window.storage.get("toeic-leveltest");if(l&&l.value)lastTest=JSON.parse(l.value);}catch(e){}
 }
 async function saveMarks(){try{await window.storage.set("toeic-marks",JSON.stringify(marks));}catch(e){}}
 async function saveQuiz(){try{await window.storage.set("toeic-quiz",JSON.stringify(quiz));}catch(e){}}
@@ -715,8 +801,9 @@ document.querySelectorAll(".tab").forEach(t=>{
   t.onclick=()=>{
     document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
     t.classList.add("on");
-    ["cards","grammar","reading","stats"].forEach(s=>$("sec-"+s).classList.toggle("hidden",s!==t.dataset.t));
+    ["cards","grammar","reading","test","stats"].forEach(s=>$("sec-"+s).classList.toggle("hidden",s!==t.dataset.t));
     if(t.dataset.t==="stats")renderStats();
+    if(t.dataset.t==="test")renderTestHome();
   };
 });
 
@@ -724,7 +811,7 @@ document.querySelectorAll(".tab").forEach(t=>{
 let group=0,mode="EZ",reviewOnly=false,idx=0,deck=[];
 const card=$("card");
 function buildDeck(shuffle){
-  deck=WORDS.map((w,i)=>({...w,i})).filter(w=>(group===0||w.g===group)&&(!reviewOnly||marks[w.i]));
+  deck=WORDS.concat(testWords).map((w,i)=>({...w,i:w.dyn?"t:"+w.en:i})).filter(w=>(group===0||w.g===group)&&(!reviewOnly||marks[w.i]));
   if(shuffle)for(let i=deck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]];}
   if(idx>=deck.length)idx=0;
 }
@@ -733,19 +820,22 @@ function renderCards(){
   $("cardwrap").classList.toggle("hidden",!has);
   $("actionsCards").classList.toggle("hidden",!has);
   $("emptyCards").classList.toggle("hidden",has);
+  $("emptyCards").textContent=reviewOnly?"這個範圍沒有標記「需複習」的單字。":(group===99?"還沒有測驗不會的字，去「測驗」分頁做一次單字量測驗。":"這個範圍目前沒有單字。");
   $("count").textContent=`單字 ${deck.length} 張`;
   $("posInd").textContent=has?`${idx+1} / ${deck.length}`:"";
   if(!has)return;
   const w=deck[idx];
   card.classList.remove("flip");
   card.classList.toggle("marked",!!marks[w.i]);
-  $("tagF").textContent="組別 "+w.g;$("tagB").textContent="組別 "+w.g;
+  const gl=w.g===99?"測驗":"組別 "+w.g;
+  $("tagF").textContent=gl;$("tagB").textContent=gl;
   const ez=mode==="EZ";
   $("frontMain").textContent=ez?w.en:w.zh; $("frontMain").className=ez?"word":"zh";
   $("frontSub").textContent=ez?w.pos:"";
   $("backMain").textContent=ez?w.zh:w.en; $("backMain").className=ez?"zh":"word";
   $("backEx").textContent=w.ex;
 }
+GROUPS.push({id:99,label:"測驗不會的字"});
 GROUPS.forEach(g=>{
   const b=document.createElement("button");
   b.className="chip"+(g.id===0?" on":"");b.textContent=g.label;
@@ -898,6 +988,7 @@ function renderStats(){
 }
 $("copyBtn").onclick=async()=>{
   const lines=["【多益練習室成績回報】"];
+  if(lastTest)lines.push(testSummaryLine(lastTest));
   const done=Object.keys(quiz).length;
   if(!done){lines.push("尚未作答。");}
   else{
@@ -908,7 +999,7 @@ $("copyBtn").onclick=async()=>{
     if(r.length){const[cr,cw]=sum(r);lines.push(`閱讀：對${cr} 錯${cw}`);}
     const wrongs=[...GQ,...RQ.flatMap(p=>p.qs)].filter(q=>quiz[q.id]&&quiz[q.id].w>0);
     if(wrongs.length)lines.push("錯題："+wrongs.map(q=>`${q.id}${"t"in q?`(${q.t})`:""}x${quiz[q.id].w}`).join(", "));
-    const marked=WORDS.filter((w,i)=>marks[i]);
+    const marked=WORDS.filter((w,i)=>marks[i]).concat(testWords.filter(w=>marks["t:"+w.en]));
     if(marked.length)lines.push("需複習單字："+marked.map(w=>w.en).join(", "));
   }
   const txt=lines.join("\n");
@@ -997,6 +1088,16 @@ document.addEventListener("keydown",async e=>{
     await saveKeys();renderKbRows();renderKeyHint();
     return;
   }
+  // 測驗分頁
+  if(!$("sec-test").classList.contains("hidden")&&!$("tRun").classList.contains("hidden")){
+    if(e.repeat)return;
+    const a=Object.keys(keymap).find(k=>keymap[k]===e.code);
+    if(!a)return;
+    e.preventDefault();
+    if(document.activeElement&&document.activeElement!==document.body)document.activeElement.blur();
+    if(a==="know")tAnswer(true);else if(a==="again")tAnswer(false);else if(a==="speak")tSay();else if(a==="prev")tUndoFn();
+    return;
+  }
   // 只在單字卡分頁、且卡片有顯示時生效
   if($("sec-cards").classList.contains("hidden"))return;
   if($("cardwrap").classList.contains("hidden"))return;
@@ -1008,8 +1109,113 @@ document.addEventListener("keydown",async e=>{
   doAction(act);
 });
 document.addEventListener("keyup",e=>{
-  if(!$("sec-cards").classList.contains("hidden")&&Object.values(keymap).includes(e.code))e.preventDefault();
+  if((!$("sec-cards").classList.contains("hidden")||!$("sec-test").classList.contains("hidden"))&&Object.values(keymap).includes(e.code))e.preventDefault();
 });
+
+/* ============ 單字量測驗 ============ */
+let tItems=[],tPos=0,tAns=[];
+function shuffleArr(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function renderTestHome(){
+  $("tStart").classList.remove("hidden");$("tRun").classList.add("hidden");$("tResult").classList.add("hidden");
+  $("tLast").innerHTML=lastTest?`<div class="note" style="opacity:.75">上次測驗（${lastTest.date}）：估計總字彙量約 ${lastTest.total.toLocaleString()} 字。<br><a href="#" id="tShowLast" style="color:#E8DFC8">看上次結果</a></div>`:"";
+  const s=$("tShowLast");if(s)s.onclick=ev=>{ev.preventDefault();showResult(lastTest,false);};
+}
+$("tBegin").onclick=()=>{
+  tItems=[];
+  LT_LEVELS.forEach(L=>LT_WORDS[L.k].forEach(([en,pos,zh])=>tItems.push({en,pos,zh,lv:L.k})));
+  LT_FAKES.forEach(en=>tItems.push({en,lv:"FAKE"}));
+  shuffleArr(tItems);tPos=0;tAns=[];
+  $("tStart").classList.add("hidden");$("tResult").classList.add("hidden");$("tRun").classList.remove("hidden");
+  $("tKeys").textContent=`${keyName(keymap.know)} 會 / ${keyName(keymap.again)} 不會 / ${keyName(keymap.speak)} 發音`;
+  tRender();
+};
+function tRender(){
+  const it=tItems[tPos];
+  $("tWord").textContent=it.en;
+  $("tCount").textContent=`${tPos+1} / ${tItems.length}`;
+  $("tBar").style.width=(tPos/tItems.length*100)+"%";
+}
+function tSay(){
+  const it=tItems[tPos];if(!it)return;
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(it.en);u.lang="en-US";u.rate=.92;speechSynthesis.speak(u);}catch(e){}
+}
+async function tAnswer(yes){
+  if(tPos>=tItems.length)return;
+  tAns[tPos]=yes;tPos++;
+  if(tPos>=tItems.length){await tFinish();return;}
+  tRender();
+}
+function tUndoFn(){if(tPos>0){tPos--;tRender();}}
+$("tYes").onclick=()=>tAnswer(true);
+$("tNo").onclick=()=>tAnswer(false);
+$("tSpeak").onclick=tSay;
+$("tUndo").onclick=tUndoFn;
+$("tQuit").onclick=()=>{if(confirm("放棄這次測驗？"))renderTestHome();};
+
+async function tFinish(){
+  const by={};LT_LEVELS.forEach(L=>by[L.k]={yes:0,n:0});
+  let fy=0;const unknown=[];
+  tItems.forEach((it,i)=>{
+    if(it.lv==="FAKE"){if(tAns[i])fy++;return;}
+    by[it.lv].n++;if(tAns[i])by[it.lv].yes++;else unknown.push(it);
+  });
+  const f=fy/LT_FAKES.length;
+  const levels=LT_LEVELS.map(L=>{
+    const h=by[L.k].yes/by[L.k].n;
+    const adj=f<1?Math.max(0,(h-f)/(1-f)):0;
+    return {k:L.k,label:L.label,raw:Math.round(h*100),pct:Math.round(adj*100),est:Math.round(adj*L.size),size:L.size};
+  });
+  const total=levels.filter(l=>l.k!=="BIZ").reduce((s,l)=>s+l.est,0);
+  const gap=levels.filter(l=>["L3","L4","BIZ"].includes(l.k)).reduce((s,l)=>s+(l.size-l.est),0);
+  const d=new Date();
+  const res={date:`${d.getMonth()+1}/${d.getDate()}`,levels,fakes:fy,total,biz:levels.find(l=>l.k==="BIZ").est,gap,added:0};
+  // 不會的字加入單字卡
+  const have=new Set(testWords.map(w=>w.en));
+  unknown.forEach(it=>{
+    if(!have.has(it.en)){testWords.push({en:it.en,pos:it.pos,zh:it.zh,ex:"",g:99,dyn:1});have.add(it.en);res.added++;}
+    marks["t:"+it.en]=1;
+  });
+  try{await window.storage.set("toeic-testwords",JSON.stringify(testWords));}catch(e){}
+  await saveMarks();
+  lastTest=res;
+  try{await window.storage.set("toeic-leveltest",JSON.stringify(res));}catch(e){}
+  buildDeck();renderCards();
+  showResult(res,true);
+}
+function testSummaryLine(r){
+  return `單字量測驗(${r.date})：`+r.levels.map(l=>`${l.k} ${l.pct}%`).join("、")+`｜假字按會 ${r.fakes}/8｜估計總量約 ${r.total} 字，商務字約 ${r.biz}｜L3+L4+商務待補約 ${r.gap} 字`;
+}
+function showResult(r,fresh){
+  $("tStart").classList.add("hidden");$("tRun").classList.add("hidden");$("tResult").classList.remove("hidden");
+  const bars=r.levels.map(l=>`<div class="statline"><span>${l.label}</span><span>${l.pct}%（約 ${l.est.toLocaleString()} / ${l.size.toLocaleString()}）</span></div><div class="bar"><div style="width:${l.pct}%"></div></div>`).join("");
+  // 找第一個低於 70% 的等級當起點
+  const weak=r.levels.filter(l=>l.k!=="BIZ").find(l=>l.pct<70);
+  const advice=weak?`建議從 <b>${weak.label}</b> 開始補，這層以下沒穩，商務字背了也讀不順。`:`高中 Level 1～6 都在七成以上，主力放商務字就好。`;
+  const warn=r.fakes>=2?`<div class="t-warn">你對 ${r.fakes} 個假字按了「會」，代表有些字只是眼熟就按了。結果已經校正，但誤差會變大，建議之後照「一秒內想得出中文」的標準重測。</div>`:"";
+  $("tResult").innerHTML=`
+    <div class="statbox">
+      <h3>估計總字彙量（高中 7000 範圍內）</h3>
+      <div class="t-est">約 ${r.total.toLocaleString()} 字</div>
+      <div style="font-size:13px;color:#5C5749">多益商務字約 ${r.biz.toLocaleString()} / 1,000</div>
+      ${warn}
+    </div>
+    <div class="statbox"><h3>各等級掌握度（已校正）</h3>${bars}</div>
+    <div class="statbox">
+      <h3>700 分真正要補的量</h3>
+      <div class="t-est">約 ${r.gap.toLocaleString()} 字</div>
+      <div style="font-size:13px;color:#5C5749;line-height:1.7">= Level 3、Level 4、商務字裡你還不會的部分。<br>${advice}</div>
+    </div>
+    ${fresh?`<div class="note" style="opacity:.8">這次不會的 ${r.added} 個新字已加進單字卡「測驗不會的字」組別。</div>`:""}
+    <button class="copybtn" id="tCopy" style="margin-top:10px">複製結果給 Claude</button>
+    <button class="copybtn" id="tAgain" style="background:#4A5A5B;color:#E9E4D6;margin-top:10px">回測驗首頁</button>
+    <div class="note">這是用抽樣估的，誤差大概正負一成，當方向參考就好。</div>`;
+  $("tAgain").onclick=renderTestHome;
+  $("tCopy").onclick=async()=>{
+    const txt="【多益練習室成績回報】\n"+testSummaryLine(r);
+    try{await navigator.clipboard.writeText(txt);}catch(e){const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();}
+    $("tCopy").textContent="已複製！貼到聊天室給我";setTimeout(()=>{const b=$("tCopy");if(b)b.textContent="複製結果給 Claude";},2500);
+  };
+}
 
 /* ============ 啟動 ============ */
 (async()=>{
