@@ -16,8 +16,8 @@
   header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
   header h1{font-size:17px;font-weight:600;letter-spacing:1px}
   header .count{font-size:12px;opacity:.6}
-  .tabs{display:flex;gap:6px;margin-bottom:14px}
-  .tab{flex:1;border:1px solid #566868;background:var(--chip);color:#CFC9B8;border-radius:9px;
+  .tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+  .tab{flex:1 1 28%;border:1px solid #566868;background:var(--chip);color:#CFC9B8;border-radius:9px;
     padding:9px 0;font-size:14px;cursor:pointer;text-align:center}
   .tab.on{background:var(--chip-on);color:#2E3A3B;border-color:var(--chip-on);font-weight:600}
   .chips{display:flex;flex-wrap:wrap;gap:6px;padding-bottom:8px}
@@ -102,6 +102,24 @@
   .t-intro b{color:var(--red)}
   .t-est{font-size:26px;font-weight:700;margin:4px 0 2px}
   .t-warn{font-size:13px;color:var(--red);line-height:1.6;margin-top:8px}
+  .nt-intro{font-size:13px;opacity:.65;line-height:1.7;margin-bottom:12px}
+  .nt-item{background:var(--card);color:var(--ink);border-radius:10px;margin-bottom:8px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  .nt-head{padding:13px 15px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:15px;font-weight:600}
+  .nt-head .nt-tag{font-size:11px;font-weight:400;color:#8D8776;white-space:nowrap}
+  .nt-body{padding:0 15px 15px;font-size:14px;line-height:1.75;display:none}
+  .nt-item.open .nt-body{display:block}
+  .nt-body table{width:100%;border-collapse:collapse;margin:8px 0;font-size:13.5px}
+  .nt-body td,.nt-body th{border:1px solid #DDD5C2;padding:6px 8px;text-align:left;vertical-align:top}
+  .nt-body th{background:#EFE7D2}
+  .nt-body code{font-family:Georgia,serif;font-style:italic;background:#EFE7D2;padding:1px 5px;border-radius:4px}
+  .nt-body ul{margin:6px 0 6px 18px}
+  .nt-body li{margin-bottom:4px}
+  .nt-body .hot{color:var(--red);font-weight:700}
+  .nt-body .miss{background:#F3DBD5;border-left:3px solid var(--red);padding:8px 10px;border-radius:0 6px 6px 0;margin-top:8px;font-size:13.5px}
+  .recall{background:#EFE7D2;border-left:3px solid var(--ok);border-radius:0 6px 6px 0;padding:9px 11px;margin-top:10px;font-size:13.5px;cursor:pointer}
+  .recall .a{display:none;margin-top:6px;color:var(--ok);font-weight:600}
+  .recall.show .a{display:block}
+  .recall .hintline{font-size:11px;color:#8D8776}
   .kb-msg{font-size:12px;color:#E8B4A8;min-height:16px;margin-top:8px;text-align:center}
   .hidden{display:none!important}
 </style>
@@ -111,6 +129,7 @@
 <header><h1>多益練習室</h1><div class="count" id="count"></div></header>
 <div class="tabs">
   <button class="tab on" data-t="cards">單字卡</button>
+  <button class="tab" data-t="notes">筆記</button>
   <button class="tab" data-t="grammar">文法</button>
   <button class="tab" data-t="reading">閱讀</button>
   <button class="tab" data-t="test">測驗</button>
@@ -150,6 +169,13 @@
     <div class="kb-msg" id="kbMsg"></div>
     <div class="kb-actions"><button id="kbReset">恢復預設</button><button id="kbClose">完成</button></div>
   </div>
+</section>
+
+<!-- 筆記 -->
+<section id="sec-notes" class="hidden">
+  <div class="chips" id="ntFilter" style="margin-bottom:10px"></div>
+  <div class="nt-intro">做題前先讀。點標題展開，點綠色方塊看「自我回想」的答案。<span class="hot">紅字</span>是高頻考點，粉紅方塊是你實際錯過的地方。</div>
+  <div id="ntList"></div>
 </section>
 
 <!-- 文法 -->
@@ -403,9 +429,103 @@ const WORDS=[
  {en:"contractor",pos:"n.",zh:"承包商",ex:"The contractor finished ahead of schedule.",g:19},
  {en:"permit",pos:"n./v.",zh:"許可證；允許",ex:"A building permit is required.",g:19},
  {en:"sustainable",pos:"adj.",zh:"永續的",ex:"The office uses sustainable materials.",g:19},
- {en:"emission",pos:"n.",zh:"排放",ex:"The factory cut its emissions by 20%.",g:19}
+ {en:"emission",pos:"n.",zh:"排放",ex:"The factory cut its emissions by 20%.",g:19},
+ {en:"approach",pos:"v./n.",zh:"接近；方法",ex:"We need a new approach to this problem.",g:20},
+ {en:"capable",pos:"adj.",zh:"有能力的",ex:"She is capable of managing the whole team.",g:20},
+ {en:"contribute",pos:"v.",zh:"貢獻",ex:"Everyone contributed ideas to the project.",g:20},
+ {en:"demand",pos:"n./v.",zh:"需求；要求",ex:"Demand for the product rose sharply.",g:20},
+ {en:"domestic",pos:"adj.",zh:"國內的",ex:"Domestic sales fell, but exports grew.",g:20},
+ {en:"eventually",pos:"adv.",zh:"最後、終於",ex:"The deal was eventually approved.",g:20},
+ {en:"feature",pos:"n./v.",zh:"特色；以…為特色",ex:"The new model features a larger screen.",g:20},
+ {en:"guarantee",pos:"v./n.",zh:"保證",ex:"We guarantee delivery within 48 hours.",g:20},
+ {en:"indicate",pos:"v.",zh:"指出、顯示",ex:"The survey indicates strong customer interest.",g:20},
+ {en:"involve",pos:"v.",zh:"牽涉、包含",ex:"The job involves frequent travel.",g:20},
+ {en:"numerous",pos:"adj.",zh:"許多的",ex:"We received numerous complaints.",g:20},
+ {en:"operate",pos:"v.",zh:"經營；操作",ex:"The company operates in six countries.",g:20},
+ {en:"potential",pos:"adj./n.",zh:"潛在的；潛力",ex:"We met with several potential clients.",g:20},
+ {en:"previous",pos:"adj.",zh:"先前的",ex:"Sales exceeded the previous record.",g:20},
+ {en:"procedure",pos:"n.",zh:"程序",ex:"Please follow the safety procedure.",g:20},
+ {en:"pursue",pos:"v.",zh:"追求、從事",ex:"She plans to pursue a career in finance.",g:20},
+ {en:"resource",pos:"n.",zh:"資源",ex:"We lack the resources to expand now.",g:20},
+ {en:"specific",pos:"adj.",zh:"特定的、具體的",ex:"Please give a specific date.",g:20},
+ {en:"strategy",pos:"n.",zh:"策略",ex:"The new marketing strategy worked well.",g:20},
+ {en:"vary",pos:"v.",zh:"不同、變化",ex:"Prices vary by location.",g:20},
+ {en:"quotation",pos:"n.",zh:"報價單",ex:"Please send us a quotation for 500 units.",g:21},
+ {en:"wholesale",pos:"adj./n.",zh:"批發",ex:"We buy supplies at wholesale prices.",g:21},
+ {en:"merchandise",pos:"n.",zh:"商品",ex:"All merchandise is 20% off this week.",g:21},
+ {en:"retail",pos:"n./adj.",zh:"零售",ex:"The retail price is $49.",g:21},
+ {en:"clearance",pos:"n.",zh:"清倉",ex:"The clearance sale ends Sunday.",g:21},
+ {en:"shareholder",pos:"n.",zh:"股東",ex:"Shareholders will meet in April.",g:21},
+ {en:"dividend",pos:"n.",zh:"股利",ex:"The company paid a higher dividend this year.",g:21},
+ {en:"acquisition",pos:"n.",zh:"收購",ex:"The acquisition was completed in May.",g:21},
+ {en:"personnel",pos:"n.",zh:"人事；全體員工",ex:"Only authorized personnel may enter.",g:21},
+ {en:"keynote",pos:"n.",zh:"主題演講",ex:"The CEO will give the keynote speech.",g:21},
+ {en:"expedite",pos:"v.",zh:"加速處理",ex:"We can expedite your order for a small fee.",g:21},
+ {en:"out of stock",pos:"phr.",zh:"缺貨",ex:"This item is currently out of stock.",g:21},
+ {en:"on behalf of",pos:"phr.",zh:"代表",ex:"I am writing on behalf of the sales team.",g:21},
+ {en:"prospective",pos:"adj.",zh:"潛在的、未來的",ex:"We welcome prospective students to visit.",g:21},
+ {en:"subsidiary",pos:"n.",zh:"子公司",ex:"The firm opened a subsidiary in Vietnam.",g:21},
+ {en:"franchise",pos:"n.",zh:"加盟、特許經營",ex:"He owns three restaurant franchises.",g:21},
+ {en:"consumer",pos:"n.",zh:"消費者",ex:"Consumers are spending less this year.",g:21},
+ {en:"collaborate",pos:"v.",zh:"合作",ex:"The two teams collaborated on the design.",g:21},
+ {en:"revise",pos:"v.",zh:"修改",ex:"Please revise the budget and resend it.",g:21},
+ {en:"forward",pos:"v.",zh:"轉寄",ex:"I will forward the email to my manager.",g:21},
+ {en:"accurate",pos:"adj.",zh:"準確的",ex:"Please make sure the figures are accurate.",g:22},
+ {en:"apparent",pos:"adj.",zh:"明顯的",ex:"It soon became apparent that we needed help.",g:22},
+ {en:"assign",pos:"v.",zh:"指派",ex:"The task was assigned to the new intern.",g:22},
+ {en:"aware",pos:"adj.",zh:"知道的、察覺的",ex:"Are you aware of the policy change?",g:22},
+ {en:"complex",pos:"adj.",zh:"複雜的",ex:"The process is more complex than it looks.",g:22},
+ {en:"consist of",pos:"phr.",zh:"由…組成",ex:"The team consists of five engineers.",g:22},
+ {en:"crucial",pos:"adj.",zh:"關鍵的",ex:"Timing is crucial in this negotiation.",g:22},
+ {en:"efficient",pos:"adj.",zh:"有效率的",ex:"The new method is far more efficient.",g:22},
+ {en:"identify",pos:"v.",zh:"辨認、找出",ex:"We must identify the cause of the delay.",g:22},
+ {en:"impact",pos:"n./v.",zh:"影響、衝擊",ex:"The strike had a major impact on sales.",g:22},
+ {en:"objective",pos:"n./adj.",zh:"目標；客觀的",ex:"Our main objective is to cut costs.",g:22},
+ {en:"obvious",pos:"adj.",zh:"明顯的",ex:"There is no obvious solution.",g:22},
+ {en:"reduce",pos:"v.",zh:"減少",ex:"We reduced waste by 30%.",g:22},
+ {en:"regarding",pos:"prep.",zh:"關於",ex:"I am writing regarding your recent order.",g:22},
+ {en:"reveal",pos:"v.",zh:"揭露、顯示",ex:"The report revealed several errors.",g:22},
+ {en:"secure",pos:"v./adj.",zh:"取得；安全的",ex:"We secured a two-year contract.",g:22},
+ {en:"tend to",pos:"phr.",zh:"傾向於",ex:"Customers tend to buy more in December.",g:22},
+ {en:"significant",pos:"adj.",zh:"重大的、顯著的",ex:"There was a significant drop in complaints.",g:22},
+ {en:"appropriate",pos:"adj.",zh:"適當的",ex:"Please wear appropriate clothing.",g:23},
+ {en:"arrange",pos:"v.",zh:"安排",ex:"I will arrange a meeting for Thursday.",g:23},
+ {en:"assure",pos:"v.",zh:"向…保證",ex:"I assure you the problem has been fixed.",g:23},
+ {en:"attempt",pos:"v./n.",zh:"嘗試",ex:"They attempted to renegotiate the terms.",g:23},
+ {en:"cease",pos:"v.",zh:"停止",ex:"The company ceased operations in June.",g:23},
+ {en:"confidential",pos:"adj.",zh:"機密的",ex:"This file is strictly confidential.",g:23},
+ {en:"considerate",pos:"adj.",zh:"體貼的",ex:"He was considerate enough to call ahead.",g:23},
+ {en:"emphasize",pos:"v.",zh:"強調",ex:"The manager emphasized the deadline.",g:23},
+ {en:"essential",pos:"adj.",zh:"必要的",ex:"Experience is essential for this role.",g:23},
+ {en:"external",pos:"adj.",zh:"外部的",ex:"We hired an external consultant.",g:23},
+ {en:"generate",pos:"v.",zh:"產生",ex:"The campaign generated strong interest.",g:23},
+ {en:"internal",pos:"adj.",zh:"內部的",ex:"This is an internal document only.",g:23},
+ {en:"modify",pos:"v.",zh:"修改",ex:"We modified the design after testing.",g:23},
+ {en:"reluctant",pos:"adj.",zh:"不情願的",ex:"He was reluctant to sign the contract.",g:23},
+ {en:"remainder",pos:"n.",zh:"剩餘部分",ex:"The remainder will be shipped next week.",g:23},
+ {en:"thorough",pos:"adj.",zh:"徹底的",ex:"We conducted a thorough inspection.",g:23},
+ {en:"verify",pos:"v.",zh:"查證、確認",ex:"Please verify the account number.",g:23},
+ {en:"adjust",pos:"v.",zh:"調整",ex:"We adjusted the schedule to fit the deadline.",g:24},
+ {en:"alter",pos:"v.",zh:"改變",ex:"The plans were altered at the last minute.",g:24},
+ {en:"assemble",pos:"v.",zh:"集合；組裝",ex:"Staff assembled in the lobby at 9 a.m.",g:24},
+ {en:"beneficial",pos:"adj.",zh:"有益的",ex:"The partnership was beneficial to both firms.",g:24},
+ {en:"consistent",pos:"adj.",zh:"一致的、穩定的",ex:"Sales have been consistent all year.",g:24},
+ {en:"deliberate",pos:"adj.",zh:"故意的；慎重的",ex:"The delay was not deliberate.",g:24},
+ {en:"dispose of",pos:"phr.",zh:"處理、丟棄",ex:"Please dispose of packaging properly.",g:24},
+ {en:"enhance",pos:"v.",zh:"提升、增強",ex:"The update enhances battery life.",g:24},
+ {en:"evident",pos:"adj.",zh:"明顯的",ex:"It was evident that demand had fallen.",g:24},
+ {en:"exceptional",pos:"adj.",zh:"優異的；例外的",ex:"Her performance was exceptional.",g:24},
+ {en:"facilitate",pos:"v.",zh:"促進、使容易",ex:"The software facilitates remote work.",g:24},
+ {en:"hesitate",pos:"v.",zh:"猶豫",ex:"Do not hesitate to contact us.",g:24},
+ {en:"imply",pos:"v.",zh:"暗示",ex:"The memo implies further cuts.",g:24},
+ {en:"intended",pos:"adj.",zh:"預定的、打算的",ex:"The intended audience is small business owners.",g:24},
+ {en:"minimize",pos:"v.",zh:"使降到最低",ex:"We aim to minimize downtime.",g:24},
+ {en:"optional",pos:"adj.",zh:"選擇性的",ex:"Attendance at the workshop is optional.",g:24},
+ {en:"pending",pos:"adj./prep.",zh:"待決的；在…期間",ex:"The decision is still pending.",g:24},
+ {en:"restrict",pos:"v.",zh:"限制",ex:"Access is restricted to authorized staff.",g:24},
+ {en:"undergo",pos:"v.",zh:"經歷、接受",ex:"The building will undergo renovation.",g:24}
 ];
-const GROUPS=[{id:0,label:"全部 192 字"},{id:1,label:"組別 1（0822）"},{id:2,label:"組別 2（0822-2）"},{id:3,label:"組別 3（0829）"},{id:4,label:"組別 4（人事）"},{id:5,label:"組別 5（採購財務）"},{id:6,label:"組別 6（行銷客服）"},{id:7,label:"組別 7（差旅設施）"},{id:8,label:"組別 8（報帳流程）"},{id:9,label:"組別 9（合約會議）"},{id:10,label:"組別 10（形副詞）"},{id:11,label:"組別 11（商務動詞）"},{id:12,label:"組別 12（生產品管）"},{id:13,label:"組別 13（租賃搬遷）"},{id:14,label:"組別 14（銀行金融）"},{id:15,label:"組別 15（IT辦公）"},{id:16,label:"組別 16（餐飲活動）"},{id:17,label:"組別 17（媒體出版）"},{id:18,label:"組別 18（人資福利）"},{id:19,label:"組別 19（交通建設）"}];
+const GROUPS=[{id:0,label:"全部 286 字"},{id:1,label:"組別 1（0822）"},{id:2,label:"組別 2（0822-2）"},{id:3,label:"組別 3（0829）"},{id:4,label:"組別 4（人事）"},{id:5,label:"組別 5（採購財務）"},{id:6,label:"組別 6（行銷客服）"},{id:7,label:"組別 7（差旅設施）"},{id:8,label:"組別 8（報帳流程）"},{id:9,label:"組別 9（合約會議）"},{id:10,label:"組別 10（形副詞）"},{id:11,label:"組別 11（商務動詞）"},{id:12,label:"組別 12（生產品管）"},{id:13,label:"組別 13（租賃搬遷）"},{id:14,label:"組別 14（銀行金融）"},{id:15,label:"組別 15（IT辦公）"},{id:16,label:"組別 16（餐飲活動）"},{id:17,label:"組別 17（媒體出版）"},{id:18,label:"組別 18（人資福利）"},{id:19,label:"組別 19（交通建設）"},{id:20,label:"組別 20（L3-4 核心①）"},{id:21,label:"組別 21（商務②）"},{id:22,label:"組別 22（L3-4 核心②）"},{id:23,label:"組別 23（L3-4 核心③）"},{id:24,label:"組別 24（L3-4 核心④）"}];
 
 const GQ=[
  {id:"G1-1",t:"介連",q:"The annual report must be submitted ______ Friday.",o:["by","until","on to","at"],a:0,
@@ -655,7 +775,67 @@ const GQ=[
  {id:"G14-9",t:"搭配",q:"The rent includes all utilities ______ electricity.",o:["except","expect","excepting of","exception"],a:0,
   e:"except＝除了…之外。expect（預期）是拼字陷阱。"},
  {id:"G14-10",t:"詞性",q:"Most employees reported that their commute had become ______ shorter.",o:["notice","noticeable","noticeably","noticing"],a:2,
-  e:"修飾形容詞 shorter → 副詞 noticeably。"}
+  e:"修飾形容詞 shorter → 副詞 noticeably。"},
+ {id:"G15-1",t:"詞性",q:"The new procedure is far more ______ than the old one.",o:["efficient","efficiently","efficiency","efficiencies"],a:0,
+  e:"more ___ than 比較級，描述主詞 procedure → 形容詞 efficient。"},
+ {id:"G15-2",t:"搭配",q:"I am writing ______ the invoice we received last week.",o:["regarding","regard","regarded","regards"],a:0,
+  e:"regarding＝關於，介系詞，商務書信開頭常用。"},
+ {id:"G15-3",t:"文法",q:"The committee ______ of five senior managers.",o:["consist","consists","consisting","consisted of"],a:1,
+  e:"consist of＝由…組成。主詞 committee 單數 → consists。"},
+ {id:"G15-4",t:"詞性",q:"The report revealed a ______ drop in customer complaints.",o:["significant","significantly","significance","signify"],a:0,
+  e:"a ___ drop → 修飾名詞用形容詞 significant。"},
+ {id:"G15-5",t:"介連",q:"______ the complex approval process, the project was completed on time.",o:["Although","Despite","Because","While"],a:1,
+  e:"the complex approval process 是名詞片語 → Despite。"},
+ {id:"G15-6",t:"文法",q:"Customers ______ to spend more during the holiday season.",o:["tends","tend","tending","are tended"],a:1,
+  e:"主詞 Customers 複數 → tend。tend to + 原形動詞。"},
+ {id:"G15-7",t:"詞性",q:"All staff should be ______ of the new security policy.",o:["aware","awarely","awareness","award"],a:0,
+  e:"be aware of＝知道、察覺。be 動詞後接形容詞。"},
+ {id:"G15-8",t:"文法",q:"The tasks ______ to the interns were completed ahead of schedule.",o:["assign","assigned","assigning","assigns"],a:1,
+  e:"分詞修飾被動：任務「被」指派 → assigned。"},
+ {id:"G15-9",t:"搭配",q:"Timing is ______ importance in this negotiation.",o:["of crucial","in crucial","at crucial","for crucial"],a:0,
+  e:"of + 抽象名詞＝形容詞，of crucial importance＝極為重要。"},
+ {id:"G15-10",t:"介連",q:"______ the audit was completed, the funds were released.",o:["Despite","Once","Because of","During"],a:1,
+  e:"the audit was completed 是完整句子 → 連接詞 Once（一旦…就）。"},
+ {id:"G16-1",t:"詞性",q:"All visitors must wear ______ safety equipment.",o:["appropriate","appropriately","appropriateness","appropriate to"],a:0,
+  e:"修飾名詞 equipment → 形容詞 appropriate。"},
+ {id:"G16-2",t:"文法",q:"The documents ______ to the client yesterday contained an error.",o:["send","sent","sending","sends"],a:1,
+  e:"分詞修飾被動：文件「被」寄出 → sent。"},
+ {id:"G16-3",t:"介連",q:"______ the report was confidential, only three people received it.",o:["Despite","Because","Because of","During"],a:1,
+  e:"the report was confidential 是句子 → 連接詞 Because。"},
+ {id:"G16-4",t:"搭配",q:"Experience in logistics is ______ for this position.",o:["essential","essentially","essence","essentials"],a:0,
+  e:"be ___ for → 形容詞 essential。"},
+ {id:"G16-5",t:"文法",q:"Neither of the external consultants ______ available next week.",o:["are","were","is","have"],a:2,
+  e:"Neither of + 複數 → 動詞單數 is。"},
+ {id:"G16-6",t:"詞性",q:"The auditor examined the accounts ______ before signing off.",o:["thorough","thoroughly","thoroughness","thoroughgoing"],a:1,
+  e:"修飾動詞 examined → 副詞 thoroughly。"},
+ {id:"G16-7",t:"文法",q:"If the supplier ______ the design, we will need to retest it.",o:["modify","modifies","will modify","modifying"],a:1,
+  e:"if 子句用現在式代替未來式，主詞單數 → modifies。"},
+ {id:"G16-8",t:"介連",q:"______ the thorough inspection, several defects were missed.",o:["Although","Despite","Because","Since"],a:1,
+  e:"the thorough inspection 是名詞片語 → Despite。"},
+ {id:"G16-9",t:"搭配",q:"The manager emphasized the need ______ accurate records.",o:["for","of","to","with"],a:0,
+  e:"the need for + 名詞＝對…的需求。"},
+ {id:"G16-10",t:"詞性",q:"Management was ______ to approve the additional budget.",o:["reluctant","reluctantly","reluctance","reluct"],a:0,
+  e:"be + ___ + to V → 形容詞 reluctant。be reluctant to＝不願意。"},
+ {id:"G17-1",t:"搭配",q:"Please do not hesitate ______ us if you have questions.",o:["contact","to contact","contacting","for contacting"],a:1,
+  e:"hesitate to + 原形動詞。商務書信結尾常用句。"},
+ {id:"G17-2",t:"詞性",q:"The upgrade will ______ the system's overall performance.",o:["enhance","enhanced","enhancement","enhancing"],a:0,
+  e:"will + 原形動詞 → enhance。"},
+ {id:"G17-3",t:"文法",q:"The equipment ______ inspection will not be available today.",o:["undergo","undergoes","undergoing","undergone"],a:2,
+  e:"分詞修飾主動：設備正在接受檢查 → undergoing（= which is undergoing）。"},
+ {id:"G17-4",t:"介連",q:"______ the decision is still pending, we cannot proceed.",o:["Despite","Since","Because of","During"],a:1,
+  e:"the decision is still pending 是完整句子 → 連接詞 Since（因為）。"},
+ {id:"G17-5",t:"詞性",q:"Access to the server room is ______ to authorized personnel.",o:["restrict","restricted","restriction","restrictive"],a:1,
+  e:"be + p.p. 被動 → restricted。be restricted to＝僅限…。"},
+ {id:"G17-6",t:"搭配",q:"The new layout is beneficial ______ both staff and visitors.",o:["for","to","with","at"],a:1,
+  e:"be beneficial to＝對…有益。"},
+ {id:"G17-7",t:"文法",q:"Had the supplier notified us earlier, we ______ the order.",o:["cancel","will cancel","would have canceled","canceled"],a:2,
+  e:"與過去事實相反的假設，倒裝 Had + 主詞 + p.p. → 主要子句用 would have + p.p.。"},
+ {id:"G17-8",t:"介連",q:"______ further notice, the north gate will remain closed.",o:["Until","Unless","Although","While"],a:0,
+  e:"until further notice＝直到另行通知，固定用法，後面接名詞。"},
+ {id:"G17-9",t:"詞性",q:"Her sales record last quarter was truly ______.",o:["exception","exceptional","exceptionally","excepting"],a:1,
+  e:"be 動詞後描述主詞 → 形容詞 exceptional。truly 是副詞修飾它。"},
+ {id:"G17-10",t:"文法",q:"The report, ______ was submitted on Monday, contained two errors.",o:["that","which","who","what"],a:1,
+  e:"逗號後的非限定關係子句只能用 which。"}
 ];
 
 const RQ=[
@@ -801,9 +981,10 @@ document.querySelectorAll(".tab").forEach(t=>{
   t.onclick=()=>{
     document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
     t.classList.add("on");
-    ["cards","grammar","reading","test","stats"].forEach(s=>$("sec-"+s).classList.toggle("hidden",s!==t.dataset.t));
+    ["cards","notes","grammar","reading","test","stats"].forEach(s=>$("sec-"+s).classList.toggle("hidden",s!==t.dataset.t));
     if(t.dataset.t==="stats")renderStats();
     if(t.dataset.t==="test")renderTestHome();
+    if(t.dataset.t==="notes")renderNotes();
   };
 });
 
@@ -871,7 +1052,10 @@ const GBATCH=[
  {k:"G11",label:"第11批 進階複習"},
  {k:"G12",label:"第12批 機上總複習"},
  {k:"G13",label:"第13批 生產品管"},
- {k:"G14",label:"第14批 租賃搬遷"}
+ {k:"G14",label:"第14批 租賃搬遷"},
+ {k:"G15",label:"第15批 核心字彙"},
+ {k:"G16",label:"第16批 核心字彙②"},
+ {k:"G17",label:"第17批 核心字彙③"}
 ];
 GBATCH.forEach(g=>{
   const b=document.createElement("button");
@@ -1215,6 +1399,166 @@ function showResult(r,fresh){
     try{await navigator.clipboard.writeText(txt);}catch(e){const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();}
     $("tCopy").textContent="已複製！貼到聊天室給我";setTimeout(()=>{const b=$("tCopy");if(b)b.textContent="複製結果給 Claude";},2500);
   };
+}
+
+/* ============ 筆記 ============ */
+const R=(q,a)=>`<div class="recall"><div>自我回想：${q}</div><div class="hintline">點一下看答案</div><div class="a">${a}</div></div>`;
+const NOTES=[
+{cat:"核心",title:"① 介系詞 vs 連接詞",tag:"最常考 ★★★",body:`
+<p>判斷只做一件事：<span class="hot">看空格後面有沒有「主詞＋動詞」</span>。</p>
+<ul><li>有主詞＋動詞 → 連接詞</li><li>只有名詞片語 → 介系詞</li></ul>
+<table><tr><th>中文</th><th>接句子（連接詞）</th><th>接名詞（介系詞）</th></tr>
+<tr><td>雖然</td><td>although / though / even though / while</td><td>despite / in spite of</td></tr>
+<tr><td>因為</td><td>because / since / as</td><td>because of / due to / owing to</td></tr>
+<tr><td>在…期間</td><td>while</td><td>during</td></tr>
+<tr><td>如果</td><td>if / unless</td><td>in case of</td></tr>
+<tr><td>一…就…</td><td>as soon as / once</td><td>upon + V-ing</td></tr>
+<tr><td>在…之前</td><td>before</td><td>prior to</td></tr></table>
+<ul><li><span class="hot">while 永遠是連接詞</span>，永遠接句子。它有「當…時候／然而」兩個意思，但都接句子，選答案時不用管意思。</li>
+<li>because 接句子、because of 接名詞，差一個 of 差很多。</li>
+<li>名詞片語可以很長：<code>the ongoing maintenance</code>、<code>its high cost</code>、<code>a shortage of staff</code> 都沒有動詞。</li>
+<li>反向陷阱：<code>the renovation work continues</code> 看起來像名詞，但 continues 是動詞，整個是句子。</li></ul>
+<div class="miss">你的實際錯誤：G1-3、G2-2、G4-1、G4-6、G6-4、G10-4。共同點是<b>句首空格時憑語意選了連接詞</b>，沒有先掃結構。做題時用筆把後半句的動詞圈出來。</div>
+${R("Despite 和 Although 差在哪？","意思一樣，Despite 接名詞、Although 接句子。")}
+${R("看到句首空格，第一個動作是什麼？","找逗號前那半句有沒有動詞。")}`},
+
+{cat:"核心",title:"② 詞性判斷",tag:"最好拿分 ★★★",body:`
+<p>看空格<span class="hot">前後的結構</span>，不用讀懂整句。</p>
+<table><tr><th>結構</th><th>填什麼</th></tr>
+<tr><td>the ___ + 名詞</td><td>形容詞</td></tr>
+<tr><td>a / an ___</td><td>名詞</td></tr>
+<tr><td>動詞 + ___</td><td>副詞</td></tr>
+<tr><td>___ + 過去分詞</td><td>副詞（widely attended）</td></tr>
+<tr><td>be 動詞 + ___</td><td>形容詞或過去分詞</td></tr>
+<tr><td>介系詞 + ___</td><td>名詞或動名詞</td></tr>
+<tr><td>more ___ than</td><td>形容詞或副詞（看修飾誰）</td></tr></table>
+<p><b>字尾速查</b><br>
+形容詞 -able -ible -al -ial -ous -ive -ful -ary -ory -ant -ent<br>
+副詞 -ly｜名詞 -tion -sion -ment -ness -ity -ance -ence -ship<br>
+動詞 -ize -ify -ate -en</p>
+<p><b>修飾誰</b>：修飾名詞→形容詞；修飾動詞／形容詞／整句→副詞。</p>
+<div class="miss">你的實際錯誤：G6-5、G10-2、G10-6、G5-7。前兩個是<b>單字不熟讀不出詞性</b>（profitably、insufficient），不是文法問題。G5-7 的線索在後面的代名詞 them（複數）→ 空格要填複數名詞。</div>
+${R("All complaints must be handled ______.","修飾動詞 handled → 副詞 professionally")}
+${R("the ___ training session 要填什麼詞性？","形容詞（mandatory）")}`},
+
+{cat:"核心",title:"③ 時態",tag:"★★",body:`
+<ul>
+<li><b>過去完成式 had + p.p.</b>：兩個過去動作，先發生的用它。關鍵字 <span class="hot">By the time</span> / before / after。<br><code>By the time he arrived, the meeting had ended.</code></li>
+<li><b>條件與時間子句用現在式代替未來式</b>（if / unless / when / before / after），<span class="hot">不能用 will</span>。<br><code>If the shipment arrives tomorrow, we will ship it.</code></li>
+<li><b>與過去相反的假設</b>：If + had + p.p., 主詞 + would have + p.p.。倒裝：<code>Had the supplier notified us earlier, we would have canceled the order.</code></li>
+<li><b>被動 be + p.p.</b>：was issued / has been postponed / must be submitted</li></ul>
+<div class="miss">你的實際錯誤：G10-1、G10-3。這兩個是第一次見到的觀念，複習題在第 11 批（G11-1、G11-2、G11-5）。</div>
+${R("If the client ______ (accept) the terms, we can proceed.","accepts —— if 子句用現在式，主詞單數")}
+${R("看到 By the time + 過去句，主要子句用什麼？","過去完成式 had + p.p.")}`},
+
+{cat:"核心",title:"④ 主詞動詞一致",tag:"★★",body:`
+<ul><li>Each of / Neither of / Either of / One of ＋複數名詞 → <span class="hot">動詞一律單數</span></li>
+<li>of 後面的複數名詞是來騙你的，真正的主詞在 of 前面</li></ul>
+<p><span class="hot">最容易混的一組</span>：<br>
+<code>Neither of the proposals was acceptable.</code>（Neither of → 單數）<br>
+<code>Neither the landlord nor the tenants were satisfied.</code>（Neither A nor B → 動詞跟最靠近的 B 走）</p>
+<div class="miss">你的實際錯誤：G10-7。相同觀念的複習題在 G11-3、G11-6、G13-4、G16-5。</div>
+${R("Each of the departments ___ its own budget.","has")}
+${R("Neither of 和 Neither A nor B 規則一樣嗎？","不一樣。Neither of 一律單數；Neither A nor B 看 B。")}`},
+
+{cat:"核心",title:"⑤ 分詞修飾",tag:"每次必考 ★★★",body:`
+<p>問自己：這個名詞是<span class="hot">主動做</span>還是<span class="hot">被動承受</span>？</p>
+<ul><li>主動 → 現在分詞 V-ing：<code>Passengers proceeding to Gate 12</code>、<code>The equipment undergoing inspection</code></li>
+<li>被動 → 過去分詞 p.p.：<code>The invoice issued last week</code>、<code>The documents sent yesterday</code>、<code>The tasks assigned to the interns</code></li></ul>
+<p>還原法：把它想成關係子句 → the invoice (which was) issued last week</p>
+${R("The documents ______ (send) yesterday contained an error.","sent —— 文件被寄出，用過去分詞")}`},
+
+{cat:"核心",title:"⑥ 關係代名詞",tag:"★★",body:`
+<ul><li>人 → who / whom / whose｜物 → which / that</li>
+<li>所有格 whose，後面<b>直接接名詞</b>：<code>Applicants whose resumes are received...</code></li>
+<li><span class="hot">逗號後的非限定子句只能用 which，不能用 that</span></li></ul>
+<div class="miss">你的實際錯誤：G1-6（whose）。相同考點：G9-5、G12-13、G17-10。</div>
+${R("The seminar, ______ was held in Osaka... 為什麼不能填 that？","逗號後的非限定子句不能用 that，只能用 which。")}`},
+
+{cat:"核心",title:"⑦ 固定搭配總表",tag:"只能背 ★★★",body:`
+<p><b>時間／期限</b><br>
+by + 時間點＝之前完成（一次性）｜until + 時間點＝持續到<br>
+in advance 事先｜prior to 在…之前｜until further notice 直到另行通知</p>
+<p><b>動詞片語</b><br>
+take effect 生效｜take charge of 接管｜<span class="hot">be in charge of</span> 負責｜<span class="hot">be responsible for</span> 負責（介系詞不同，小心）<br>
+comply with 遵守｜consist of 由…組成｜dispose of 丟棄｜fill out a form 填表<br>
+distribute A to B｜take notes 做筆記｜look forward to + <b>V-ing</b>（to 是介系詞）｜hesitate to + V</p>
+<p><b>形容詞 + 介系詞</b><br>
+be eligible for｜be entitled to｜be aware of｜be reluctant to + V｜be beneficial to｜be restricted to｜be capable of</p>
+<p><b>其他</b><br>
+regardless of 不論｜regarding 關於（介系詞）｜neither A nor B｜the need for + 名詞｜of + 抽象名詞＝形容詞（of crucial importance）</p>
+<div class="miss">你的實際錯誤：G1-5（take effect）、G2-6（take charge of）、G3-1（in advance）、G6-6（distribute to）。這類沒有邏輯，看到就要反射。</div>`},
+
+{cat:"核心",title:"做題流程（四步）",tag:"考試時照這個跑",body:`
+<ol style="margin-left:18px;line-height:2">
+<li>先看空格<b>後面</b>：有沒有動詞？→ 有＝連接詞、沒有＝介系詞</li>
+<li>不是介連題，看空格<b>前後</b>的詞性結構</li>
+<li>都不是，想是不是<b>固定搭配</b></li>
+<li>最後才考慮語意</li></ol>
+<p>Part 5 一題平均 <span class="hot">20～25 秒</span>。超過就猜一個往下走，時間留給 Part 7。</p>`},
+
+{cat:"批次",title:"第 1～3 批（8/22–8/29）入門",tag:"基本盤",body:`
+<p><b>主題</b>：辦公室日常、客服訂單、會議行程</p>
+<p><b>帶到的考點</b>：by/until、介系詞接動名詞、Despite/Although、詞性字尾、take effect、whose、if 倒裝 Should you、at + 時刻、during/while</p>
+<div class="miss">18 題錯 14。介連 9 次錯最多，其中 Despite/Although 佔 5 次。</div>`},
+
+{cat:"批次",title:"第 4～5 批 介連特訓",tag:"專攻弱點",body:`
+<p><b>全部是「後面接句子還是名詞」的判斷題</b>，含一題陷阱（G4-5：renovation work <u>continues</u> 是句子）。</p>
+<p>第 5 批六題介連只錯 1 題 —— 這是你進步最明顯的一次，偏誤基本修掉。</p>
+<div class="miss">G5-4 錯：In spite of 是三個字，看起來不像介系詞容易被跳過，它跟 Despite 完全等價。</div>`},
+
+{cat:"批次",title:"第 6～9 批 情境擴充",tag:"行銷／差旅／報帳／合約",body:`
+<p><b>新增考點</b>：distribute A to B、be entitled to、neither...nor、regardless of、fill out、comply with、比較級 more quickly、non-restrictive which</p>
+<div class="miss">G6-4 又錯一次 While（後面是句子卻選了介系詞）。</div>`},
+
+{cat:"批次",title:"第 10～11 批 進階文法",tag:"難度跳一階 ★★",body:`
+<p><b>第一次出現</b>：過去完成式（by the time）、條件句現在式代未來、Each of/Neither of 單數、look forward to + V-ing、Upon + V-ing</p>
+<div class="miss">第 10 批 8 題只對 2 題。三題是全新觀念（正常），另三題（G10-2、G10-6 詞性，G10-4 by）反映的是<b>單字不熟</b>和<b>舊觀念沒內化</b>。第 11 批補完後回到 14/16。</div>`},
+
+{cat:"批次",title:"第 12 批 機上總複習 24 題",tag:"小模考",body:`
+<p>涵蓋全部七條規則，題數最多，做完看成績頁的分類正確率最準。</p>
+<p>值得記的：<code>Employees without badges</code>（without 是介系詞）、<code>Neither of the two proposals was</code>、<code>fill out</code>、<code>take effect</code>。</p>`},
+
+{cat:"批次",title:"第 13～14 批 生產品管／租賃",tag:"介系詞細節",body:`
+<p><b>新增</b>：prior to（接名詞）、be responsible for（對照 be in charge of）、except vs expect 拼字陷阱、<span class="hot">Neither A nor B 動詞跟 B</span>（跟 Neither of 不同）</p>`},
+
+{cat:"批次",title:"第 15～17 批 核心字彙題",tag:"單字＋文法合體",body:`
+<p>用新學的 L3/L4 單字出題，讀不懂字就答不出來，等於同時驗收單字。</p>
+<p><b>新增</b>：of + 抽象名詞＝形容詞（of crucial importance）、Once（連接詞）、Since（因為）、hesitate to、be beneficial to、be restricted to、until further notice、假設語氣倒裝 Had + 主詞 + p.p.</p>`},
+
+{cat:"批次",title:"閱讀累積重點",tag:"Part 7 ★★",body:`
+<p><b>單篇</b>：主旨題看開頭、NOT 題找否定句（do not need to）、細節題照關鍵字回文章定位。</p>
+<p><b>雙篇／三篇</b>：<span class="hot">跨文章題答案永遠不在單一篇裡</span>。第一篇抓規則和數字，讀第二篇時心裡帶著「這個人符不符合那些條件」。</p>
+<p>最常考的三種算法：<br>
+① 算日期（入住四晚、30 天期限、開課前一週）<br>
+② 對級距（金額落在哪一段折扣、哪一種費率）<br>
+③ 對條件（有沒有會員／公司帳戶／認證安裝）</p>
+<div class="miss">你錯的 R6-4 就是要同時記住兩個日期範圍再比對。R12-4 更難：問「客戶為什麼要強調那些事」，答案是他在逐條排除保固不涵蓋的情況。</div>`}
+];
+let ntCat="全部";
+function renderNotes(){
+  const cats=["全部","核心","批次"];
+  const cf=$("ntFilter");
+  if(!cf.children.length){
+    cats.forEach(c=>{
+      const b=document.createElement("button");
+      b.className="chip"+(c==="全部"?" on":"");
+      b.textContent=c==="核心"?"核心速查":(c==="批次"?"各批次重點":"全部");
+      b.onclick=()=>{ntCat=c;[...cf.children].forEach(x=>x.classList.remove("on"));b.classList.add("on");drawNotes();};
+      cf.appendChild(b);
+    });
+  }
+  drawNotes();
+}
+function drawNotes(){
+  const list=$("ntList");list.innerHTML="";
+  NOTES.filter(n=>ntCat==="全部"||n.cat===ntCat).forEach(n=>{
+    const d=document.createElement("div");d.className="nt-item";
+    d.innerHTML=`<div class="nt-head"><span>${n.title}</span><span class="nt-tag">${n.tag}</span></div><div class="nt-body">${n.body}</div>`;
+    d.querySelector(".nt-head").onclick=()=>d.classList.toggle("open");
+    d.querySelectorAll(".recall").forEach(r=>r.onclick=e=>{e.stopPropagation();r.classList.toggle("show");});
+    list.appendChild(d);
+  });
 }
 
 /* ============ 啟動 ============ */
