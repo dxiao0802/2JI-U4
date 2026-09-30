@@ -227,10 +227,16 @@
 
 <!-- 成績 -->
 <section id="sec-stats" class="hidden">
+  <div class="statbox"><h3>單字 — 各組別錯誤率（錯最多的在上面）</h3><div id="statGroups"></div></div>
   <div class="statbox"><h3>文法 — 各題型正確率</h3><div id="statTypes"></div></div>
   <div class="statbox"><h3>答錯過的題目</h3><div class="wronglist" id="wrongList">還沒有紀錄。</div></div>
   <button class="copybtn" id="copyBtn">複製結果給 Claude</button>
   <div class="note">我沒辦法直接看到你在這裡的作答，<br>做完按上面的按鈕，把結果貼回聊天室給我。</div>
+  <div class="kb-actions" style="margin-top:10px">
+    <button id="exportBtn">匯出紀錄（複製）</button>
+    <button id="importBtn">匯入紀錄（貼上）</button>
+  </div>
+  <div class="note">換裝置時：在舊裝置按「匯出」，把複製到的文字傳到新裝置（LINE、Email 都可以），再按「匯入」貼上。</div>
   <button class="copybtn" id="resetBtn" style="background:#4A5A5B;color:#E9E4D6;margin-top:10px">清除所有作答紀錄</button>
 </section>
 </div>
@@ -960,13 +966,44 @@ const LT_WORDS={
 const LT_FAKES=["brillent","plorkish","dentrify","fastidate","crovulent","mensible","tromage","sprudent"];
 
 /* ============ 狀態與儲存 ============ */
+// Claude artifact 以外（例如 GitHub Pages）沒有 window.storage，改存 localStorage
+if(!window.storage){
+  window.storage={
+    async get(k){const v=localStorage.getItem(k);return v==null?null:{key:k,value:v};},
+    async set(k,v){localStorage.setItem(k,v);return{key:k,value:v};}
+  };
+}
+const STORE_KEYS=["toeic-marks","toeic-quiz","toeic-testwords","toeic-leveltest","toeic-keys","toeic-wordstats"];
 let marks={}, quiz={}, testWords=[], lastTest=null;   // quiz[qid] = {r:0, w:0}
+let wordStats={};   // wordStats[單字 i] = {r:認得次數, w:需複習次數}
 async function load(){
   try{const m=await window.storage.get("toeic-marks");if(m&&m.value)marks=JSON.parse(m.value);}catch(e){}
   try{const q=await window.storage.get("toeic-quiz");if(q&&q.value)quiz=JSON.parse(q.value);}catch(e){}
   try{const t=await window.storage.get("toeic-testwords");if(t&&t.value)testWords=JSON.parse(t.value);}catch(e){}
   try{const l=await window.storage.get("toeic-leveltest");if(l&&l.value)lastTest=JSON.parse(l.value);}catch(e){}
+  try{const s=await window.storage.get("toeic-wordstats");if(s&&s.value)wordStats=JSON.parse(s.value);}catch(e){}
 }
+async function saveWordStats(){try{await window.storage.set("toeic-wordstats",JSON.stringify(wordStats));}catch(e){}}
+function recordWord(i,ok){
+  if(!wordStats[i])wordStats[i]={r:0,w:0};
+  ok?wordStats[i].r++:wordStats[i].w++;
+  saveWordStats();
+}
+// 各組別累計：{g, r, w, total, rate}，錯誤率高的排前面
+function groupStats(){
+  const by={};
+  for(const [i,s] of Object.entries(wordStats)){
+    const g=String(i).startsWith("t:")?99:WORDS[i]?.g;
+    if(g==null)continue;
+    if(!by[g])by[g]={g,r:0,w:0};
+    by[g].r+=s.r;by[g].w+=s.w;
+  }
+  return Object.values(by).map(x=>({...x,total:x.r+x.w,rate:x.w/(x.r+x.w)}))
+    .sort((a,b)=>b.rate-a.rate||b.w-a.w);
+}
+const WEAK_MIN=3;   // 一組至少答過幾次才列入弱點
+const weakGroups=()=>groupStats().filter(x=>x.total>=WEAK_MIN&&x.w>0).slice(0,3).map(x=>x.g);
+const groupLabel=id=>(GROUPS.find(g=>g.id===id)||{label:"組別 "+id}).label;
 async function saveMarks(){try{await window.storage.set("toeic-marks",JSON.stringify(marks));}catch(e){}}
 async function saveQuiz(){try{await window.storage.set("toeic-quiz",JSON.stringify(quiz));}catch(e){}}
 function record(qid,ok){
@@ -992,7 +1029,9 @@ document.querySelectorAll(".tab").forEach(t=>{
 let group=0,mode="EZ",reviewOnly=false,idx=0,deck=[];
 const card=$("card");
 function buildDeck(shuffle){
-  deck=WORDS.concat(testWords).map((w,i)=>({...w,i:w.dyn?"t:"+w.en:i})).filter(w=>(group===0||w.g===group)&&(!reviewOnly||marks[w.i]));
+  const weak=group===-1?weakGroups():null;
+  deck=WORDS.concat(testWords).map((w,i)=>({...w,i:w.dyn?"t:"+w.en:i}))
+    .filter(w=>(group===0||(weak?weak.includes(w.g):w.g===group))&&(!reviewOnly||marks[w.i]));
   if(shuffle)for(let i=deck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]];}
   if(idx>=deck.length)idx=0;
 }
@@ -1001,8 +1040,12 @@ function renderCards(){
   $("cardwrap").classList.toggle("hidden",!has);
   $("actionsCards").classList.toggle("hidden",!has);
   $("emptyCards").classList.toggle("hidden",has);
-  $("emptyCards").textContent=reviewOnly?"這個範圍沒有標記「需複習」的單字。":(group===99?"還沒有測驗不會的字，去「測驗」分頁做一次單字量測驗。":"這個範圍目前沒有單字。");
-  $("count").textContent=`單字 ${deck.length} 張`;
+  $("emptyCards").textContent=
+    group===-1&&!weakGroups().length?`還看不出弱點。先在各組按「認得／需複習」，每組至少 ${WEAK_MIN} 次就會開始統計。`:
+    reviewOnly?"這個範圍沒有標記「需複習」的單字。":(group===99?"還沒有測驗不會的字，去「測驗」分頁做一次單字量測驗。":"這個範圍目前沒有單字。");
+  $("count").textContent=group===-1&&has
+    ?`弱點：${weakGroups().map(g=>g===99?"測驗":"組別 "+g).join("、")}，共 ${deck.length} 張`
+    :`單字 ${deck.length} 張`;
   $("posInd").textContent=has?`${idx+1} / ${deck.length}`:"";
   if(!has)return;
   const w=deck[idx];
@@ -1017,17 +1060,21 @@ function renderCards(){
   $("backEx").textContent=w.ex;
 }
 GROUPS.push({id:99,label:"測驗不會的字"});
-GROUPS.forEach(g=>{
+[...GROUPS,{id:-1,label:"★ 弱點加強"}].forEach(g=>{
   const b=document.createElement("button");
-  b.className="chip"+(g.id===0?" on":"");b.textContent=g.label;
+  b.className="chip"+(g.id===0?" on":"");b.textContent=g.label;b.dataset.g=g.id;
   b.onclick=()=>{group=g.id;idx=0;[...$("groupChips").children].forEach(c=>c.classList.remove("on"));b.classList.add("on");buildDeck();renderCards();};
   $("groupChips").appendChild(b);
 });
 card.onclick=()=>card.classList.toggle("flip");
 $("speakBtn").onclick=e=>{e.stopPropagation();const w=deck[idx];if(!w)return;
   try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(w.en);u.lang="en-US";u.rate=.92;speechSynthesis.speak(u);}catch(err){}};
-$("knowBtn").onclick=async()=>{const w=deck[idx];if(w&&marks[w.i]){delete marks[w.i];await saveMarks();}if(deck.length){idx=(idx+1)%deck.length;renderCards();}};
-$("againBtn").onclick=async()=>{const w=deck[idx];if(w){marks[w.i]=1;await saveMarks();}if(deck.length){idx=(idx+1)%deck.length;renderCards();}};
+$("knowBtn").onclick=async()=>{const w=deck[idx];if(w){recordWord(w.i,true);if(marks[w.i]){delete marks[w.i];await saveMarks();}}if(deck.length){idx=(idx+1)%deck.length;renderCards();}};
+$("againBtn").onclick=async()=>{const w=deck[idx];if(w){recordWord(w.i,false);marks[w.i]=1;await saveMarks();}if(deck.length){idx=(idx+1)%deck.length;renderCards();}};
+function practiceGroup(id){
+  document.querySelector('.tab[data-t="cards"]').click();
+  document.querySelector(`#groupChips .chip[data-g="${id}"]`).click();
+}
 $("prevBtn").onclick=()=>{if(deck.length){idx=(idx-1+deck.length)%deck.length;renderCards();}};
 $("shuffleBtn").onclick=()=>{idx=0;buildDeck(true);renderCards();};
 $("modeEZ").onclick=()=>{mode="EZ";$("modeEZ").classList.add("on");$("modeZE").classList.remove("on");renderCards();};
@@ -1149,6 +1196,19 @@ function renderR(){
 
 /* ============ 成績 ============ */
 function renderStats(){
+  const gs=groupStats(),gbox=$("statGroups");
+  gbox.innerHTML=gs.length?"":'<div style="font-size:13px;color:#8D8776">還沒有單字卡的作答紀錄。在單字卡按「認得／需複習」就會開始統計。</div>';
+  gs.forEach(x=>{
+    const pct=Math.round(x.rate*100);
+    const note=x.total<WEAK_MIN?"（次數太少）":"";
+    gbox.insertAdjacentHTML("beforeend",
+      `<div class="statline"><span>${groupLabel(x.g)}</span><span>錯 ${x.w}/${x.total}（${pct}%）${note} <button class="gpBtn" data-g="${x.g}" style="margin-left:6px;border:1px solid #C9BFA6;background:#EFE7D2;border-radius:6px;padding:2px 8px;font-size:12px;cursor:pointer">練這組</button></span></div>`+
+      `<div class="bar"><div style="width:${pct}%;background:var(--red)"></div></div>`);
+  });
+  if(weakGroups().length)gbox.insertAdjacentHTML("beforeend",
+    `<button class="copybtn" id="weakBtn" style="margin-top:8px">★ 集中練最弱的 ${weakGroups().length} 組</button>`);
+  gbox.querySelectorAll(".gpBtn").forEach(b=>b.onclick=()=>practiceGroup(+b.dataset.g));
+  if($("weakBtn"))$("weakBtn").onclick=()=>practiceGroup(-1);
   const types={};
   GQ.forEach(q=>{
     const s=quiz[q.id];if(!s)return;
@@ -1173,6 +1233,8 @@ function renderStats(){
 $("copyBtn").onclick=async()=>{
   const lines=["【多益練習室成績回報】"];
   if(lastTest)lines.push(testSummaryLine(lastTest));
+  const gs=groupStats().filter(x=>x.total>=WEAK_MIN);
+  if(gs.length)lines.push("單字各組錯誤率："+gs.map(x=>`${x.g===99?"測驗":"組"+x.g} ${Math.round(x.rate*100)}%(${x.w}/${x.total})`).join(", "));
   const done=Object.keys(quiz).length;
   if(!done){lines.push("尚未作答。");}
   else{
@@ -1197,7 +1259,32 @@ $("copyBtn").onclick=async()=>{
 };
 $("resetBtn").onclick=async()=>{
   if(!confirm("確定要清除所有作答紀錄？（單字複習標記會保留）"))return;
-  quiz={};await saveQuiz();renderStats();
+  quiz={};wordStats={};await saveQuiz();await saveWordStats();renderStats();
+};
+$("exportBtn").onclick=async()=>{
+  const data={};
+  for(const k of STORE_KEYS){try{const r=await window.storage.get(k);if(r&&r.value)data[k]=r.value;}catch(e){}}
+  const txt="TOEIC1:"+JSON.stringify(data);
+  try{await navigator.clipboard.writeText(txt);}
+  catch(e){
+    const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);
+    ta.select();document.execCommand("copy");ta.remove();
+  }
+  $("exportBtn").textContent="已複製！";
+  setTimeout(()=>$("exportBtn").textContent="匯出紀錄（複製）",2500);
+};
+$("importBtn").onclick=async()=>{
+  const txt=(prompt("貼上從另一台裝置匯出的文字：")||"").trim();
+  if(!txt)return;
+  let data;
+  try{
+    if(!txt.startsWith("TOEIC1:"))throw 0;
+    data=JSON.parse(txt.slice(7));
+    if(!data||typeof data!=="object")throw 0;
+  }catch(e){alert("格式不對，請確認有完整複製匯出的文字。");return;}
+  if(!confirm("匯入會覆蓋這台裝置目前的紀錄，確定嗎？"))return;
+  for(const k of STORE_KEYS){if(typeof data[k]==="string"){try{await window.storage.set(k,data[k]);}catch(e){}}}
+  location.reload();
 };
 
 /* ============ 鍵盤快捷鍵 ============ */
