@@ -573,9 +573,23 @@ const WORDS=[
  {en:"assume",pos:"v.",zh:"假定",ex:"Do not assume the order was received.",g:27},
  {en:"precise",pos:"adj.",zh:"精確的",ex:"We need precise measurements.",g:27},
  {en:"throughout",pos:"prep.",zh:"遍及、在整個…期間",ex:"Smoking is banned throughout the building.",g:27},
- {en:"alternative",pos:"n./adj.",zh:"替代方案",ex:"We need an alternative supplier.",g:27}
+ {en:"alternative",pos:"n./adj.",zh:"替代方案",ex:"We need an alternative supplier.",g:27},
+ {en:"accommodate",pos:"v.",zh:"容納；配合",ex:"The hall can accommodate 300 guests.",g:28},
+ {en:"disruption",pos:"n.",zh:"中斷、干擾",ex:"We apologize for the disruption to service.",g:28},
+ {en:"endorse",pos:"v.",zh:"背書、支持",ex:"The board endorsed the proposal.",g:28},
+ {en:"exempt",pos:"adj./v.",zh:"免除的",ex:"Members are exempt from the entry fee.",g:28},
+ {en:"feasible",pos:"adj.",zh:"可行的",ex:"A spring launch is not feasible.",g:28},
+ {en:"incur",pos:"v.",zh:"招致（費用、損失）",ex:"Late payment will incur a fee.",g:28},
+ {en:"mandate",pos:"n./v.",zh:"授權、強制規定",ex:"The new rule mandates annual training.",g:28},
+ {en:"oversee",pos:"v.",zh:"監督",ex:"She oversees three regional offices.",g:28},
+ {en:"preliminary",pos:"adj.",zh:"初步的",ex:"These are preliminary results only.",g:28},
+ {en:"prompt",pos:"v./adj.",zh:"促使；迅速的",ex:"The complaint prompted a full review.",g:28},
+ {en:"revenue stream",pos:"n.",zh:"收入來源",ex:"Subscriptions are our main revenue stream.",g:28},
+ {en:"scope",pos:"n.",zh:"範圍",ex:"The scope of the project has expanded.",g:28},
+ {en:"subsequent",pos:"adj.",zh:"後續的",ex:"Subsequent meetings were canceled.",g:28},
+ {en:"waiver",pos:"n.",zh:"豁免、棄權書",ex:"All participants must sign a waiver.",g:28}
 ];
-const GROUPS=[{id:0,label:"全部 329 字"},{id:1,label:"組別 1（0822）"},{id:2,label:"組別 2（0822-2）"},{id:3,label:"組別 3（0829）"},{id:4,label:"組別 4（人事）"},{id:5,label:"組別 5（採購財務）"},{id:6,label:"組別 6（行銷客服）"},{id:7,label:"組別 7（差旅設施）"},{id:8,label:"組別 8（報帳流程）"},{id:9,label:"組別 9（合約會議）"},{id:10,label:"組別 10（形副詞）"},{id:11,label:"組別 11（商務動詞）"},{id:12,label:"組別 12（生產品管）"},{id:13,label:"組別 13（租賃搬遷）"},{id:14,label:"組別 14（銀行金融）"},{id:15,label:"組別 15（IT辦公）"},{id:16,label:"組別 16（餐飲活動）"},{id:17,label:"組別 17（媒體出版）"},{id:18,label:"組別 18（人資福利）"},{id:19,label:"組別 19（交通建設）"},{id:20,label:"組別 20（L3-4 核心①）"},{id:21,label:"組別 21（商務②）"},{id:22,label:"組別 22（L3-4 核心②）"},{id:23,label:"組別 23（L3-4 核心③）"},{id:24,label:"組別 24（L3-4 核心④）"},{id:25,label:"組別 25（L3-4 核心⑤）"},{id:26,label:"組別 26（L3-4 核心⑥）"},{id:27,label:"組別 27（錯題同源字）"}];
+const GROUPS=[{id:0,label:"全部 343 字"},{id:1,label:"組別 1（0822）"},{id:2,label:"組別 2（0822-2）"},{id:3,label:"組別 3（0829）"},{id:4,label:"組別 4（人事）"},{id:5,label:"組別 5（採購財務）"},{id:6,label:"組別 6（行銷客服）"},{id:7,label:"組別 7（差旅設施）"},{id:8,label:"組別 8（報帳流程）"},{id:9,label:"組別 9（合約會議）"},{id:10,label:"組別 10（形副詞）"},{id:11,label:"組別 11（商務動詞）"},{id:12,label:"組別 12（生產品管）"},{id:13,label:"組別 13（租賃搬遷）"},{id:14,label:"組別 14（銀行金融）"},{id:15,label:"組別 15（IT辦公）"},{id:16,label:"組別 16（餐飲活動）"},{id:17,label:"組別 17（媒體出版）"},{id:18,label:"組別 18（人資福利）"},{id:19,label:"組別 19（交通建設）"},{id:20,label:"組別 20（L3-4 核心①）"},{id:21,label:"組別 21（商務②）"},{id:22,label:"組別 22（L3-4 核心②）"},{id:23,label:"組別 23（L3-4 核心③）"},{id:24,label:"組別 24（L3-4 核心④）"},{id:25,label:"組別 25（L3-4 核心⑤）"},{id:26,label:"組別 26（L3-4 核心⑥）"},{id:27,label:"組別 27（錯題同源字）"},{id:28,label:"組別 28（進階商務）"}];
 
 const GQ=[
  {id:"G1-1",t:"介連",q:"The annual report must be submitted ______ Friday.",o:["by","until","on to","at"],a:0,
@@ -925,7 +939,75 @@ const GQ=[
  {id:"G19-9",t:"詞性",q:"Details of the ______ merger will be announced next week.",o:["forthcoming","forthcomingly","forthcome","forthcomings"],a:0,
   e:"the ___ merger → 形容詞 forthcoming（即將到來的）。"},
  {id:"G19-10",t:"文法",q:"By the time the policy ______ effect, most staff had already relocated.",o:["takes","took","had taken","will take"],a:1,
-  e:"By the time + 過去（took），主要子句用過去完成式 had relocated。這題反過來考 by the time 子句本身用過去式。"}
+  e:"By the time + 過去（took），主要子句用過去完成式 had relocated。這題反過來考 by the time 子句本身用過去式。"},
+ {id:"G20-1",t:"詞性",q:"The committee took a different ______ to the staffing problem.",o:["approach","approaching","approachable","approached"],a:0,
+  e:"a different ___ to → 名詞 approach（方法）。注意搭配是 approach TO something。"},
+ {id:"G20-2",t:"詞性",q:"Exports rose while ______ sales remained flat.",o:["domestic","domestically","domesticate","domesticity"],a:0,
+  e:"修飾名詞 sales → 形容詞 domestic（國內的）。"},
+ {id:"G20-3",t:"文法",q:"The revised ______ must be followed by all warehouse staff.",o:["proceed","procedure","proceeding","procedural"],a:1,
+  e:"The revised ___ must be... → 需要名詞當主詞，procedure（程序）。procedural 是形容詞。"},
+ {id:"G20-4",t:"搭配",q:"We cannot ______ delivery before Friday.",o:["guarantee","guarantee of","guarantee for","guarantee to"],a:0,
+  e:"guarantee 是及物動詞，直接接受詞，不加介系詞。"},
+ {id:"G20-5",t:"詞性",q:"The audit ______ several errors in the previous report.",o:["reveal","revealed","revealing","revelation"],a:1,
+  e:"句子需要主要動詞，過去式 revealed。"},
+ {id:"G20-6",t:"詞性",q:"All staff should be ______ of the revised safety procedure.",o:["aware","awarely","awareness","awarded"],a:0,
+  e:"be aware of＝知道、察覺。be 動詞後接形容詞。"},
+ {id:"G20-7",t:"搭配",q:"I am writing ______ the quotation you sent last week.",o:["regarding","regard","regards","regarded"],a:0,
+  e:"regarding＝關於，介系詞。商務書信開頭常用。"},
+ {id:"G20-8",t:"文法",q:"The information ______ in the report must be verified.",o:["contain","contained","containing","contains"],a:1,
+  e:"分詞修飾被動：資訊「被」包含在報告裡 → contained。"},
+ {id:"G20-9",t:"詞性",q:"Accurate records are ______ for the annual audit.",o:["essence","essential","essentially","essentials"],a:1,
+  e:"be ___ for → 形容詞 essential。"},
+ {id:"G20-10",t:"介連",q:"______ numerous complaints, the company kept the original design.",o:["Although","Despite","Because","Since"],a:1,
+  e:"numerous complaints 是名詞片語（numerous 是形容詞）→ Despite。"},
+ {id:"G21-1",t:"詞性",q:"The venue can ______ up to 300 guests.",o:["accommodate","accommodation","accommodating","accommodated"],a:0,
+  e:"can + 原形動詞 → accommodate。"},
+ {id:"G21-2",t:"介連",q:"______ the preliminary results were positive, the trial will continue.",o:["Despite","Because of","Since","Prior to"],a:2,
+  e:"the preliminary results were positive 是完整句子 → 連接詞 Since。"},
+ {id:"G21-3",t:"搭配",q:"Late payment will ______ an additional fee.",o:["incur","occur","recur","concur"],a:0,
+  e:"incur a fee＝招致費用。occur 是「發生」，不及物。四個字長很像，看受詞判斷。"},
+ {id:"G21-4",t:"文法",q:"Members ______ before June are exempt from the new fee.",o:["register","registered","registering","registers"],a:1,
+  e:"分詞修飾：會員「被」登記 → registered（= who were registered）。"},
+ {id:"G21-5",t:"詞性",q:"The manager who ______ the project has resigned.",o:["oversee","oversaw","overseeing","overseen"],a:1,
+  e:"關係子句需要動詞，過去式 oversaw。"},
+ {id:"G21-6",t:"文法",q:"Neither of the proposals ______ feasible within the current budget.",o:["are","were","is","have been"],a:2,
+  e:"Neither of + 複數 → 動詞單數 is。"},
+ {id:"G21-7",t:"介連",q:"______ the disruption to service, all customers received a credit.",o:["Although","Due to","Because","While"],a:1,
+  e:"the disruption 是名詞片語 → 介系詞 Due to。"},
+ {id:"G21-8",t:"詞性",q:"The scope of the project has expanded ______ since January.",o:["consider","considerable","considerably","consideration"],a:2,
+  e:"修飾動詞 expanded → 副詞 considerably。"},
+ {id:"G21-9",t:"搭配",q:"All participants are required to sign a waiver ______ advance.",o:["on","in","at","by"],a:1,
+  e:"in advance＝事先。"},
+ {id:"G21-10",t:"文法",q:"If the schedule ______ feasible, we will confirm the venue today.",o:["prove","proves","will prove","proving"],a:1,
+  e:"if 子句用現在式代替未來式，主詞單數 → proves。"},
+ {id:"G21-11",t:"詞性",q:"______ meetings will be held in the east conference room.",o:["Subsequent","Subsequently","Subsequence","Subsequential"],a:0,
+  e:"修飾名詞 meetings → 形容詞 Subsequent（後續的）。"},
+ {id:"G21-12",t:"介連",q:"______ signing the waiver, participants may enter the workshop.",o:["Although","Upon","While","Because"],a:1,
+  e:"Upon + V-ing＝一…就…。後面是動名詞不是句子。"},
+ {id:"G22-1",t:"文法",q:"By the time the auditor left, the team ______ all the receipts.",o:["compiles","has compiled","had compiled","will compile"],a:2,
+  e:"By the time + 過去 → 主要子句用過去完成式 had compiled。"},
+ {id:"G22-2",t:"詞性",q:"The board gave its ______ approval to the merger.",o:["formal","formally","formality","formalize"],a:0,
+  e:"its ___ approval → 形容詞 formal。"},
+ {id:"G22-3",t:"介連",q:"Deliveries will continue ______ the renovation of the loading dock.",o:["while","during","although","because"],a:1,
+  e:"the renovation 是名詞片語 → during。while 要接句子。"},
+ {id:"G22-4",t:"搭配",q:"Full-time staff are eligible ______ the training allowance.",o:["to","for","with","of"],a:1,
+  e:"be eligible for＝有資格獲得。（對照 be entitled to）"},
+ {id:"G22-5",t:"文法",q:"Each of the branch managers ______ a monthly report.",o:["submit","submits","submitting","have submitted"],a:1,
+  e:"Each of + 複數 → 動詞單數 submits。"},
+ {id:"G22-6",t:"詞性",q:"The findings were presented ______ at the quarterly meeting.",o:["brief","briefly","briefness","briefing"],a:1,
+  e:"修飾動詞 presented → 副詞 briefly。"},
+ {id:"G22-7",t:"介連",q:"______ the system was upgraded, response times improved sharply.",o:["Despite","After","Because of","During"],a:1,
+  e:"the system was upgraded 是句子 → 連接詞 After。"},
+ {id:"G22-8",t:"文法",q:"The documents, ______ were filed last week, cannot be located.",o:["that","which","what","who"],a:1,
+  e:"逗號後的非限定子句只能用 which。"},
+ {id:"G22-9",t:"搭配",q:"The committee is responsible ______ reviewing all applications.",o:["for","to","of","with"],a:0,
+  e:"be responsible for。（對照 be in charge of，介系詞不同）"},
+ {id:"G22-10",t:"詞性",q:"The data must be entered ______ to avoid billing errors.",o:["accurate","accurately","accuracy","accurateness"],a:1,
+  e:"修飾動詞 entered → 副詞 accurately。"},
+ {id:"G22-11",t:"介連",q:"Access is restricted ______ further notice.",o:["until","unless","although","while"],a:0,
+  e:"until further notice＝直到另行通知，固定用法。"},
+ {id:"G22-12",t:"文法",q:"Unless the client ______ the revised terms, the contract will lapse.",o:["approve","approves","will approve","approving"],a:1,
+  e:"unless 子句用現在式代替未來式，主詞單數 → approves。"}
 ];
 
 const RQ=[
@@ -1028,6 +1110,41 @@ const RQ=[
    {id:"R13-3",q:"What is NOT included in the rent?",o:["Water","Internet","Electricity","Meeting rooms"],a:2,e:"細節：utilities included, except electricity。"},
    {id:"R13-4",q:"Which condition does Ms. Lin want to change?",o:["The monthly rent","The deposit amount","The minimum lease period","The move-in date"],a:2,e:"跨文章：廣告寫最少 3 年，她希望 2 年。"},
    {id:"R13-5",q:"What is suggested about the company?",o:["It is reducing staff","It plans to grow","It is relocating overseas","It owns Riverside Tower"],a:1,e:"推論題：提到明年新進人員、expansion → 公司在擴張。"}
+  ]},
+ {id:"R14",title:"新流程公告 ＋ 部門主管回覆（雙篇・錯題字密集）",
+  p:"【文章一】\nTo: All Department Heads\nFrom: Operations\nSubject: Revised Approval Procedure\n\nBeginning November 1, a revised procedure will apply to all purchase requests. The current approach has produced numerous delays, and an internal review revealed that most requests wait an average of nine days for approval.\n\nUnder the new procedure, requests below $2,000 no longer require director approval. Requests above that amount still do, but department heads must first verify that the supplier appears on our approved list. All supporting documents are considered confidential and must not be shared outside the department.\n\nThe intended result is a reduction in processing time from nine days to three. Please confirm by October 25 that your team is aware of the change.\n\n【文章二】\nTo: Operations\nFrom: Marisol Ferreira, Facilities\nSubject: Re: Revised Approval Procedure\n\nThank you for the update. My team is aware of the change and finds it appropriate.\n\nI do want to emphasize one potential problem. Facilities frequently orders replacement parts from domestic suppliers that are not yet on the approved list. Most of these orders fall well below $2,000, so under the previous procedure they were straightforward. I am reluctant to delay urgent repairs while a new supplier is verified.\n\nCould you confirm whether the verification step applies to requests below $2,000? If it does, I would like to pursue an exception for emergency repairs.\n\nMarisol",
+  qs:[
+   {id:"R14-1",q:"Why is the procedure being changed?",o:["To reduce costs","To shorten approval time","To hire more staff","To replace the supplier list"],a:1,e:"細節題：revealed that most requests wait nine days；intended result is a reduction to three days。"},
+   {id:"R14-2",q:"What must department heads do for requests above $2,000?",o:["Pay a deposit","Verify the supplier is on the approved list","Submit the request twice","Contact Facilities"],a:1,e:"細節題：must first verify that the supplier appears on our approved list。"},
+   {id:"R14-3",q:"What is Ms. Ferreira's main concern?",o:["The confidentiality rule","That her team was not informed","That verification may delay urgent repairs","The November 1 start date"],a:2,e:"推論題：她說 reluctant to delay urgent repairs while a new supplier is verified。"},
+   {id:"R14-4",q:"What does the notice NOT state clearly?",o:["When the change begins","Whether verification applies below $2,000","The confirmation deadline","The current average wait"],a:1,e:"這正是 Marisol 寫信要問的事 —— 公告只說 above that amount 要主管核准，沒講 verify 這一步適用範圍。跨文章找「缺口」的題型。"},
+   {id:"R14-5",q:"What does Ms. Ferreira request?",o:["A longer deadline","More staff","An exception for emergency repairs","A new supplier list"],a:2,e:"細節題：pursue an exception for emergency repairs。"}
+  ]},
+ {id:"R15",title:"健身房會員規章（單篇）",
+  p:"EASTGATE FITNESS — Membership Terms\n\nMonthly membership: $45\nAnnual membership: $480\n\nAll new members must sign a waiver before their first session. Members under 18 must be accompanied by a parent or guardian when signing.\n\nMembers may freeze their membership for up to two months per year at no charge. Requests must be submitted at least 14 days in advance. Cancellations require 30 days' written notice; fees already paid are not refunded, but any remaining balance may be applied as credit toward a future membership.\n\nGuests are welcome. Each member may bring one guest per month at no cost; additional guest visits incur a $12 fee.",
+  qs:[
+   {id:"R15-1",q:"How much does an annual membership save compared with paying monthly?",o:["$45","$60","$90","$120"],a:1,e:"計算題：$45 × 12 = $540，年繳 $480 → 省 $60。"},
+   {id:"R15-2",q:"What must a 17-year-old do to join?",o:["Pay an extra fee","Sign the waiver with a parent present","Wait until turning 18","Bring two guests"],a:1,e:"細節題：under 18 must be accompanied by a parent or guardian。"},
+   {id:"R15-3",q:"How far in advance must a freeze be requested?",o:["7 days","14 days","30 days","60 days"],a:1,e:"細節題。注意 30 days 是取消的規定，不是暫停。"},
+   {id:"R15-4",q:"What happens to fees already paid if a member cancels?",o:["They are fully refunded","They may become credit","They are donated","They transfer to a guest"],a:1,e:"細節題：not refunded, but may be applied as credit。"},
+   {id:"R15-5",q:"A member brings three guests in one month. What is the charge?",o:["Nothing","$12","$24","$36"],a:2,e:"計算題：第一位免費，第二、三位各 $12 → $24。"}
+  ]},
+ {id:"R16",title:"展覽攤位申請 ＋ 主辦單位回覆（雙篇）",
+  p:"【文章一】\nNORTHPORT TRADE EXPO — Exhibitor Information\n\nBooth sizes and rates:\n  Standard (3m × 3m)    $1,400\n  Premium (3m × 6m)     $2,600\n  Corner premium        $3,100\n\nAll rates include one table, two chairs, and basic lighting. Electricity is available for an additional $180. Exhibitors who book before August 1 receive a 15% early rate; after that date the standard rates apply.\n\nSetup takes place on October 9 between 8 a.m. and 6 p.m. The expo runs October 10–12. Booths left unattended for more than four hours may be reassigned.\n\n【文章二】\nTo: exhibitors@northportexpo.org\nFrom: j.okafor@brightlinetools.com\nSubject: Booth request\n\nHello,\n\nWe would like to reserve a premium booth. We submitted our application on July 28 and have not yet received confirmation.\n\nWe will need electricity for our demonstration equipment. Our team arrives on the evening of October 9, so we would like to know whether setup access is available on the morning of October 10 instead.\n\nPlease also confirm our final cost.\n\nJoseph Okafor",
+  qs:[
+   {id:"R16-1",q:"What will Mr. Okafor's booth cost in total?",o:["$2,600","$2,390","$2,780","$2,210"],a:1,e:"跨文章計算：7/28 申請 → 早鳥 15%，$2,600 × 0.85 = $2,210，加電費 $180 = $2,390。注意早鳥折扣不套用在電費上。"},
+   {id:"R16-2",q:"Why does Mr. Okafor ask about October 10?",o:["He wants an extra day at the expo","His team arrives too late to set up on October 9","He wants to change booths","He needs more electricity"],a:1,e:"推論題：團隊 10/9 晚上才到，但佈展只開放 10/9 白天。"},
+   {id:"R16-3",q:"What is included in the booth rate?",o:["Electricity","A table and two chairs","Overnight security","Printed materials"],a:1,e:"細節題。電力是另外加價的。"},
+   {id:"R16-4",q:"What could happen if a booth is left empty for five hours?",o:["A fine is charged","It may be reassigned","The rate increases","Nothing"],a:1,e:"細節題：more than four hours may be reassigned。五小時超過四小時。"}
+  ]},
+ {id:"R17",title:"訓練補助：規定＋申請信＋人資回覆（三篇）",
+  p:"【文章一】PROFESSIONAL DEVELOPMENT POLICY\n\nThe company reimburses course fees up to $1,500 per employee per calendar year.\n\nConditions:\n- The employee must have completed the probation period.\n- The course must be relevant to the employee's current role.\n- Approval must be obtained before enrollment. Courses begun without prior approval are not eligible.\n- Receipts must be submitted within 60 days of course completion.\n\nEmployees who leave the company within six months of completing a reimbursed course must repay the full amount.\n\n【文章二】\nTo: HR\nFrom: Lena Vasquez, Marketing\nSubject: Course reimbursement\n\nHello,\n\nI would like to request reimbursement for a digital analytics course. The fee is $1,750. I completed my probation in March and have been in the marketing team since.\n\nThe course ran from June 3 to July 30. I am submitting this request today, September 20, along with my receipt.\n\nLena\n\n【文章三】\nTo: Lena Vasquez\nFrom: HR\nSubject: Re: Course reimbursement\n\nDear Lena,\n\nThank you for your request. The course is clearly relevant to your role and your probation status is not an issue.\n\nHowever, I am unable to process this request as submitted. Please see the policy regarding timing. If you would like to discuss an exception, your department director would need to approve it in writing.\n\nAlso note that the annual limit applies, so the full fee could not be covered in any case.",
+  qs:[
+   {id:"R17-1",q:"What does HR confirm is NOT a problem with Lena's request?",o:["The amount she is claiming","Her probation status and the course's relevance","The date she submitted her receipt","Her department"],a:1,e:"細節題：人資明說 relevant to your role 和 probation status is not an issue。"},
+   {id:"R17-2",q:"Which condition did Lena most likely fail to meet?",o:["Prior approval before enrollment","The probation requirement","Course relevance","Submitting a receipt"],a:0,e:"推論題：人資說 probation 和 relevance 都沒問題，收據也交了。剩下的只有「報名前須先取得核准」—— 她整封信沒提過有事先申請。"},
+   {id:"R17-3",q:"How much could Lena receive at most?",o:["$1,750","$1,500","$250","Nothing"],a:1,e:"跨文章：年度上限 $1,500，課程費 $1,750，所以最多 $1,500。"},
+   {id:"R17-4",q:"What would Lena need for an exception?",o:["A new receipt","Written approval from her department director","A second course","A letter from the training provider"],a:1,e:"細節題。"},
+   {id:"R17-5",q:"What happens if an employee resigns three months after a reimbursed course?",o:["Nothing","They repay half","They repay the full amount","They lose next year's allowance"],a:2,e:"細節題：六個月內離職須全額償還。三個月在六個月內。"}
   ]}
 ];
 
@@ -1188,7 +1305,10 @@ const GBATCH=[
  {k:"G16",label:"第16批 核心字彙②"},
  {k:"G17",label:"第17批 核心字彙③"},
  {k:"G18",label:"第18批 商務書信"},
- {k:"G19",label:"第19批 合約規範"}
+ {k:"G19",label:"第19批 合約規範"},
+ {k:"G20",label:"第20批 錯題複習"},
+ {k:"G21",label:"第21批 進階商務"},
+ {k:"G22",label:"第22批 綜合複習"}
 ];
 GBATCH.forEach(g=>{
   const b=document.createElement("button");
