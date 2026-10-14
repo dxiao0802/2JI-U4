@@ -103,6 +103,27 @@
   .t-intro b{color:var(--red)}
   .t-est{font-size:26px;font-weight:700;margin:4px 0 2px}
   .t-warn{font-size:13px;color:var(--red);line-height:1.6;margin-top:8px}
+  .d-hero{background:var(--card);color:var(--ink);border-radius:12px;padding:18px;box-shadow:0 8px 22px rgba(0,0,0,.3);margin-bottom:12px}
+  .d-date{font-size:12px;color:#8D8776;letter-spacing:.5px}
+  .d-title{font-size:21px;font-weight:700;margin:2px 0 10px}
+  .d-ring{display:flex;align-items:center;gap:14px}
+  .d-pct{font-size:34px;font-weight:700;line-height:1}
+  .d-sub{font-size:13px;color:#5C5749;line-height:1.6}
+  .d-streak{display:inline-block;background:#EFE7D2;border-radius:999px;padding:3px 11px;font-size:12px;font-weight:600;color:#7A4438;margin-top:8px}
+  .d-task{background:var(--card);color:var(--ink);border-radius:10px;padding:14px 15px;margin-bottom:9px;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);display:flex;align-items:center;gap:12px}
+  .d-task.done{opacity:.6}
+  .d-check{flex:0 0 26px;height:26px;border-radius:50%;border:2px solid #C6BCA3;display:flex;align-items:center;
+    justify-content:center;font-size:14px;color:#FBF7EC;font-weight:700}
+  .d-task.done .d-check{background:var(--ok);border-color:var(--ok)}
+  .d-info{flex:1;min-width:0}
+  .d-name{font-size:15px;font-weight:600}
+  .d-task.done .d-name{text-decoration:line-through}
+  .d-meta{font-size:12px;color:#8D8776;margin-top:2px}
+  .d-go{flex:0 0 auto;background:var(--chip);color:#FBF7EC;border:none;border-radius:8px;padding:8px 15px;font-size:13px;font-weight:600;cursor:pointer}
+  .d-task.done .d-go{background:#7E8A89}
+  .d-bar{height:5px;background:#E3DCC8;border-radius:3px;overflow:hidden;margin-top:7px}
+  .d-bar>div{height:100%;background:var(--ok);transition:width .3s}
   .nt-intro{font-size:13px;opacity:.65;line-height:1.7;margin-bottom:12px}
   .nt-item{background:var(--card);color:var(--ink);border-radius:10px;margin-bottom:8px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.2)}
   .nt-head{padding:13px 15px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:15px;font-weight:600}
@@ -129,7 +150,8 @@
 <div class="wrap">
 <header><h1>多益練習室</h1><div class="count" id="count"></div></header>
 <div class="tabs">
-  <button class="tab on" data-t="cards">單字卡</button>
+  <button class="tab on" data-t="daily">今日任務</button>
+  <button class="tab" data-t="cards">單字卡</button>
   <button class="tab" data-t="notes">筆記</button>
   <button class="tab" data-t="grammar">文法</button>
   <button class="tab" data-t="reading">閱讀</button>
@@ -138,7 +160,20 @@
 </div>
 
 <!-- 單字卡 -->
-<section id="sec-cards">
+<!-- 今日任務 -->
+<section id="sec-daily">
+  <div class="d-hero">
+    <div class="d-date" id="dDate"></div>
+    <div class="d-title">今日任務</div>
+    <div class="d-ring"><div class="d-pct" id="dPct">0%</div><div class="d-sub" id="dSub"></div></div>
+    <div class="d-bar"><div id="dBar" style="width:0%"></div></div>
+    <div class="d-streak" id="dStreak"></div>
+  </div>
+  <div id="dTasks"></div>
+  <div class="note" id="dNote"></div>
+</section>
+
+<section id="sec-cards" class="hidden">
   <div class="chips" id="groupChips"></div>
   <div class="chips" style="margin:2px 0 12px">
     <button class="chip on" id="modeEZ">英 → 中</button>
@@ -587,9 +622,51 @@ const WORDS=[
  {en:"revenue stream",pos:"n.",zh:"收入來源",ex:"Subscriptions are our main revenue stream.",g:28},
  {en:"scope",pos:"n.",zh:"範圍",ex:"The scope of the project has expanded.",g:28},
  {en:"subsequent",pos:"adj.",zh:"後續的",ex:"Subsequent meetings were canceled.",g:28},
- {en:"waiver",pos:"n.",zh:"豁免、棄權書",ex:"All participants must sign a waiver.",g:28}
+ {en:"waiver",pos:"n.",zh:"豁免、棄權書",ex:"All participants must sign a waiver.",g:28},
+ {en:"itemize",pos:"v.",zh:"逐項列出",ex:"Please itemize all expenses on the form.",g:29},
+ {en:"remittance",pos:"n.",zh:"匯款",ex:"Remittance should be made by bank transfer.",g:29},
+ {en:"installment",pos:"n.",zh:"分期付款",ex:"The fee may be paid in three installments.",g:29},
+ {en:"surcharge",pos:"n.",zh:"附加費",ex:"A weekend surcharge of $25 applies.",g:29},
+ {en:"credit",pos:"n./v.",zh:"額度；貸記",ex:"The amount was credited to your account.",g:29},
+ {en:"balance due",pos:"n.",zh:"應付餘額",ex:"The balance due is $340.",g:29},
+ {en:"amenity",pos:"n.",zh:"便利設施",ex:"The hotel's amenities include a spa.",g:29},
+ {en:"concierge",pos:"n.",zh:"禮賓人員",ex:"Ask the concierge to arrange a taxi.",g:29},
+ {en:"applicant",pos:"n.",zh:"應徵者",ex:"Applicants must submit two references.",g:30},
+ {en:"credential",pos:"n.",zh:"資格證明",ex:"Please attach copies of your credentials.",g:30},
+ {en:"proficiency",pos:"n.",zh:"熟練程度",ex:"English proficiency is required.",g:30},
+ {en:"compensation",pos:"n.",zh:"薪酬",ex:"Compensation depends on experience.",g:30},
+ {en:"tenure",pos:"n.",zh:"任期、年資",ex:"After five years' tenure, staff get extra leave.",g:30},
+ {en:"turnover",pos:"n.",zh:"人員流動率；營業額",ex:"Staff turnover fell by half this year.",g:30},
+ {en:"shortlist",pos:"v./n.",zh:"列入候選名單",ex:"Four candidates were shortlisted.",g:30},
+ {en:"abolish",pos:"v.",zh:"廢除",ex:"The late fee was abolished last year.",g:31},
+ {en:"accelerate",pos:"v.",zh:"加速",ex:"We accelerated the testing schedule.",g:31},
+ {en:"allege",pos:"v.",zh:"聲稱",ex:"The report alleges a breach of contract.",g:31},
+ {en:"ambiguous",pos:"adj.",zh:"含糊的",ex:"The wording of clause 4 is ambiguous.",g:31},
+ {en:"attribute",pos:"v./n.",zh:"歸因於；特質",ex:"Growth is attributed to the new campaign.",g:31},
+ {en:"coincide",pos:"v.",zh:"同時發生、相符",ex:"The launch coincides with the trade fair.",g:31},
+ {en:"constitute",pos:"v.",zh:"構成",ex:"Three absences constitute grounds for review.",g:31},
+ {en:"deteriorate",pos:"v.",zh:"惡化",ex:"Conditions deteriorated over the winter.",g:31},
+ {en:"discrepancy",pos:"n.",zh:"不一致、落差",ex:"There is a discrepancy in the figures.",g:31},
+ {en:"dispatch",pos:"v./n.",zh:"發送、派遣",ex:"The parts were dispatched this morning.",g:31},
+ {en:"diversify",pos:"v.",zh:"多元化",ex:"The firm diversified into packaging.",g:31},
+ {en:"fluctuate",pos:"v.",zh:"波動",ex:"Prices fluctuate with demand.",g:31},
+ {en:"hinder",pos:"v.",zh:"阻礙",ex:"Bad weather hindered construction.",g:31},
+ {en:"incentive",pos:"n.",zh:"誘因",ex:"The bonus is an incentive to finish early.",g:32},
+ {en:"integrate",pos:"v.",zh:"整合",ex:"The two systems were integrated in May.",g:32},
+ {en:"lapse",pos:"v./n.",zh:"失效、過期",ex:"Your membership will lapse in June.",g:32},
+ {en:"mitigate",pos:"v.",zh:"減輕",ex:"Steps were taken to mitigate the risk.",g:32},
+ {en:"negligible",pos:"adj.",zh:"微不足道的",ex:"The difference in cost is negligible.",g:32},
+ {en:"obsolete",pos:"adj.",zh:"過時的",ex:"That model is now obsolete.",g:32},
+ {en:"offset",pos:"v.",zh:"抵銷",ex:"Savings offset the higher shipping cost.",g:32},
+ {en:"optimize",pos:"v.",zh:"最佳化",ex:"We optimized the delivery routes.",g:32},
+ {en:"precedent",pos:"n.",zh:"先例",ex:"This decision sets a precedent.",g:32},
+ {en:"reinstate",pos:"v.",zh:"恢復、復職",ex:"The discount was reinstated in August.",g:32},
+ {en:"stipulate",pos:"v.",zh:"規定、訂明",ex:"The contract stipulates a 30-day notice.",g:32},
+ {en:"supplement",pos:"v./n.",zh:"補充",ex:"We supplement the team with contractors.",g:32},
+ {en:"viable",pos:"adj.",zh:"可行的",ex:"This is the only viable option.",g:32},
+ {en:"yield",pos:"v./n.",zh:"產生；讓步",ex:"The study yielded unexpected results.",g:32}
 ];
-const GROUPS=[{id:0,label:"全部 343 字"},{id:1,label:"組別 1（0822）"},{id:2,label:"組別 2（0822-2）"},{id:3,label:"組別 3（0829）"},{id:4,label:"組別 4（人事）"},{id:5,label:"組別 5（採購財務）"},{id:6,label:"組別 6（行銷客服）"},{id:7,label:"組別 7（差旅設施）"},{id:8,label:"組別 8（報帳流程）"},{id:9,label:"組別 9（合約會議）"},{id:10,label:"組別 10（形副詞）"},{id:11,label:"組別 11（商務動詞）"},{id:12,label:"組別 12（生產品管）"},{id:13,label:"組別 13（租賃搬遷）"},{id:14,label:"組別 14（銀行金融）"},{id:15,label:"組別 15（IT辦公）"},{id:16,label:"組別 16（餐飲活動）"},{id:17,label:"組別 17（媒體出版）"},{id:18,label:"組別 18（人資福利）"},{id:19,label:"組別 19（交通建設）"},{id:20,label:"組別 20（L3-4 核心①）"},{id:21,label:"組別 21（商務②）"},{id:22,label:"組別 22（L3-4 核心②）"},{id:23,label:"組別 23（L3-4 核心③）"},{id:24,label:"組別 24（L3-4 核心④）"},{id:25,label:"組別 25（L3-4 核心⑤）"},{id:26,label:"組別 26（L3-4 核心⑥）"},{id:27,label:"組別 27（錯題同源字）"},{id:28,label:"組別 28（進階商務）"}];
+const GROUPS=[{id:0,label:"全部 385 字"},{id:1,label:"組別 1（0822）"},{id:2,label:"組別 2（0822-2）"},{id:3,label:"組別 3（0829）"},{id:4,label:"組別 4（人事）"},{id:5,label:"組別 5（採購財務）"},{id:6,label:"組別 6（行銷客服）"},{id:7,label:"組別 7（差旅設施）"},{id:8,label:"組別 8（報帳流程）"},{id:9,label:"組別 9（合約會議）"},{id:10,label:"組別 10（形副詞）"},{id:11,label:"組別 11（商務動詞）"},{id:12,label:"組別 12（生產品管）"},{id:13,label:"組別 13（租賃搬遷）"},{id:14,label:"組別 14（銀行金融）"},{id:15,label:"組別 15（IT辦公）"},{id:16,label:"組別 16（餐飲活動）"},{id:17,label:"組別 17（媒體出版）"},{id:18,label:"組別 18（人資福利）"},{id:19,label:"組別 19（交通建設）"},{id:20,label:"組別 20（L3-4 核心①）"},{id:21,label:"組別 21（商務②）"},{id:22,label:"組別 22（L3-4 核心②）"},{id:23,label:"組別 23（L3-4 核心③）"},{id:24,label:"組別 24（L3-4 核心④）"},{id:25,label:"組別 25（L3-4 核心⑤）"},{id:26,label:"組別 26（L3-4 核心⑥）"},{id:27,label:"組別 27（錯題同源字）"},{id:28,label:"組別 28（進階商務）"},{id:29,label:"組別 29（帳務差旅）"},{id:30,label:"組別 30（招募人資）"},{id:31,label:"組別 31（進階動詞①）"},{id:32,label:"組別 32（進階動詞②）"}];
 
 const GQ=[
  {id:"G1-1",t:"介連",q:"The annual report must be submitted ______ Friday.",o:["by","until","on to","at"],a:0,
@@ -1007,7 +1084,47 @@ const GQ=[
  {id:"G22-11",t:"介連",q:"Access is restricted ______ further notice.",o:["until","unless","although","while"],a:0,
   e:"until further notice＝直到另行通知，固定用法。"},
  {id:"G22-12",t:"文法",q:"Unless the client ______ the revised terms, the contract will lapse.",o:["approve","approves","will approve","approving"],a:1,
-  e:"unless 子句用現在式代替未來式，主詞單數 → approves。"}
+  e:"unless 子句用現在式代替未來式，主詞單數 → approves。"},
+ {id:"G23-1",t:"詞性",q:"Please ______ all travel expenses on the reimbursement form.",o:["item","itemize","itemized","itemization"],a:1,
+  e:"Please + 原形動詞 → itemize。"},
+ {id:"G23-2",t:"介連",q:"______ two invoices remain outstanding, the account cannot be closed.",o:["Despite","Because of","Since","Prior to"],a:2,
+  e:"two invoices remain outstanding 是完整句子 → 連接詞 Since。"},
+ {id:"G23-3",t:"搭配",q:"The registration fee may be paid ______ three installments.",o:["in","on","by","at"],a:0,
+  e:"pay in installments＝分期付款，固定搭配。"},
+ {id:"G23-4",t:"文法",q:"The surcharge ______ to weekend bookings has been reduced.",o:["apply","applied","applying","applies"],a:1,
+  e:"分詞修飾被動：附加費「被」套用於週末訂房 → applied。"},
+ {id:"G23-5",t:"詞性",q:"The hotel offers a wide range of ______ for business travelers.",o:["amenity","amenities","amenable","amenably"],a:1,
+  e:"a wide range of + 複數名詞 → amenities。"},
+ {id:"G23-6",t:"文法",q:"Neither of the remittances ______ received before the deadline.",o:["are","were","was","have been"],a:2,
+  e:"Neither of + 複數 → 動詞單數 was。"},
+ {id:"G23-7",t:"介連",q:"______ the revised itinerary, the team will arrive a day earlier.",o:["Although","According to","Because","While"],a:1,
+  e:"the revised itinerary 是名詞片語 → 介系詞 According to（根據）。"},
+ {id:"G23-8",t:"搭配",q:"The balance due must be settled ______ the end of the month.",o:["by","until","during","since"],a:0,
+  e:"by + 時間點＝之前完成。settle 是一次性動作，不能用 until。"},
+ {id:"G23-9",t:"詞性",q:"The concierge handled the request ______ and professionally.",o:["prompt","promptly","promptness","prompted"],a:1,
+  e:"修飾動詞 handled → 副詞 promptly。and 後面是 professionally，詞性要一致。"},
+ {id:"G23-10",t:"文法",q:"If the client ______ the balance by Friday, we will waive the surcharge.",o:["settle","settles","will settle","settling"],a:1,
+  e:"if 子句用現在式代替未來式，主詞單數 → settles。"},
+ {id:"G24-1",t:"詞性",q:"All ______ must provide two professional references.",o:["apply","applicants","application","applicable"],a:1,
+  e:"All + 複數名詞，且指「人」→ applicants。application 是「申請書」。"},
+ {id:"G24-2",t:"介連",q:"______ her limited experience, Ms. Oyelaran was shortlisted.",o:["Although","Despite","Because","Since"],a:1,
+  e:"her limited experience 是名詞片語 → Despite。"},
+ {id:"G24-3",t:"搭配",q:"Compensation will be commensurate ______ experience.",o:["with","to","for","of"],a:0,
+  e:"be commensurate with＝與…相稱。徵才廣告固定用語。"},
+ {id:"G24-4",t:"文法",q:"Candidates ______ for the second round will be contacted Friday.",o:["select","selected","selecting","selects"],a:1,
+  e:"分詞修飾被動：候選人「被」選出 → selected。"},
+ {id:"G24-5",t:"詞性",q:"A high level of English ______ is essential for this role.",o:["proficient","proficiently","proficiency","proficiencies"],a:2,
+  e:"a high level of + 不可數名詞 → proficiency。"},
+ {id:"G24-6",t:"文法",q:"Each of the three supervisors ______ a different department.",o:["oversee","oversees","overseeing","have overseen"],a:1,
+  e:"Each of + 複數 → 動詞單數 oversees。"},
+ {id:"G24-7",t:"介連",q:"______ the new training program was introduced, turnover has fallen sharply.",o:["Despite","Because of","Since","During"],a:2,
+  e:"the new training program was introduced 是句子 → 連接詞 Since（自從／因為，兩個意思都接句子）。"},
+ {id:"G24-8",t:"搭配",q:"Staff become eligible ______ additional leave after five years.",o:["for","to","with","on"],a:0,
+  e:"be eligible for。（對照 be entitled to）"},
+ {id:"G24-9",t:"詞性",q:"The position has remained ______ for over three months.",o:["vacancy","vacant","vacantly","vacate"],a:1,
+  e:"remain 是連綴動詞，後接形容詞 vacant（空缺的）。vacancy 是名詞。"},
+ {id:"G24-10",t:"文法",q:"Unless the applicant ______ the required credentials, the offer will be withdrawn.",o:["provide","provides","will provide","providing"],a:1,
+  e:"unless 子句用現在式代替未來式，主詞單數 → provides。"}
 ];
 
 const RQ=[
@@ -1145,6 +1262,24 @@ const RQ=[
    {id:"R17-3",q:"How much could Lena receive at most?",o:["$1,750","$1,500","$250","Nothing"],a:1,e:"跨文章：年度上限 $1,500，課程費 $1,750，所以最多 $1,500。"},
    {id:"R17-4",q:"What would Lena need for an exception?",o:["A new receipt","Written approval from her department director","A second course","A letter from the training provider"],a:1,e:"細節題。"},
    {id:"R17-5",q:"What happens if an employee resigns three months after a reimbursed course?",o:["Nothing","They repay half","They repay the full amount","They lose next year's allowance"],a:2,e:"細節題：六個月內離職須全額償還。三個月在六個月內。"}
+  ]},
+ {id:"R18",title:"飯店帳單爭議：訂房確認 ＋ 帳單 ＋ 客訴信（三篇）",
+  p:"【文章一】BOOKING CONFIRMATION — Harbor Crest Hotel\n\nGuest: Daniela Rossi\nCheck-in: May 4　Check-out: May 8\nRoom: Executive King, $190 per night\n\nIncluded: breakfast, Wi-Fi, use of the fitness center.\nA weekend surcharge of $25 per night applies to Friday and Saturday stays.\nCancellation: free until 48 hours before check-in.\n\n【文章二】\nSTATEMENT — Harbor Crest Hotel\n\nRoom charges (4 nights)        $760\nWeekend surcharge (2 nights)    $50\nBreakfast (4 days)              $72\nLaundry service                 $34\nBalance due                    $916\n\n【文章三】\nTo: billing@harborcrest.com\nFrom: d.rossi@meridianlaw.com\nSubject: Statement for reservation 44812\n\nHello,\n\nI have reviewed my statement and believe one line is incorrect. Please check my booking confirmation and remove the charge in question.\n\nI would also like to point out that I checked out on the morning of May 8, so I was charged for the correct number of nights.\n\nPlease send a revised statement showing the corrected balance due. I will remit payment within seven days of receiving it.\n\nDaniela Rossi",
+  qs:[
+   {id:"R18-1",q:"Which charge is Ms. Rossi disputing?",o:["Room charges","Weekend surcharge","Breakfast","Laundry service"],a:2,e:"跨文章：訂房確認寫 breakfast 已包含，帳單卻另外收 $72。其他三項都符合確認單。"},
+   {id:"R18-2",q:"What should the corrected balance be?",o:["$916","$882","$844","$810"],a:2,e:"計算題：$916 − $72 = $844。"},
+   {id:"R18-3",q:"Why is the weekend surcharge $50?",o:["It is a flat fee","Two nights of her stay fell on a weekend","She checked out late","She upgraded her room"],a:1,e:"跨文章：$25 × 2 晚。5/4 入住到 5/8 退房共四晚，其中兩晚是週五、週六。"},
+   {id:"R18-4",q:"Why does Ms. Rossi mention her check-out time?",o:["To request a late check-out","To confirm the night count is correct","To complain about the staff","To ask for a refund"],a:1,e:"推論題：她在排除另一個可能的爭議點，表示自己不是在爭房價晚數。"},
+   {id:"R18-5",q:"When will Ms. Rossi pay?",o:["Immediately","Within seven days of the original statement","Within seven days of receiving a revised statement","After checking out"],a:2,e:"細節題：within seven days of receiving it（it 指修正後的帳單）。"}
+  ]},
+ {id:"R19",title:"徵才廣告 ＋ 應徵信（雙篇）",
+  p:"【文章一】\nTECHNICAL WRITER — Halvorsen Instruments\n\nWe are seeking a technical writer to join our documentation team in Kaohsiung.\n\nRequirements:\n- At least three years' experience writing technical documentation\n- English proficiency at a professional level\n- A degree in engineering, communications, or a related field\n- Familiarity with version control systems is preferred but not required\n\nCompensation is commensurate with experience. Staff become eligible for an additional five days of leave after three years' tenure.\n\nApplications close November 14. Shortlisted candidates will be contacted within two weeks of that date. Please send a resume and two professional references to careers@halvorsen.com. Applications without references will not be considered.\n\n【文章二】\nTo: careers@halvorsen.com\nFrom: t.bergstrom@mailhive.net\nSubject: Technical Writer position\n\nDear Hiring Team,\n\nI am writing to apply for the technical writer position.\n\nI hold a degree in mechanical engineering and have spent the last four years documenting control systems at a mid-sized manufacturer. I use Git daily and have maintained documentation repositories for three product lines.\n\nMy resume is attached. My former supervisor has agreed to serve as a reference, and I am contacting a second colleague now — I will forward her details before the closing date.\n\nI am available for interview from November 20.\n\nTobias Bergstrom",
+  qs:[
+   {id:"R19-1",q:"Which requirement does Mr. Bergstrom exceed?",o:["The degree requirement","Years of experience","English proficiency","Version control familiarity"],a:1,e:"跨文章：廣告要求至少三年，他有四年。學歷是符合不是超過；Git 是加分項不是要求。"},
+   {id:"R19-2",q:"What is currently missing from his application?",o:["His resume","A second reference","His degree certificate","His contact details"],a:1,e:"跨文章：廣告要兩位推薦人，他目前只確定一位。"},
+   {id:"R19-3",q:"What would happen if he did not send the second reference in time?",o:["He would be interviewed anyway","His application would not be considered","He would be placed on a waiting list","He would need to reapply next year"],a:1,e:"跨文章推論：Applications without references will not be considered。"},
+   {id:"R19-4",q:"By when can shortlisted candidates expect to hear back?",o:["November 14","November 20","November 28","December 14"],a:2,e:"計算題：截止 11/14 起兩週內 → 11/28。"},
+   {id:"R19-5",q:"What is indicated about version control experience?",o:["It is required","It is an advantage","It disqualifies applicants","It replaces the degree requirement"],a:1,e:"細節題：preferred but not required。他提 Git 是在強化這個加分項。"}
   ]}
 ];
 
@@ -1174,8 +1309,8 @@ if(!window.storage){
     async set(k,v){localStorage.setItem(k,v);return{key:k,value:v};}
   };
 }
-const STORE_KEYS=["toeic-marks","toeic-quiz","toeic-testwords","toeic-leveltest","toeic-keys","toeic-wordstats"];
-let marks={}, quiz={}, testWords=[], lastTest=null;   // quiz[qid] = {r:0, w:0}
+const STORE_KEYS=["toeic-marks","toeic-quiz","toeic-testwords","toeic-leveltest","toeic-keys","toeic-wordstats","toeic-daily"];
+let marks={}, quiz={}, testWords=[], lastTest=null, daily=null;   // quiz[qid] = {r:0, w:0}
 let wordStats={};   // wordStats[單字 i] = {r:認得次數, w:需複習次數}
 async function load(){
   try{const m=await window.storage.get("toeic-marks");if(m&&m.value)marks=JSON.parse(m.value);}catch(e){}
@@ -1183,6 +1318,7 @@ async function load(){
   try{const t=await window.storage.get("toeic-testwords");if(t&&t.value)testWords=JSON.parse(t.value);}catch(e){}
   try{const l=await window.storage.get("toeic-leveltest");if(l&&l.value)lastTest=JSON.parse(l.value);}catch(e){}
   try{const s=await window.storage.get("toeic-wordstats");if(s&&s.value)wordStats=JSON.parse(s.value);}catch(e){}
+  try{const d=await window.storage.get("toeic-daily");if(d&&d.value)daily=JSON.parse(d.value);}catch(e){}
 }
 async function saveWordStats(){try{await window.storage.set("toeic-wordstats",JSON.stringify(wordStats));}catch(e){}}
 function recordWord(i,ok){
@@ -1211,6 +1347,7 @@ function record(qid,ok){
   if(!quiz[qid])quiz[qid]={r:0,w:0};
   ok?quiz[qid].r++:quiz[qid].w++;
   saveQuiz();
+  noteDaily(qid);
 }
 const $=id=>document.getElementById(id);
 
@@ -1219,10 +1356,11 @@ document.querySelectorAll(".tab").forEach(t=>{
   t.onclick=()=>{
     document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
     t.classList.add("on");
-    ["cards","notes","grammar","reading","test","stats"].forEach(s=>$("sec-"+s).classList.toggle("hidden",s!==t.dataset.t));
+    ["daily","cards","notes","grammar","reading","test","stats"].forEach(s=>$("sec-"+s).classList.toggle("hidden",s!==t.dataset.t));
     if(t.dataset.t==="stats")renderStats();
     if(t.dataset.t==="test")renderTestHome();
     if(t.dataset.t==="notes")renderNotes();
+    if(t.dataset.t==="daily")renderDaily();
   };
 });
 
@@ -1232,7 +1370,7 @@ const card=$("card");
 function buildDeck(shuffle){
   const weak=group===-1?weakGroups():null;
   deck=WORDS.concat(testWords).map((w,i)=>({...w,i:w.dyn?"t:"+w.en:i}))
-    .filter(w=>(group===0||(weak?weak.includes(w.g):w.g===group))&&(!reviewOnly||marks[w.i]));
+    .filter(w=>(group===0||(group===98?(daily&&daily.vocab.indexOf(w.i)>=0):weak?weak.includes(w.g):w.g===group))&&(!reviewOnly||marks[w.i]));
   if(shuffle)for(let i=deck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]];}
   if(idx>=deck.length)idx=0;
 }
@@ -1243,7 +1381,7 @@ function renderCards(){
   $("emptyCards").classList.toggle("hidden",has);
   $("emptyCards").textContent=
     group===-1&&!weakGroups().length?`還看不出弱點。先在各組按「認得／需複習」，每組至少 ${WEAK_MIN} 次就會開始統計。`:
-    reviewOnly?"這個範圍沒有標記「需複習」的單字。":(group===99?"還沒有測驗不會的字，去「測驗」分頁做一次單字量測驗。":"這個範圍目前沒有單字。");
+    reviewOnly?"這個範圍沒有標記「需複習」的單字。":(group===98?"今日任務還沒產生，先去「今日任務」分頁。":group===99?"還沒有測驗不會的字，去「測驗」分頁做一次單字量測驗。":"這個範圍目前沒有單字。");
   $("count").textContent=group===-1&&has
     ?`弱點：${weakGroups().map(g=>g===99?"測驗":"組別 "+g).join("、")}，共 ${deck.length} 張`
     :`單字 ${deck.length} 張`;
@@ -1260,7 +1398,7 @@ function renderCards(){
   $("backMain").textContent=ez?w.zh:w.en; $("backMain").className=ez?"zh":"word";
   $("backEx").textContent=w.ex;
 }
-GROUPS.push({id:99,label:"測驗不會的字"});
+GROUPS.push({id:98,label:"今日任務單字"},{id:99,label:"測驗不會的字"});
 [...GROUPS,{id:-1,label:"★ 弱點加強"}].forEach(g=>{
   const b=document.createElement("button");
   b.className="chip"+(g.id===0?" on":"");b.textContent=g.label;b.dataset.g=g.id;
@@ -1270,8 +1408,8 @@ GROUPS.push({id:99,label:"測驗不會的字"});
 card.onclick=()=>card.classList.toggle("flip");
 $("speakBtn").onclick=e=>{e.stopPropagation();const w=deck[idx];if(!w)return;
   try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(w.en);u.lang="en-US";u.rate=.92;speechSynthesis.speak(u);}catch(err){}};
-$("knowBtn").onclick=async()=>{const w=deck[idx];if(w){recordWord(w.i,true);if(marks[w.i]){delete marks[w.i];await saveMarks();}}if(deck.length){idx=(idx+1)%deck.length;renderCards();}};
-$("againBtn").onclick=async()=>{const w=deck[idx];if(w){recordWord(w.i,false);marks[w.i]=1;await saveMarks();}if(deck.length){idx=(idx+1)%deck.length;renderCards();}};
+$("knowBtn").onclick=async()=>{const w=deck[idx];if(w){recordWord(w.i,true);noteDailyWord(w.i);if(marks[w.i]){delete marks[w.i];await saveMarks();}}if(deck.length){idx=(idx+1)%deck.length;renderCards();}};
+$("againBtn").onclick=async()=>{const w=deck[idx];if(w){recordWord(w.i,false);noteDailyWord(w.i);marks[w.i]=1;await saveMarks();}if(deck.length){idx=(idx+1)%deck.length;renderCards();}};
 function practiceGroup(id){
   document.querySelector('.tab[data-t="cards"]').click();
   document.querySelector(`#groupChips .chip[data-g="${id}"]`).click();
@@ -1287,6 +1425,7 @@ let gFilterType="全部",gFilterBatch="全部",gIdx=0,gList=[];
 const GTYPES=["全部","詞性","介連","搭配","文法"];
 const GBATCH=[
  {k:"全部",label:"全部批次"},
+ {k:"今日",label:"★ 今日 8 題"},
  {k:"G1",label:"第1批 0822"},
  {k:"G2",label:"第2批 0822-2"},
  {k:"G3",label:"第3批 0829"},
@@ -1308,7 +1447,9 @@ const GBATCH=[
  {k:"G19",label:"第19批 合約規範"},
  {k:"G20",label:"第20批 錯題複習"},
  {k:"G21",label:"第21批 進階商務"},
- {k:"G22",label:"第22批 綜合複習"}
+ {k:"G22",label:"第22批 綜合複習"},
+ {k:"G23",label:"第23批 帳務差旅"},
+ {k:"G24",label:"第24批 招募人資"}
 ];
 GBATCH.forEach(g=>{
   const b=document.createElement("button");
@@ -1323,7 +1464,8 @@ GTYPES.forEach(t=>{
   $("gFilter").appendChild(b);
 });
 function buildG(){
-  gList=GQ.filter(q=>(gFilterType==="全部"||q.t===gFilterType)&&(gFilterBatch==="全部"||q.id.startsWith(gFilterBatch+"-")));
+  gList=GQ.filter(q=>(gFilterType==="全部"||q.t===gFilterType)&&(
+    gFilterBatch==="全部"?true:gFilterBatch==="今日"?(daily&&daily.gq.indexOf(q.id)>=0):q.id.startsWith(gFilterBatch+"-")));
   if(gIdx>=gList.length)gIdx=0;
 }
 function renderG(){
@@ -1857,6 +1999,104 @@ function drawNotes(){
   });
 }
 
+/* ============ 今日任務 ============ */
+const D_VOCAB=25, D_GRAM=8;
+function todayKey(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
+function hashStr(s){let x=2166136261;for(let i=0;i<s.length;i++){x^=s.charCodeAt(i);x=Math.imul(x,16777619);}return x>>>0;}
+function rngFrom(seed){let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function shuffleSeed(arr,rnd){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function prevKey(k){const [y,m,d]=k.split("-").map(Number);const dt=new Date(y,m-1,d);dt.setDate(dt.getDate()-1);return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;}
+
+function buildDaily(){
+  const key=todayKey(), rnd=rngFrom(hashStr(key));
+  const all=WORDS.map((w,i)=>i).concat(testWords.map(w=>"t:"+w.en));
+  const review=shuffleSeed(all.filter(i=>marks[i]),rnd);
+  const rest=shuffleSeed(all.filter(i=>!marks[i]),rnd);
+  const vocab=review.slice(0,Math.min(review.length,Math.ceil(D_VOCAB*0.6)));
+  for(const i of rest){if(vocab.length>=D_VOCAB)break;vocab.push(i);}
+  for(const i of review){if(vocab.length>=D_VOCAB)break;if(vocab.indexOf(i)<0)vocab.push(i);}
+
+  const wrong=shuffleSeed(GQ.filter(q=>quiz[q.id]&&quiz[q.id].w>0).map(q=>q.id),rnd);
+  const fresh=shuffleSeed(GQ.filter(q=>!quiz[q.id]).map(q=>q.id),rnd);
+  const seen=shuffleSeed(GQ.filter(q=>quiz[q.id]&&!quiz[q.id].w).map(q=>q.id),rnd);
+  const gq=[];
+  for(const src of [wrong.slice(0,4),fresh,seen,wrong]){for(const id of src){if(gq.length>=D_GRAM)break;if(gq.indexOf(id)<0)gq.push(id);}}
+
+  const untouched=RQ.filter(pg=>pg.qs.every(q=>!quiz[q.id]));
+  const pool=untouched.length?untouched:RQ;
+  const rid=shuffleSeed(pool.map(p=>p.id),rnd)[0];
+
+  const streak=(daily&&daily.date===prevKey(key)&&daily.completed)?(daily.streak||0):(daily&&daily.completed&&daily.date===key?daily.streak:0);
+  daily={date:key,vocab,gq,rid,vDone:[],gDone:[],rDone:[],streak:streak||0,completed:false};
+  saveDaily();
+}
+async function saveDaily(){try{await window.storage.set("toeic-daily",JSON.stringify(daily));}catch(e){}}
+function ensureDaily(){if(!daily||daily.date!==todayKey())buildDaily();}
+function noteDailyWord(i){
+  if(!daily||daily.date!==todayKey())return;
+  if(daily.vocab.indexOf(i)>=0&&daily.vDone.indexOf(i)<0){daily.vDone.push(i);checkComplete();saveDaily();}
+}
+function noteDaily(qid){
+  if(!daily||daily.date!==todayKey())return;
+  let ch=false;
+  if(daily.gq.indexOf(qid)>=0&&daily.gDone.indexOf(qid)<0){daily.gDone.push(qid);ch=true;}
+  const pg=RQ.find(p=>p.id===daily.rid);
+  if(pg&&pg.qs.some(q=>q.id===qid)&&daily.rDone.indexOf(qid)<0){daily.rDone.push(qid);ch=true;}
+  if(ch){checkComplete();saveDaily();}
+}
+function dailyParts(){
+  const pg=RQ.find(p=>p.id===daily.rid);
+  const rTotal=pg?pg.qs.length:0;
+  return [
+    {k:"v",name:"單字卡",done:daily.vDone.length,total:daily.vocab.length,meta:"今日抽選，需複習的優先",go:()=>{group=98;reviewOnly=false;idx=0;syncCardChips();buildDeck();renderCards();switchTab("cards");}},
+    {k:"g",name:"文法",done:daily.gDone.length,total:daily.gq.length,meta:"以前錯過的優先",go:()=>{gFilterBatch="今日";gFilterType="全部";gIdx=0;syncGChips();buildG();renderG();switchTab("grammar");}},
+    {k:"r",name:"閱讀 "+(pg?pg.title:""),done:daily.rDone.length,total:rTotal,meta:"一篇，全部答完才算",go:()=>{const i=RQ.findIndex(p=>p.id===daily.rid);if(i>=0){rIdx=i;[...$("rPick").children].forEach((c,j)=>c.classList.toggle("on",j===i));renderR();}switchTab("reading");}}
+  ];
+}
+function checkComplete(){
+  const parts=dailyParts();
+  const all=parts.every(p=>p.total===0||p.done>=p.total);
+  if(all&&!daily.completed){daily.completed=true;daily.streak=(daily.streak||0)+1;}
+}
+function switchTab(name){
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.dataset.t===name));
+  ["daily","cards","notes","grammar","reading","test","stats"].forEach(s=>$("sec-"+s).classList.toggle("hidden",s!==name));
+  window.scrollTo(0,0);
+}
+function syncCardChips(){[...$("groupChips").children].forEach(c=>c.classList.toggle("on",c.textContent.indexOf("今日任務單字")>=0));
+  $("reviewOnly").classList.remove("on");}
+function syncGChips(){
+  [...$("gBatch").children].forEach(c=>c.classList.toggle("on",c.textContent.indexOf("今日")>=0));
+  [...$("gFilter").children].forEach(c=>c.classList.toggle("on",c.textContent==="全部"));}
+
+function renderDaily(){
+  ensureDaily();
+  const parts=dailyParts();
+  const done=parts.reduce((s,p)=>s+Math.min(p.done,p.total),0);
+  const tot=parts.reduce((s,p)=>s+p.total,0);
+  const pct=tot?Math.round(done/tot*100):0;
+  const d=new Date();
+  $("dDate").textContent=`${d.getMonth()+1} 月 ${d.getDate()} 日`;
+  $("dPct").textContent=pct+"%";
+  $("dSub").innerHTML=daily.completed?"今天的任務完成了。<br>想多做就直接去各分頁。":`還剩 ${tot-done} 項<br>大約 15～20 分鐘`;
+  $("dBar").style.width=pct+"%";
+  $("dStreak").textContent=daily.streak>0?`🔥 連續 ${daily.streak} 天`:"完成一次就開始累積連續天數";
+  const box=$("dTasks");box.innerHTML="";
+  parts.forEach(p=>{
+    const fin=p.total>0&&p.done>=p.total;
+    const el=document.createElement("div");
+    el.className="d-task"+(fin?" done":"");
+    el.innerHTML=`<div class="d-check">${fin?"✓":""}</div>
+      <div class="d-info"><div class="d-name">${p.name}</div>
+      <div class="d-meta">${p.done} / ${p.total}　${p.meta}</div></div>`;
+    const b=document.createElement("button");
+    b.className="d-go";b.textContent=fin?"再做":"開始";b.onclick=p.go;
+    el.appendChild(b);box.appendChild(el);
+  });
+  $("dNote").innerHTML='每天 0 點自動換一份。單字選了你標「需複習」的優先，文法選你答錯過的優先。<br><a href="#" id="dReroll" style="color:#CFC9B8">重抽今天這份</a>';
+  $("dReroll").onclick=e=>{e.preventDefault();if(confirm("重抽今天的任務？進度會歸零。")){const s=daily.streak;buildDaily();daily.streak=s;saveDaily();renderDaily();}};
+}
+
 /* ============ 啟動 ============ */
 (async()=>{
   await load();
@@ -1864,6 +2104,7 @@ function drawNotes(){
   buildDeck();renderCards();
   buildG();renderG();
   renderR();
+  renderDaily();
 })();
 </script>
 </body>
