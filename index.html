@@ -283,7 +283,6 @@
   <div class="statbox"><h3>答錯過的題目</h3><div class="wronglist" id="wrongList">還沒有紀錄。</div></div>
   <button class="copybtn" id="copyBtn">複製結果給 Claude</button>
   <div class="note">我沒辦法直接看到你在這裡的作答，<br>做完按上面的按鈕，把結果貼回聊天室給我。</div>
-  <button class="copybtn" id="resetBtn" style="background:#4A5A5B;color:#E9E4D6;margin-top:10px">清除所有作答紀錄</button>
   <div class="kb-actions" style="margin-top:10px">
     <button id="exportBtn">匯出紀錄（複製）</button>
     <button id="importBtn">匯入紀錄（貼上）</button>
@@ -1169,7 +1168,27 @@ const GQ=[
  {id:"G25-9",t:"搭配",q:"Several customers have inquired ______ the delayed shipment.",o:["about","to","for","on"],a:0,
   e:"inquire about＝詢問關於…。"},
  {id:"G25-10",t:"文法",q:"If the supplier ______ to deliver on time, we will seek an alternative.",o:["fail","fails","will fail","failing"],a:1,
-  e:"if 子句用現在式代替未來式，主詞單數 → fails。"}
+  e:"if 子句用現在式代替未來式，主詞單數 → fails。"},
+ {id:"G26-1",t:"文法",q:"By the time the technician ______, the system had been down for three hours.",o:["arrives","arrived","had arrived","has arrived"],a:1,
+  e:"★跟著 by the time 的子句用「過去簡單式」→ arrived。另一個子句才是 had been。"},
+ {id:"G26-2",t:"文法",q:"By the time the policy took effect, most staff ______ already relocated.",o:["have","has","had","will have"],a:2,
+  e:"★by the time 子句已經是過去式 took，另一個子句用 had + p.p. → had relocated。"},
+ {id:"G26-3",t:"文法",q:"By the time we ______ the warehouse, the shipment had already left.",o:["reach","reached","had reached","reaching"],a:1,
+  e:"by the time 那一句 → 過去簡單式 reached。"},
+ {id:"G26-4",t:"文法",q:"The auditor ______ before the manager returned from lunch.",o:["leaves","had left","has left","leaving"],a:1,
+  e:"before 子句是過去式 returned，先發生的動作用 had left。"},
+ {id:"G26-5",t:"文法",q:"Only senior staff ______ to approve overtime requests.",o:["authorize","are authorized","authorizing","authorization"],a:1,
+  e:"員工是「被」授權 → be authorized to。主詞複數用 are。"},
+ {id:"G26-6",t:"文法",q:"The outstanding balance ______ before the account can be closed.",o:["must settle","must be settled","must settling","must have settle"],a:1,
+  e:"餘額是「被」結清 → must be settled。"},
+ {id:"G26-7",t:"介連",q:"Smoking is prohibited ______ the entire facility.",o:["throughout","although","while","whereas"],a:0,
+  e:"後面是名詞 the entire facility → 介系詞 throughout（遍及整個…）。"},
+ {id:"G26-8",t:"詞性",q:"Details of the ______ restructuring will be announced on Monday.",o:["forthcoming","forthcomingly","forthcome","forthcomings"],a:0,
+  e:"the ___ restructuring → 形容詞 forthcoming（即將到來的）。"},
+ {id:"G26-9",t:"介連",q:"______ the contract was signed, deliveries began immediately.",o:["Despite","Once","Because of","Prior to"],a:1,
+  e:"the contract was signed 是完整句子 → 連接詞 Once。"},
+ {id:"G26-10",t:"文法",q:"Either party may cancel ______ 30 days' written notice.",o:["with","while","although","unless"],a:0,
+  e:"後面是名詞片語 30 days' written notice → 介系詞 with（憑…）。"}
 ];
 
 const RQ=[
@@ -1334,6 +1353,15 @@ const RQ=[
    {id:"R20-3",q:"Which finding required a written plan?",o:["Fire exit signage","Maintenance records","Training log","All three"],a:1,e:"跨文章：只有 Major 需要書面計畫，Major 的只有維修紀錄那項。"},
    {id:"R20-4",q:"Was the February inspection report submitted on time?",o:["No, it was late","Yes","It was not required","The passage does not say"],a:1,e:"細節題：received on schedule。"},
    {id:"R20-5",q:"What does Mr. Kessler appear to misunderstand?",o:["The deadline for minor deficiencies","That buying software is not a written corrective plan","The date of the audit","Which items were rated Minor"],a:1,e:"推論題：他描述了打算怎麼做，但規定要的是「書面改善計畫」。描述意圖不等於提交計畫 —— 這是最難的一題。"}
+  ]},
+ {id:"R21",title:"設備租借爭議（雙篇・全部推論題）",
+  p:"【文章一】\nEQUIPMENT LOAN AGREEMENT — Summary of Terms\n\n1. Equipment may be borrowed for up to 14 days.\n2. Borrowers are responsible for damage occurring while the equipment is in their possession, except where a pre-existing fault is reported within 24 hours of collection.\n3. Late returns incur $15 per day.\n4. Extensions may be granted once per loan if requested before the due date.\n\n【文章二】\nTo: equipment@brightlabs.org\nFrom: s.ahmadi@brightlabs.org\nSubject: Spectrometer — unit 7\n\nHi,\n\nI collected unit 7 on the 3rd. I should mention that the calibration dial was already stiff when I unpacked it that afternoon, and I emailed Tomas about it the same day.\n\nI will need the unit until the 20th. I know what the standard period is, and I have not asked for anything like this before on this loan.\n\nThe dial has since stopped turning altogether. I want to be clear that nothing happened to it in the lab.\n\nSabah",
+  qs:[
+   {id:"R21-1",q:"Why does Ms. Ahmadi mention emailing Tomas on the 3rd?",o:["To show she followed the reporting rule","To complain about Tomas","To request a replacement","To confirm the collection date"],a:0,e:"推論題：規定第 2 條說 24 小時內回報既有故障就免責。她在證明自己做到了。"},
+   {id:"R21-2",q:"What is Ms. Ahmadi implicitly requesting?",o:["A refund","An extension","A new spectrometer","A longer standard loan period"],a:1,e:"推論題：她沒有寫「我要延長」，但說要用到 20 號、提到標準期限、強調沒申請過 —— 整段都在鋪陳第 4 條的延長申請。"},
+   {id:"R21-3",q:"Why does she point out that she has not asked before on this loan?",o:["To show she rarely borrows equipment","Because extensions are limited to one per loan","To apologize","To request a discount"],a:1,e:"推論題：第 4 條寫 once per loan，她在說明自己還有這個額度。"},
+   {id:"R21-4",q:"By what date must the unit normally be returned?",o:["The 14th","The 17th","The 20th","The 24th"],a:1,e:"計算題：3 號借，14 天 → 17 號。"},
+   {id:"R21-5",q:"If her request is refused and she returns it on the 20th, what would she owe?",o:["Nothing","$15","$45","$210"],a:2,e:"跨文章計算：17 號到期，20 號還 → 遲 3 天 × $15 = $45。"}
   ]}
 ];
 
@@ -1494,7 +1522,8 @@ const GBATCH=[
  {k:"G22",label:"第22批 綜合複習"},
  {k:"G23",label:"第23批 帳務差旅"},
  {k:"G24",label:"第24批 招募人資"},
- {k:"G25",label:"第25批 正式用語"}
+ {k:"G25",label:"第25批 正式用語"},
+ {k:"G26",label:"第26批 時態/被動"}
 ];
 GBATCH.forEach(g=>{
   const b=document.createElement("button");
@@ -1957,11 +1986,15 @@ ${R("the ___ training session 要填什麼詞性？","形容詞（mandatory）")
 
 {cat:"核心",title:"③ 時態",tag:"★★",body:`
 <ul>
-<li><b>過去完成式 had + p.p.</b>：兩個過去動作，先發生的用它。關鍵字 <span class="hot">By the time</span> / before / after。<br><code>By the time he arrived, the meeting had ended.</code></li>
+<li><b>過去完成式 had + p.p.</b>：兩個過去動作，先發生的用它。<br>
+<span class="hot">By the time 最容易放錯邊</span>，規則只有一句：<b>跟著 by the time 的那個子句用「過去簡單式」，另一個子句才用 had + p.p.</b><br>
+<code>By the time he <b>arrived</b>, the meeting <b>had ended</b>.</code><br>
+<code>By the time the policy <b>took</b> effect, most staff <b>had</b> already <b>relocated</b>.</code><br>
+兩句的 had 都不在 by the time 那一邊。考試時先找 by the time 在哪一句，那句就填過去式。</li>
 <li><b>條件與時間子句用現在式代替未來式</b>（if / unless / when / before / after），<span class="hot">不能用 will</span>。<br><code>If the shipment arrives tomorrow, we will ship it.</code></li>
 <li><b>與過去相反的假設</b>：If + had + p.p., 主詞 + would have + p.p.。倒裝：<code>Had the supplier notified us earlier, we would have canceled the order.</code></li>
 <li><b>被動 be + p.p.</b>：was issued / has been postponed / must be submitted</li></ul>
-<div class="miss">你的實際錯誤：G10-1、G10-3。這兩個是第一次見到的觀念，複習題在第 11 批（G11-1、G11-2、G11-5）。</div>
+<div class="miss">你的實際錯誤：G10-1、G10-3、G12-8、G19-10。後兩題都是 by the time，而且是<b>一題填 had、一題填過去式</b>的正反組合 —— 代表你記成「看到 by the time 就填 had」。專練題在第 26 批 G26-1～G26-4。</div>
 ${R("If the client ______ (accept) the terms, we can proceed.","accepts —— if 子句用現在式，主詞單數")}
 ${R("看到 By the time + 過去句，主要子句用什麼？","過去完成式 had + p.p.")}`},
 
@@ -2050,7 +2083,11 @@ regardless of 不論｜regarding 關於（介系詞）｜neither A nor B｜the n
 ① 算日期（入住四晚、30 天期限、開課前一週）<br>
 ② 對級距（金額落在哪一段折扣、哪一種費率）<br>
 ③ 對條件（有沒有會員／公司帳戶／認證安裝）</p>
-<div class="miss">你錯的 R6-4 就是要同時記住兩個日期範圍再比對。R12-4 更難：問「客戶為什麼要強調那些事」，答案是他在逐條排除保固不涵蓋的情況。</div>`}
+<div class="miss">你錯的 R6-4 就是要同時記住兩個日期範圍再比對。R12-4、R8-2、R8-4 更難，都是同一類<b>推論題</b>。</div>
+<p><b>推論題的固定解法</b>（你目前最弱的一類）：<br>
+寫信的人<span class="hot">提到某件事，通常是在對應規定裡的某一條</span>。看到「我在 X 日就通知過了」「我之前沒申請過」這種句子，回第一篇找那一條規定，答案就在那裡。<br>
+問「他需要什麼／會發生什麼」時，答案往往是<span class="hot">他沒寫出來的那一條</span> —— 把規定逐條比對他的狀況，他漏掉的就是答案。</p>
+<div class="miss">專練：第 21 篇閱讀五題全是推論題。</div>`}
 ];
 let ntCat="全部";
 function renderNotes(){
@@ -2106,7 +2143,7 @@ function buildDaily(){
   const rid=shuffleSeed(pool.map(p=>p.id),rnd)[0];
 
   const streak=(daily&&daily.date===prevKey(key)&&daily.completed)?(daily.streak||0):(daily&&daily.completed&&daily.date===key?daily.streak:0);
-  daily={date:key,vocab,gq,rid,vDone:[],gDone:[],rDone:[],streak:streak||0,completed:false};
+  daily={date:key,vocab,gq,rid,vDone:[],gDone:[],rDone:[],streak:streak||0,rounds:0,completed:false};
   saveDaily();
 }
 async function saveDaily(){try{await window.storage.set("toeic-daily",JSON.stringify(daily));}catch(e){}}
@@ -2135,7 +2172,17 @@ function dailyParts(){
 function checkComplete(){
   const parts=dailyParts();
   const all=parts.every(p=>p.total===0||p.done>=p.total);
-  if(all&&!daily.completed){daily.completed=true;daily.streak=(daily.streak||0)+1;}
+  if(all&&!daily.completed){
+    daily.completed=true;
+    daily.rounds=(daily.rounds||0)+1;
+    if(daily.rounds===1)daily.streak=(daily.streak||0)+1;  // 連續天數一天只加一次
+  }
+}
+function newRound(){
+  const s=daily.streak,r=daily.rounds||0;
+  buildDaily();
+  daily.streak=s;daily.rounds=r;
+  saveDaily();renderDaily();
 }
 function switchTab(name){
   document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.dataset.t===name));
@@ -2157,7 +2204,9 @@ function renderDaily(){
   const d=new Date();
   $("dDate").textContent=`${d.getMonth()+1} 月 ${d.getDate()} 日`;
   $("dPct").textContent=pct+"%";
-  $("dSub").innerHTML=daily.completed?"今天的任務完成了。<br>想多做就直接去各分頁。":`還剩 ${tot-done} 項<br>大約 15～20 分鐘`;
+  $("dSub").innerHTML=daily.completed
+    ?`今天第 ${daily.rounds} 輪完成了。<br>想再練就按下面「再出一份新的」。`
+    :`還剩 ${tot-done} 項<br>大約 15～20 分鐘`+((daily.rounds||0)>0?`<br><span style="color:#8D8776">今天已完成 ${daily.rounds} 輪</span>`:"");
   $("dBar").style.width=pct+"%";
   $("dStreak").textContent=daily.streak>0?`🔥 連續 ${daily.streak} 天`:"完成一次就開始累積連續天數";
   const box=$("dTasks");box.innerHTML="";
@@ -2172,8 +2221,15 @@ function renderDaily(){
     b.className="d-go";b.textContent=fin?"再做":"開始";b.onclick=p.go;
     el.appendChild(b);box.appendChild(el);
   });
-  $("dNote").innerHTML='每天 0 點自動換一份。單字選了你標「需複習」的優先，文法選你答錯過的優先。<br><a href="#" id="dReroll" style="color:#CFC9B8">重抽今天這份</a>';
-  $("dReroll").onclick=e=>{e.preventDefault();if(confirm("重抽今天的任務？進度會歸零。")){const s=daily.streak;buildDaily();daily.streak=s;saveDaily();renderDaily();}};
+  const nRed=redKeys().length;
+  $("dNote").innerHTML=
+    (daily.completed
+      ?'<button class="redbtn" id="dNew" style="background:var(--chip-on);color:#2E3A3B;margin:4px 0 12px">再出一份新的</button>'
+      :'<a href="#" id="dReroll" style="color:#CFC9B8">這份不想做 → 重抽（進度歸零）</a><br>')
+    +`每天 0 點自動換一份。單字先排紅字（目前 ${nRed} 個），文法先排你答錯過的題。<br>連續天數一天只算一次，多做幾輪不會重複累加。`;
+  const nb=$("dNew"); if(nb)nb.onclick=newRound;
+  const rb=$("dReroll");
+  if(rb)rb.onclick=e=>{e.preventDefault();if(confirm("重抽今天的任務？目前進度會歸零。"))newRound();};
 }
 
 /* ============ 啟動 ============ */
