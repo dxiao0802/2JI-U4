@@ -119,6 +119,8 @@
   .d-ring{display:flex;align-items:center;gap:14px}
   .d-pct{font-size:34px;font-weight:700;line-height:1}
   .d-sub{font-size:13px;color:#5C5749;line-height:1.6}
+  .d-today{margin-top:12px;padding-top:11px;border-top:1px solid #E3DCC8;font-size:13px;color:#5C5749;line-height:1.75}
+  .d-today b{color:var(--ink)}
   .d-streak{display:inline-block;background:#EFE7D2;border-radius:999px;padding:3px 11px;font-size:12px;font-weight:600;color:#7A4438;margin-top:8px}
   .d-task{background:var(--card);color:var(--ink);border-radius:10px;padding:14px 15px;margin-bottom:9px;
     box-shadow:0 4px 12px rgba(0,0,0,.2);display:flex;align-items:center;gap:12px}
@@ -178,6 +180,7 @@
     <div class="d-ring"><div class="d-pct" id="dPct">0%</div><div class="d-sub" id="dSub"></div></div>
     <div class="d-bar"><div id="dBar" style="width:0%"></div></div>
     <div class="d-streak" id="dStreak"></div>
+  <div class="d-today" id="dToday"></div>
   </div>
   <div id="dTasks"></div>
   <div class="note" id="dNote"></div>
@@ -1410,11 +1413,13 @@ function record(qid,ok){
   if(!quiz[qid])quiz[qid]={r:0,w:0};
   ok?quiz[qid].r++:quiz[qid].w++;
   saveQuiz();
+  noteToday(GQ.some(q=>q.id===qid)?"g":"r",ok);
   noteDaily(qid);
 }
 const $=id=>document.getElementById(id);
 async function saveWstat(){try{await window.storage.set("toeic-wstat",JSON.stringify(wstat));}catch(e){}}
 function recWord(key,ok){
+  noteToday("v",ok);
   const s=wstat[key]||(wstat[key]={r:0,w:0,h:""});
   ok?s.r++:s.w++;
   s.h=(s.h+(ok?"1":"0")).slice(-WIN);
@@ -1687,6 +1692,12 @@ $("redDrill").onclick=()=>{
 };
 $("copyBtn").onclick=async()=>{
   const lines=["【多益練習室成績回報】"];
+  if(daily&&daily.date===todayKey()&&daily.log){
+    const L=daily.log;
+    if(L.vR+L.vW+L.gR+L.gW+L.rR+L.rW)
+      lines.push(`今天：單字 ${L.vR+L.vW} 張(需複習 ${L.vW})、文法 對${L.gR} 錯${L.gW}、閱讀 對${L.rR} 錯${L.rW}　｜完成 ${daily.rounds||0} 輪`);
+  }
+  lines.push("—— 以下為累計 ——");
   const gr=groupRows();
   if(gr.length)lines.push("單字各組最近5次錯誤率："+gr.map(r=>`${gLabel(r.g).replace(/（.*/,"")} ${r.pct}%(${r.bad}/${r.n})`).join(", "));
   lines.push("紅字單字剩 "+redKeys().length+" 個");
@@ -2143,7 +2154,7 @@ function buildDaily(){
   const rid=shuffleSeed(pool.map(p=>p.id),rnd)[0];
 
   const streak=(daily&&daily.date===prevKey(key)&&daily.completed)?(daily.streak||0):(daily&&daily.completed&&daily.date===key?daily.streak:0);
-  daily={date:key,vocab,gq,rid,vDone:[],gDone:[],rDone:[],streak:streak||0,rounds:0,completed:false};
+  daily={date:key,vocab,gq,rid,vDone:[],gDone:[],rDone:[],streak:streak||0,rounds:0,completed:false,log:{vR:0,vW:0,gR:0,gW:0,rR:0,rW:0}};
   saveDaily();
 }
 async function saveDaily(){try{await window.storage.set("toeic-daily",JSON.stringify(daily));}catch(e){}}
@@ -2179,10 +2190,16 @@ function checkComplete(){
   }
 }
 function newRound(){
-  const s=daily.streak,r=daily.rounds||0;
+  const s=daily.streak,r=daily.rounds||0,lg=daily.log;
   buildDaily();
-  daily.streak=s;daily.rounds=r;
+  daily.streak=s;daily.rounds=r;if(lg)daily.log=lg;
   saveDaily();renderDaily();
+}
+function noteToday(kind,ok){
+  if(!daily||daily.date!==todayKey())return;
+  if(!daily.log)daily.log={vR:0,vW:0,gR:0,gW:0,rR:0,rW:0};
+  daily.log[kind+(ok?"R":"W")]++;
+  saveDaily();
 }
 function switchTab(name){
   document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.dataset.t===name));
@@ -2209,6 +2226,14 @@ function renderDaily(){
     :`還剩 ${tot-done} 項<br>大約 15～20 分鐘`+((daily.rounds||0)>0?`<br><span style="color:#8D8776">今天已完成 ${daily.rounds} 輪</span>`:"");
   $("dBar").style.width=pct+"%";
   $("dStreak").textContent=daily.streak>0?`🔥 連續 ${daily.streak} 天`:"完成一次就開始累積連續天數";
+  const L=daily.log||{vR:0,vW:0,gR:0,gW:0,rR:0,rW:0};
+  const tl=$("dToday");
+  const any=L.vR+L.vW+L.gR+L.gW+L.rR+L.rW;
+  tl.innerHTML=any?`<b>今天到目前為止</b>（只算今天，不含以前的累計）<br>
+    單字 ${L.vR+L.vW} 張，認得 ${L.vR}、需複習 ${L.vW}<br>
+    文法 對 ${L.gR} 錯 ${L.gW}${L.gR+L.gW?`（${Math.round(L.gR/(L.gR+L.gW)*100)}%）`:""}　
+    閱讀 對 ${L.rR} 錯 ${L.rW}${L.rR+L.rW?`（${Math.round(L.rR/(L.rR+L.rW)*100)}%）`:""}`
+    :"今天還沒開始。";
   const box=$("dTasks");box.innerHTML="";
   parts.forEach(p=>{
     const fin=p.total>0&&p.done>=p.total;
