@@ -41,7 +41,8 @@
     box-shadow:0 1px 2px rgba(0,0,0,.4) inset}
   .tag{position:absolute;top:14px;right:16px;font-size:11px;color:#9A9484}
   .review-flag{position:absolute;top:12px;right:16px;font-size:11px;color:var(--red);font-weight:700;display:none}
-  .card.marked .review-flag{display:block}.card.marked .tag{display:none}
+  .card.marked .review-flag{display:block}
+  .card.requeued .face{box-shadow:0 8px 22px rgba(0,0,0,.38), 0 0 0 2px var(--red)}.card.marked .tag{display:none}
   .word{font-family:Georgia,serif;font-size:33px;font-weight:600;line-height:1.15}
   .pos{font-size:13px;color:#8D8776;margin-top:6px;font-style:italic}
   .zh{font-size:29px;font-weight:600}
@@ -1410,8 +1411,10 @@ async function load(){
 async function saveMarks(){try{await window.storage.set("toeic-marks",JSON.stringify(marks));}catch(e){}}
 async function saveQuiz(){try{await window.storage.set("toeic-quiz",JSON.stringify(quiz));}catch(e){}}
 function record(qid,ok){
-  if(!quiz[qid])quiz[qid]={r:0,w:0};
-  ok?quiz[qid].r++:quiz[qid].w++;
+  if(!quiz[qid])quiz[qid]={r:0,w:0,h:""};
+  const s=quiz[qid];
+  ok?s.r++:s.w++;
+  s.h=((s.h||"")+(ok?"1":"0")).slice(-4);
   saveQuiz();
   noteToday(GQ.some(q=>q.id===qid)?"g":"r",ok);
   noteDaily(qid);
@@ -1466,11 +1469,13 @@ function renderCards(){
   $("emptyCards").classList.toggle("hidden",has);
   $("emptyCards").textContent=reviewOnly?"這個範圍沒有標記「需複習」的單字。":(group===97?"沒有紅字了 —— 每個練過的字最近 5 次都全對。":group===98?"今日任務還沒產生，先去「今日任務」分頁。":group===99?"還沒有測驗不會的字，去「測驗」分頁做一次單字量測驗。":"這個範圍目前沒有單字。");
   $("count").textContent=`單字 ${deck.length} 張`;
-  $("posInd").textContent=has?`${idx+1} / ${deck.length}`:"";
+  const rq=deck.filter(x=>x.rq).length;
+  $("posInd").textContent=has?`${idx+1} / ${deck.length}`+(rq?`　待複習 ${rq}`:""):"";
   if(!has)return;
   const w=deck[idx];
   card.classList.remove("flip");
   card.classList.toggle("marked",!!marks[w.i]);
+  card.classList.toggle("requeued",!!w.rq);
   const gl=w.g===99?"測驗":"組別 "+w.g;
   $("tagF").textContent=gl;$("tagB").textContent=gl;
   const ez=mode==="EZ";
@@ -1490,7 +1495,12 @@ card.onclick=()=>card.classList.toggle("flip");
 $("speakBtn").onclick=e=>{e.stopPropagation();const w=deck[idx];if(!w)return;
   try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(w.en);u.lang="en-US";u.rate=.92;speechSynthesis.speak(u);}catch(err){}};
 $("knowBtn").onclick=async()=>{const w=deck[idx];if(w){recWord(w.i,true);noteDailyWord(w.i);}if(w&&marks[w.i]){delete marks[w.i];await saveMarks();}if(deck.length){idx=(idx+1)%deck.length;renderCards();}};
-$("againBtn").onclick=async()=>{const w=deck[idx];if(w){recWord(w.i,false);noteDailyWord(w.i);marks[w.i]=1;await saveMarks();}if(deck.length){idx=(idx+1)%deck.length;renderCards();}};
+$("againBtn").onclick=async()=>{const w=deck[idx];if(w){recWord(w.i,false);noteDailyWord(w.i);marks[w.i]=1;await saveMarks();
+    if(deck.length>3){
+      const a=Math.min(idx+4,deck.length), b=Math.min(idx+13,deck.length+1);
+      deck.splice(a,0,{...w,rq:1});
+      deck.splice(b,0,{...w,rq:1});
+    }}if(deck.length){idx=(idx+1)%deck.length;renderCards();}};
 $("prevBtn").onclick=()=>{if(deck.length){idx=(idx-1+deck.length)%deck.length;renderCards();}};
 $("shuffleBtn").onclick=()=>{idx=0;buildDeck(true);renderCards();};
 $("modeEZ").onclick=()=>{mode="EZ";$("modeEZ").classList.add("on");$("modeZE").classList.remove("on");renderCards();};
@@ -1680,10 +1690,12 @@ function renderStats(){
       `<div class="statline"><span>${names[t]||t}</span><span>${s.r}/${total}（${pct}%）</span></div><div class="bar"><div style="width:${pct}%"></div></div>`);
   });
   if(!any)tbox.innerHTML='<div style="font-size:13px;color:#8D8776">還沒作答過文法題。</div>';
-  const wrongs=[...GQ,...RQ.flatMap(p=>p.qs)].filter(q=>quiz[q.id]&&quiz[q.id].w>0);
-  $("wrongList").innerHTML=wrongs.length
-    ? wrongs.map(q=>`${q.id}　錯 ${quiz[q.id].w} 次${quiz[q.id].r?`（後來對 ${quiz[q.id].r} 次）`:""}`).join("<br>")
-    : "還沒有錯題紀錄。";
+  const all=[...GQ,...RQ.flatMap(p=>p.qs)].filter(q=>quiz[q.id]&&quiz[q.id].w>0);
+  const fixed=all.filter(q=>(quiz[q.id].h||"").slice(-2)==="11");
+  const still=all.filter(q=>fixed.indexOf(q)<0);
+  $("wrongList").innerHTML=
+    (still.length?`<b style="color:#7A4438">還在錯（${still.length}）</b><br>`+still.map(q=>`${q.id}　錯 ${quiz[q.id].w} 次`).join("<br>"):"目前沒有還在錯的題目。")
+    +(fixed.length?`<br><br><b style="color:#3E6B4F">已修好（${fixed.length}）</b><span style="color:#8D8776">　連續答對兩次，不會再每天出現</span><br><span style="color:#8D8776">`+fixed.map(q=>q.id).join("、")+"</span>":"");
 }
 $("redDrill").onclick=()=>{
   group=97;reviewOnly=false;idx=0;
@@ -2143,11 +2155,15 @@ function buildDaily(){
   const vocab=red.slice(0,Math.ceil(D_VOCAB*0.6));
   for(const src of [review,rest,red]){for(const i of src){if(vocab.length>=D_VOCAB)break;if(vocab.indexOf(i)<0)vocab.push(i);}}
 
-  const wrong=shuffleSeed(GQ.filter(q=>quiz[q.id]&&quiz[q.id].w>0).map(q=>q.id),rnd);
+  // 近期還在錯的才算弱項；連續兩次答對就畢業，不再每天糾纏
+  const recentBad=id=>{const s=quiz[id];if(!s)return false;const hh=s.h||"";
+    if(hh.length>=2&&hh.slice(-2)==="11")return false;
+    return hh.indexOf("0")>=0||(!hh&&s.w>0);};
+  const wrong=shuffleSeed(GQ.filter(q=>recentBad(q.id)).map(q=>q.id),rnd);
   const fresh=shuffleSeed(GQ.filter(q=>!quiz[q.id]).map(q=>q.id),rnd);
-  const seen=shuffleSeed(GQ.filter(q=>quiz[q.id]&&!quiz[q.id].w).map(q=>q.id),rnd);
+  const seen=shuffleSeed(GQ.filter(q=>quiz[q.id]&&!recentBad(q.id)).map(q=>q.id),rnd);
   const gq=[];
-  for(const src of [wrong.slice(0,4),fresh,seen,wrong]){for(const id of src){if(gq.length>=D_GRAM)break;if(gq.indexOf(id)<0)gq.push(id);}}
+  for(const src of [wrong.slice(0,3),fresh,seen,wrong]){for(const id of src){if(gq.length>=D_GRAM)break;if(gq.indexOf(id)<0)gq.push(id);}}
 
   const untouched=RQ.filter(pg=>pg.qs.every(q=>!quiz[q.id]));
   const pool=untouched.length?untouched:RQ;
@@ -2176,7 +2192,7 @@ function dailyParts(){
   const rTotal=pg?pg.qs.length:0;
   return [
     {k:"v",name:"單字卡",done:daily.vDone.length,total:daily.vocab.length,meta:"紅字優先，答對會讓紅字退掉",go:()=>{group=98;reviewOnly=false;idx=0;syncCardChips();buildDeck();renderCards();switchTab("cards");}},
-    {k:"g",name:"文法",done:daily.gDone.length,total:daily.gq.length,meta:"以前錯過的優先",go:()=>{gFilterBatch="今日";gFilterType="全部";gIdx=0;syncGChips();buildG();renderG();switchTab("grammar");}},
+    {k:"g",name:"文法",done:daily.gDone.length,total:daily.gq.length,meta:"3 題弱項＋5 題新的",go:()=>{gFilterBatch="今日";gFilterType="全部";gIdx=0;syncGChips();buildG();renderG();switchTab("grammar");}},
     {k:"r",name:"閱讀 "+(pg?pg.title:""),done:daily.rDone.length,total:rTotal,meta:"一篇，全部答完才算",go:()=>{const i=RQ.findIndex(p=>p.id===daily.rid);if(i>=0){rIdx=i;[...$("rPick").children].forEach((c,j)=>c.classList.toggle("on",j===i));renderR();}switchTab("reading");}}
   ];
 }
