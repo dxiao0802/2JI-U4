@@ -1723,7 +1723,10 @@ $("copyBtn").onclick=async()=>{
     if(g.length){const[cr,cw]=sum(g);lines.push(`文法：對${cr} 錯${cw}`);}
     if(r.length){const[cr,cw]=sum(r);lines.push(`閱讀：對${cr} 錯${cw}`);}
     const wrongs=[...GQ,...RQ.flatMap(p=>p.qs)].filter(q=>quiz[q.id]&&quiz[q.id].w>0);
-    if(wrongs.length)lines.push("錯題："+wrongs.map(q=>`${q.id}${"t"in q?`(${q.t})`:""}x${quiz[q.id].w}`).join(", "));
+    const fx=wrongs.filter(q=>(quiz[q.id].h||"").slice(-2)==="11");
+    const st=wrongs.filter(q=>fx.indexOf(q)<0);
+    if(st.length)lines.push("還在錯："+st.map(q=>`${q.id}${"t"in q?`(${q.t})`:""}x${quiz[q.id].w}`).join(", "));
+    if(fx.length)lines.push("已修好（連續對2次）："+fx.map(q=>q.id).join(", "));
     const marked=WORDS.filter((w,i)=>marks[i]).concat(testWords.filter(w=>marks["t:"+w.en]));
     if(marked.length)lines.push("需複習單字："+marked.map(w=>w.en).join(", "));
   }
