@@ -692,9 +692,21 @@ const WORDS=[
  {en:"inquire",pos:"v.",zh:"詢問",ex:"She inquired about the delivery date.",g:33},
  {en:"nevertheless",pos:"adv.",zh:"儘管如此",ex:"Costs rose; nevertheless, profits grew.",g:33},
  {en:"restore",pos:"v.",zh:"恢復",ex:"Service was restored within an hour.",g:33},
- {en:"undertake",pos:"v.",zh:"著手進行",ex:"The firm undertook a major renovation.",g:33}
+ {en:"undertake",pos:"v.",zh:"著手進行",ex:"The firm undertook a major renovation.",g:33},
+ {en:"fulfill",pos:"v.",zh:"履行、完成（訂單）",ex:"All orders are fulfilled within 48 hours.",g:34},
+ {en:"backlog",pos:"n.",zh:"積壓（未處理的工作）",ex:"We have a backlog of 200 orders.",g:34},
+ {en:"surplus",pos:"n./adj.",zh:"過剩、盈餘",ex:"Surplus stock will be sold at a discount.",g:34},
+ {en:"procure",pos:"v.",zh:"採購、取得",ex:"The department procures office supplies quarterly.",g:34},
+ {en:"perishable",pos:"adj.",zh:"易腐壞的",ex:"Perishable goods must be refrigerated.",g:34},
+ {en:"replenish",pos:"v.",zh:"補充（庫存）",ex:"Shelves are replenished every morning.",g:34},
+ {en:"courier",pos:"n.",zh:"快遞（員）",ex:"The contract was sent by courier.",g:34},
+ {en:"freight",pos:"n.",zh:"貨運、運費",ex:"Freight charges are included in the price.",g:34},
+ {en:"in bulk",pos:"phr.",zh:"大量地",ex:"Buying in bulk lowers the unit cost.",g:34},
+ {en:"fragile",pos:"adj.",zh:"易碎的",ex:"Fragile items require extra packaging.",g:34},
+ {en:"in transit",pos:"phr.",zh:"運送途中",ex:"Your package is currently in transit.",g:34},
+ {en:"vendor",pos:"n.",zh:"供應商、賣方",ex:"We compared quotes from three vendors.",g:34}
 ];
-const GROUPS=[{id:0,label:"全部 394 字"},{id:1,label:"組別 1（0822）"},{id:2,label:"組別 2（0822-2）"},{id:3,label:"組別 3（0829）"},{id:4,label:"組別 4（人事）"},{id:5,label:"組別 5（採購財務）"},{id:6,label:"組別 6（行銷客服）"},{id:7,label:"組別 7（差旅設施）"},{id:8,label:"組別 8（報帳流程）"},{id:9,label:"組別 9（合約會議）"},{id:10,label:"組別 10（形副詞）"},{id:11,label:"組別 11（商務動詞）"},{id:12,label:"組別 12（生產品管）"},{id:13,label:"組別 13（租賃搬遷）"},{id:14,label:"組別 14（銀行金融）"},{id:15,label:"組別 15（IT辦公）"},{id:16,label:"組別 16（餐飲活動）"},{id:17,label:"組別 17（媒體出版）"},{id:18,label:"組別 18（人資福利）"},{id:19,label:"組別 19（交通建設）"},{id:20,label:"組別 20（L3-4 核心①）"},{id:21,label:"組別 21（商務②）"},{id:22,label:"組別 22（L3-4 核心②）"},{id:23,label:"組別 23（L3-4 核心③）"},{id:24,label:"組別 24（L3-4 核心④）"},{id:25,label:"組別 25（L3-4 核心⑤）"},{id:26,label:"組別 26（L3-4 核心⑥）"},{id:27,label:"組別 27（錯題同源字）"},{id:28,label:"組別 28（進階商務）"},{id:29,label:"組別 29（帳務差旅）"},{id:30,label:"組別 30（招募人資）"},{id:31,label:"組別 31（進階動詞①）"},{id:32,label:"組別 32（進階動詞②）"},{id:33,label:"組別 33（正式用語）"}];
+const GROUPS=[{id:0,label:"全部 406 字"},{id:1,label:"組別 1（0822）"},{id:2,label:"組別 2（0822-2）"},{id:3,label:"組別 3（0829）"},{id:4,label:"組別 4（人事）"},{id:5,label:"組別 5（採購財務）"},{id:6,label:"組別 6（行銷客服）"},{id:7,label:"組別 7（差旅設施）"},{id:8,label:"組別 8（報帳流程）"},{id:9,label:"組別 9（合約會議）"},{id:10,label:"組別 10（形副詞）"},{id:11,label:"組別 11（商務動詞）"},{id:12,label:"組別 12（生產品管）"},{id:13,label:"組別 13（租賃搬遷）"},{id:14,label:"組別 14（銀行金融）"},{id:15,label:"組別 15（IT辦公）"},{id:16,label:"組別 16（餐飲活動）"},{id:17,label:"組別 17（媒體出版）"},{id:18,label:"組別 18（人資福利）"},{id:19,label:"組別 19（交通建設）"},{id:20,label:"組別 20（L3-4 核心①）"},{id:21,label:"組別 21（商務②）"},{id:22,label:"組別 22（L3-4 核心②）"},{id:23,label:"組別 23（L3-4 核心③）"},{id:24,label:"組別 24（L3-4 核心④）"},{id:25,label:"組別 25（L3-4 核心⑤）"},{id:26,label:"組別 26（L3-4 核心⑥）"},{id:27,label:"組別 27（錯題同源字）"},{id:28,label:"組別 28（進階商務）"},{id:29,label:"組別 29（帳務差旅）"},{id:30,label:"組別 30（招募人資）"},{id:31,label:"組別 31（進階動詞①）"},{id:32,label:"組別 32（進階動詞②）"},{id:33,label:"組別 33（正式用語）"},{id:34,label:"組別 34（物流倉儲）"}];
 
 const GQ=[
  {id:"G1-1",t:"介連",q:"The annual report must be submitted ______ Friday.",o:["by","until","on to","at"],a:0,
@@ -1192,7 +1204,27 @@ const GQ=[
  {id:"G26-9",t:"介連",q:"______ the contract was signed, deliveries began immediately.",o:["Despite","Once","Because of","Prior to"],a:1,
   e:"the contract was signed 是完整句子 → 連接詞 Once。"},
  {id:"G26-10",t:"文法",q:"Either party may cancel ______ 30 days' written notice.",o:["with","while","although","unless"],a:0,
-  e:"後面是名詞片語 30 days' written notice → 介系詞 with（憑…）。"}
+  e:"後面是名詞片語 30 days' written notice → 介系詞 with（憑…）。"},
+ {id:"G27-1",t:"詞性",q:"The new system allows staff to track shipments ______ in real time.",o:["accurate","accurately","accuracy","accurateness"],a:1,
+  e:"修飾動詞 track → 副詞 accurately。"},
+ {id:"G27-2",t:"搭配",q:"The warehouse is located ______ close proximity to the airport.",o:["in","at","on","by"],a:0,
+  e:"in close proximity to＝非常靠近，固定用 in。"},
+ {id:"G27-3",t:"文法",q:"Perishable items ______ in a refrigerated area at all times.",o:["must store","must be stored","must storing","must have stored"],a:1,
+  e:"物品是「被」存放 → must be stored。"},
+ {id:"G27-4",t:"介連",q:"______ the shipment was delayed, the client received a partial refund.",o:["Because","Due to","Despite","In spite of"],a:0,
+  e:"後面是完整句子 → 連接詞 Because。Due to / Despite / In spite of 後面都只能接名詞。"},
+ {id:"G27-5",t:"詞性",q:"Please keep the receipt as ______ of purchase.",o:["prove","proof","proven","provable"],a:1,
+  e:"as ___ of → 名詞 proof（證明）。proof of purchase＝購買證明。"},
+ {id:"G27-6",t:"文法",q:"If the stock level ______ below 20 units, the system will reorder automatically.",o:["falls","will fall","fell","falling"],a:0,
+  e:"if 子句用現在式代替未來式，主詞單數 → falls。"},
+ {id:"G27-7",t:"搭配",q:"We need to ______ our inventory before the holiday rush.",o:["replenish","replace","repeat","reply"],a:0,
+  e:"replenish inventory＝補充庫存。新單字組別 34 的字。"},
+ {id:"G27-8",t:"文法",q:"The vendor ______ prices were the lowest was awarded the contract.",o:["who","whose","which","whom"],a:1,
+  e:"空格後面直接接名詞 prices，表示「那家供應商的價格」→ 所有格 whose。"},
+ {id:"G27-9",t:"介連",q:"Items will be shipped ______ payment has been received.",o:["once","during","despite","because of"],a:0,
+  e:"後面是完整句子 → 連接詞 once（一旦）。其他三個都是介系詞。"},
+ {id:"G27-10",t:"文法",q:"By the time the replacement parts ______, the production line had been idle for two days.",o:["arrive","arrived","had arrived","have arrived"],a:1,
+  e:"★by the time 複習：跟著 by the time 的子句用過去簡單式 → arrived。had been 在另一句。"}
 ];
 
 const RQ=[
@@ -1366,6 +1398,15 @@ const RQ=[
    {id:"R21-3",q:"Why does she point out that she has not asked before on this loan?",o:["To show she rarely borrows equipment","Because extensions are limited to one per loan","To apologize","To request a discount"],a:1,e:"推論題：第 4 條寫 once per loan，她在說明自己還有這個額度。"},
    {id:"R21-4",q:"By what date must the unit normally be returned?",o:["The 14th","The 17th","The 20th","The 24th"],a:1,e:"計算題：3 號借，14 天 → 17 號。"},
    {id:"R21-5",q:"If her request is refused and she returns it on the 20th, what would she owe?",o:["Nothing","$15","$45","$210"],a:2,e:"跨文章計算：17 號到期，20 號還 → 遲 3 天 × $15 = $45。"}
+  ]},
+ {id:"R22",title:"倉庫盤點通知（雙篇・計算＋推論）",
+  p:"【文章一】\nNOTICE TO ALL STORE MANAGERS\nFrom: Central Warehouse Operations\n\nThe quarterly stock count will take place on Saturday, June 14. To allow accurate counting:\n\n1. Replenishment orders must be submitted by 5 P.M. on Wednesday, June 11. Orders received after this time will be processed on Monday, June 16.\n2. No deliveries will leave the warehouse on the day of the count.\n3. Perishable items are excluded from the count and may be ordered as usual.\n4. Stores that report discrepancies of more than 5% of item value must submit an explanation within three business days of the count.\n\n【文章二】\nTo: warehouse-ops@freshmart.com\nFrom: l.chen@freshmart.com\nSubject: Order for Beitou branch\nDate: June 12\n\nHello,\n\nI've attached our replenishment order for paper towels, takeout containers, and cooking oil. We are almost out of containers, so we'd appreciate delivery as early as possible.\n\nI've also added two cases of fresh tofu, which we need for a catering event on Saturday morning.\n\nThanks,\nLin Chen\nBeitou Branch",
+  qs:[
+   {id:"R22-1",q:"When will the takeout containers most likely be processed?",o:["June 12","June 13","June 14","June 16"],a:3,e:"跨文章：信是 6/12 寄的，已經過了 6/11 下午 5 點的截止 → 依第 1 條延到 6/16 星期一處理。"},
+   {id:"R22-2",q:"Why can the tofu be ordered even though the deadline has passed?",o:["It is a perishable item","It was ordered in bulk","It is for a catering event","It was not on the attached order"],a:0,e:"推論題：第 3 條說生鮮不列入盤點、可以照常訂。豆腐是生鮮，所以不受 6/11 截止限制。"},
+   {id:"R22-3",q:"What problem might Ms. Chen face with the tofu?",o:["It cannot be ordered at all","It cannot be delivered on Saturday","It will cost more","It must be counted first"],a:1,e:"推論題（最難）：生鮮可以照常訂，但第 2 條說盤點當天（6/14 星期六）倉庫不出貨。她星期六早上就要用，最晚星期五要送到 —— 她信裡沒想到這點。"},
+   {id:"R22-4",q:"If a store reports a 7% discrepancy, by what date must it submit an explanation?",o:["June 16","June 17","June 18","June 21"],a:2,e:"計算題：7% 超過 5% → 要解釋。盤點是 6/14 星期六，往後數三個工作天：6/16（一）、6/17（二）、6/18（三）。"},
+   {id:"R22-5",q:"In the notice, the word \"discrepancies\" is closest in meaning to",o:["differences","deliveries","discounts","decisions"],a:0,e:"詞彙題：discrepancy＝帳面數字跟實際對不上的差異。"}
   ]}
 ];
 
@@ -1538,7 +1579,8 @@ const GBATCH=[
  {k:"G23",label:"第23批 帳務差旅"},
  {k:"G24",label:"第24批 招募人資"},
  {k:"G25",label:"第25批 正式用語"},
- {k:"G26",label:"第26批 時態/被動"}
+ {k:"G26",label:"第26批 時態/被動"},
+ {k:"G27",label:"第27批 物流倉儲"}
 ];
 GBATCH.forEach(g=>{
   const b=document.createElement("button");
