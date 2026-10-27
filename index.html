@@ -26,7 +26,13 @@
     padding:6px 13px;font-size:13px;cursor:pointer}
   .chip.on{background:var(--chip-on);color:#2E3A3B;border-color:var(--chip-on);font-weight:600}
   /* flashcards */
-  .cardwrap{perspective:1200px;margin-top:4px}
+  .cardwrap{perspective:1200px;margin-top:4px;position:relative;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+  .cardwrap.fly{transition:transform .22s ease-in,opacity .22s ease-in}
+  .cardwrap.snap{transition:transform .25s cubic-bezier(.2,.8,.3,1.25),opacity .2s}
+  .stamp{position:absolute;top:22px;z-index:5;padding:3px 12px;border:3px solid;border-radius:8px;font-size:22px;font-weight:800;
+    letter-spacing:2px;opacity:0;pointer-events:none;background:rgba(251,247,236,.9)}
+  .stamp.yes{left:22px;color:var(--ok);border-color:var(--ok);transform:rotate(-14deg)}
+  .stamp.no{right:22px;color:var(--red);border-color:var(--red);transform:rotate(14deg)}
   .card{position:relative;width:100%;aspect-ratio:5/3.1;max-height:330px;transform-style:preserve-3d;
     transition:transform .45s cubic-bezier(.2,.7,.3,1);cursor:pointer}
   .card.flip{transform:rotateX(180deg)}
@@ -198,10 +204,11 @@
     <div class="card" id="card">
       <div class="face front"><div class="hole"></div><div class="tag" id="tagF"></div><div class="review-flag">需複習 ★</div>
         <div id="frontMain" class="word"></div><div id="frontSub" class="pos"></div>
-        <div class="hint">點卡片翻面</div></div>
+        <div class="hint">點卡片翻面・右滑認得／左滑需複習</div></div>
       <div class="face back"><div class="hole"></div><div class="tag" id="tagB"></div><div class="review-flag">需複習 ★</div>
         <div id="backMain" class="zh"></div><div id="backEx" class="example"></div></div>
     </div>
+    <div class="stamp yes" id="stampYes">認得</div><div class="stamp no" id="stampNo">需複習</div>
   </div>
   <div class="note hidden" id="emptyCards">這個範圍沒有標記「需複習」的單字。</div>
   <div class="actions" id="actionsCards">
@@ -1585,16 +1592,67 @@ GROUPS.forEach(g=>{
   b.onclick=()=>{group=g.id;idx=0;[...$("groupChips").children].forEach(c=>c.classList.remove("on"));b.classList.add("on");buildDeck();renderCards();};
   $("groupChips").appendChild(b);
 });
-card.onclick=()=>card.classList.toggle("flip");
+card.onclick=()=>{if(Date.now()-swEndAt<350)return;card.classList.toggle("flip");};
+/* 滑卡（像 Tinder）：右滑＝認得、左滑＝需複習；按鈕和鍵盤也會飛出去 */
+const cw=$("cardwrap");
+let sw=null,swBusy=false,swEndAt=0;
+function swSet(dx){
+  cw.style.transform=`translateX(${dx}px) rotate(${dx/18}deg)`;
+  const p=Math.min(Math.abs(dx)/90,1);
+  $("stampYes").style.opacity=dx>0?p:0;$("stampNo").style.opacity=dx<0?p:0;
+}
+function swClear(){cw.style.transform="";cw.style.opacity="";$("stampYes").style.opacity=0;$("stampNo").style.opacity=0;}
+async function flyOut(dir,done){
+  if(swBusy)return;
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches||cw.classList.contains("hidden")){await done();return;}
+  swBusy=true;
+  const p=dir>0?$("stampYes"):$("stampNo");p.style.opacity=1;
+  cw.classList.remove("snap");cw.classList.add("fly");
+  cw.style.transform=`translateX(${dir*Math.max(innerWidth,600)}px) rotate(${dir*24}deg)`;cw.style.opacity=0;
+  await new Promise(r=>setTimeout(r,220));
+  card.style.transition="none";  // 新卡直接正面，不要轉回來時露出答案
+  try{await done();}finally{
+    cw.classList.remove("fly");swClear();
+    cw.style.transform="scale(.92)";cw.style.opacity=0;
+    void cw.offsetWidth;card.style.transition="";
+    cw.classList.add("snap");cw.style.transform="";cw.style.opacity="";
+    swBusy=false;
+  }
+}
+cw.addEventListener("pointerdown",e=>{if(swBusy||e.button>0)return;sw={x:e.clientX,y:e.clientY,t:Date.now(),dx:0,on:false,id:e.pointerId};});
+cw.addEventListener("pointermove",e=>{
+  if(!sw||e.pointerId!==sw.id)return;
+  const dx=e.clientX-sw.x,dy=e.clientY-sw.y;
+  if(!sw.on){
+    if(Math.abs(dx)<8&&Math.abs(dy)<8)return;
+    if(Math.abs(dy)>Math.abs(dx)){sw=null;return;}  // 直向就讓它捲動
+    sw.on=true;try{cw.setPointerCapture(e.pointerId);}catch(err){}
+    cw.classList.remove("snap","fly");
+  }
+  sw.dx=dx;swSet(dx);
+});
+function swEnd(e,cancel){
+  if(!sw||e.pointerId!==sw.id)return;
+  const s=sw;sw=null;if(!s.on)return;
+  swEndAt=Date.now();
+  const v=Math.abs(s.dx)/Math.max(1,swEndAt-s.t);
+  if(!cancel&&(Math.abs(s.dx)>90||(Math.abs(s.dx)>40&&v>.5))){
+    const dir=Math.sign(s.dx);flyOut(dir,dir>0?knowFn:againFn);
+  }else{cw.classList.add("snap");swClear();}
+}
+cw.addEventListener("pointerup",e=>swEnd(e,false));
+cw.addEventListener("pointercancel",e=>swEnd(e,true));
 $("speakBtn").onclick=e=>{e.stopPropagation();const w=deck[idx];if(!w)return;
   try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(w.en);u.lang="en-US";u.rate=.92;speechSynthesis.speak(u);}catch(err){}};
-$("knowBtn").onclick=async()=>{const w=deck[idx];if(w){recWord(w.i,true);noteDailyWord(w.i);}if(w&&marks[w.i]){delete marks[w.i];await saveMarks();}if(deck.length){idx=(idx+1)%deck.length;renderCards();}};
-$("againBtn").onclick=async()=>{const w=deck[idx];if(w){recWord(w.i,false);noteDailyWord(w.i);marks[w.i]=1;await saveMarks();
+$("knowBtn").onclick=()=>flyOut(1,knowFn);
+$("againBtn").onclick=()=>flyOut(-1,againFn);
+async function knowFn(){const w=deck[idx];if(w){recWord(w.i,true);noteDailyWord(w.i);}if(w&&marks[w.i]){delete marks[w.i];await saveMarks();}if(deck.length){idx=(idx+1)%deck.length;renderCards();}}
+async function againFn(){const w=deck[idx];if(w){recWord(w.i,false);noteDailyWord(w.i);marks[w.i]=1;await saveMarks();
     if(deck.length>3){
       const a=Math.min(idx+4,deck.length), b=Math.min(idx+13,deck.length+1);
       deck.splice(a,0,{...w,rq:1});
       deck.splice(b,0,{...w,rq:1});
-    }}if(deck.length){idx=(idx+1)%deck.length;renderCards();}};
+    }}if(deck.length){idx=(idx+1)%deck.length;renderCards();}}
 $("prevBtn").onclick=()=>{if(deck.length){idx=(idx-1+deck.length)%deck.length;renderCards();}};
 $("shuffleBtn").onclick=()=>{idx=0;buildDeck(true);renderCards();};
 $("modeEZ").onclick=()=>{mode="EZ";$("modeEZ").classList.add("on");$("modeZE").classList.remove("on");renderCards();};
