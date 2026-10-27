@@ -716,9 +716,21 @@ const WORDS=[
  {en:"word of mouth",pos:"phr.",zh:"口碑",ex:"Most of our new clients come from word of mouth.",g:35},
  {en:"market share",pos:"phr.",zh:"市占率",ex:"The company aims to increase its market share in Asia.",g:35},
  {en:"niche",pos:"n./adj.",zh:"利基（市場）、小眾的",ex:"The store targets a niche market of vintage collectors.",g:35},
- {en:"renewal",pos:"n.",zh:"續約、續訂",ex:"Your membership is due for renewal next month.",g:35}
+ {en:"renewal",pos:"n.",zh:"續約、續訂",ex:"Your membership is due for renewal next month.",g:35},
+ {en:"hazard",pos:"n.",zh:"危險、危害",ex:"Wet floors are a common hazard in the kitchen.",g:36},
+ {en:"precaution",pos:"n.",zh:"預防措施",ex:"As a precaution, all visitors must wear a hard hat.",g:36},
+ {en:"evacuate",pos:"v.",zh:"疏散、撤離",ex:"Staff were asked to evacuate the building during the drill.",g:36},
+ {en:"protective gear",pos:"phr.",zh:"防護裝備",ex:"Protective gear must be worn in the production area.",g:36},
+ {en:"regulation",pos:"n.",zh:"規定、法規",ex:"New safety regulations take effect on May 1.",g:36},
+ {en:"inspector",pos:"n.",zh:"檢查員、稽查員",ex:"A fire inspector will visit the factory on Thursday.",g:36},
+ {en:"compliance",pos:"n.",zh:"遵守、合規",ex:"All branches must be in full compliance with the new rules.",g:36},
+ {en:"ventilation",pos:"n.",zh:"通風（設備）",ex:"Poor ventilation caused the meeting room to get too warm.",g:36},
+ {en:"emergency exit",pos:"phr.",zh:"緊急出口",ex:"Please keep the emergency exits clear at all times.",g:36},
+ {en:"mandatory",pos:"adj.",zh:"強制的、必須的",ex:"Safety training is mandatory for all new employees.",g:36},
+ {en:"on-site",pos:"adj./adv.",zh:"現場的；在現場",ex:"An on-site nurse is available during working hours.",g:36},
+ {en:"custodian",pos:"n.",zh:"（大樓）管理員、清潔工友",ex:"Report any broken lights to the building custodian.",g:36}
 ];
-const GROUPS=[{id:0,label:"全部 418 字"},{id:1,label:"組別 1（0822）"},{id:2,label:"組別 2（0822-2）"},{id:3,label:"組別 3（0829）"},{id:4,label:"組別 4（人事）"},{id:5,label:"組別 5（採購財務）"},{id:6,label:"組別 6（行銷客服）"},{id:7,label:"組別 7（差旅設施）"},{id:8,label:"組別 8（報帳流程）"},{id:9,label:"組別 9（合約會議）"},{id:10,label:"組別 10（形副詞）"},{id:11,label:"組別 11（商務動詞）"},{id:12,label:"組別 12（生產品管）"},{id:13,label:"組別 13（租賃搬遷）"},{id:14,label:"組別 14（銀行金融）"},{id:15,label:"組別 15（IT辦公）"},{id:16,label:"組別 16（餐飲活動）"},{id:17,label:"組別 17（媒體出版）"},{id:18,label:"組別 18（人資福利）"},{id:19,label:"組別 19（交通建設）"},{id:20,label:"組別 20（L3-4 核心①）"},{id:21,label:"組別 21（商務②）"},{id:22,label:"組別 22（L3-4 核心②）"},{id:23,label:"組別 23（L3-4 核心③）"},{id:24,label:"組別 24（L3-4 核心④）"},{id:25,label:"組別 25（L3-4 核心⑤）"},{id:26,label:"組別 26（L3-4 核心⑥）"},{id:27,label:"組別 27（錯題同源字）"},{id:28,label:"組別 28（進階商務）"},{id:29,label:"組別 29（帳務差旅）"},{id:30,label:"組別 30（招募人資）"},{id:31,label:"組別 31（進階動詞①）"},{id:32,label:"組別 32（進階動詞②）"},{id:33,label:"組別 33（正式用語）"},{id:34,label:"組別 34（物流倉儲）"},{id:35,label:"組別 35（行銷顧客）"}];
+const GROUPS=[{id:0,label:"全部 430 字"},{id:1,label:"組別 1（0822）"},{id:2,label:"組別 2（0822-2）"},{id:3,label:"組別 3（0829）"},{id:4,label:"組別 4（人事）"},{id:5,label:"組別 5（採購財務）"},{id:6,label:"組別 6（行銷客服）"},{id:7,label:"組別 7（差旅設施）"},{id:8,label:"組別 8（報帳流程）"},{id:9,label:"組別 9（合約會議）"},{id:10,label:"組別 10（形副詞）"},{id:11,label:"組別 11（商務動詞）"},{id:12,label:"組別 12（生產品管）"},{id:13,label:"組別 13（租賃搬遷）"},{id:14,label:"組別 14（銀行金融）"},{id:15,label:"組別 15（IT辦公）"},{id:16,label:"組別 16（餐飲活動）"},{id:17,label:"組別 17（媒體出版）"},{id:18,label:"組別 18（人資福利）"},{id:19,label:"組別 19（交通建設）"},{id:20,label:"組別 20（L3-4 核心①）"},{id:21,label:"組別 21（商務②）"},{id:22,label:"組別 22（L3-4 核心②）"},{id:23,label:"組別 23（L3-4 核心③）"},{id:24,label:"組別 24（L3-4 核心④）"},{id:25,label:"組別 25（L3-4 核心⑤）"},{id:26,label:"組別 26（L3-4 核心⑥）"},{id:27,label:"組別 27（錯題同源字）"},{id:28,label:"組別 28（進階商務）"},{id:29,label:"組別 29（帳務差旅）"},{id:30,label:"組別 30（招募人資）"},{id:31,label:"組別 31（進階動詞①）"},{id:32,label:"組別 32（進階動詞②）"},{id:33,label:"組別 33（正式用語）"},{id:34,label:"組別 34（物流倉儲）"},{id:35,label:"組別 35（行銷顧客）"},{id:36,label:"組別 36（工安設施）"}];
 
 const GQ=[
  {id:"G1-1",t:"介連",q:"The annual report must be submitted ______ Friday.",o:["by","until","on to","at"],a:0,
