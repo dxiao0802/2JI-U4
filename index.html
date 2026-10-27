@@ -735,9 +735,24 @@ const WORDS=[
  {en:"emergency exit",pos:"phr.",zh:"緊急出口",ex:"Please keep the emergency exits clear at all times.",g:36},
  {en:"mandatory",pos:"adj.",zh:"強制的、必須的",ex:"Safety training is mandatory for all new employees.",g:36},
  {en:"on-site",pos:"adj./adv.",zh:"現場的；在現場",ex:"An on-site nurse is available during working hours.",g:36},
- {en:"custodian",pos:"n.",zh:"（大樓）管理員、清潔工友",ex:"Report any broken lights to the building custodian.",g:36}
+ {en:"custodian",pos:"n.",zh:"（大樓）管理員、清潔工友",ex:"Report any broken lights to the building custodian.",g:36},
+ {en:"expenditure",pos:"n.",zh:"支出、開銷",ex:"The company plans to reduce its expenditure on travel.",g:37},
+ {en:"deficit",pos:"n.",zh:"赤字、虧損",ex:"The department ended the year with a small budget deficit.",g:37},
+ {en:"fiscal",pos:"adj.",zh:"財政的、會計年度的",ex:"Sales rose by 12 percent in the last fiscal year.",g:37},
+ {en:"projection",pos:"n.",zh:"預估、預測",ex:"Our sales projections for next quarter look strong.",g:37},
+ {en:"overhead",pos:"n.",zh:"營運固定開銷（房租水電等）",ex:"Moving to a smaller office will cut our overhead.",g:37},
+ {en:"rebate",pos:"n.",zh:"退款、折讓（買後退回部分金額）",ex:"Customers can get a $50 rebate on this printer.",g:37},
+ {en:"quota",pos:"n.",zh:"配額、業績目標",ex:"Each salesperson has a monthly quota to meet.",g:37},
+ {en:"appraisal",pos:"n.",zh:"評估、考核；估價",ex:"Annual performance appraisals take place in December.",g:37},
+ {en:"benchmark",pos:"n.",zh:"基準、標竿",ex:"Last year's results will serve as a benchmark.",g:37},
+ {en:"premium",pos:"n./adj.",zh:"保費；額外費用；高級的",ex:"Customers pay a premium for express delivery.",g:37},
+ {en:"proceeds",pos:"n.",zh:"（活動/銷售的）收入、所得",ex:"All proceeds from the event will go to charity.",g:37},
+ {en:"reconcile",pos:"v.",zh:"核對（帳目）；調和",ex:"Please reconcile the receipts with the bank statement.",g:37},
+ {en:"defer",pos:"v.",zh:"延後、延期",ex:"The board decided to defer the decision until May.",g:37},
+ {en:"consolidate",pos:"v.",zh:"合併、整併",ex:"We will consolidate the two warehouses into one.",g:37},
+ {en:"moderate",pos:"adj.",zh:"適度的、中等的",ex:"The firm expects moderate growth next year.",g:37}
 ];
-const GROUPS=[{id:0,label:"全部 430 字"},{id:1,label:"組別 1（0822）"},{id:2,label:"組別 2（0822-2）"},{id:3,label:"組別 3（0829）"},{id:4,label:"組別 4（人事）"},{id:5,label:"組別 5（採購財務）"},{id:6,label:"組別 6（行銷客服）"},{id:7,label:"組別 7（差旅設施）"},{id:8,label:"組別 8（報帳流程）"},{id:9,label:"組別 9（合約會議）"},{id:10,label:"組別 10（形副詞）"},{id:11,label:"組別 11（商務動詞）"},{id:12,label:"組別 12（生產品管）"},{id:13,label:"組別 13（租賃搬遷）"},{id:14,label:"組別 14（銀行金融）"},{id:15,label:"組別 15（IT辦公）"},{id:16,label:"組別 16（餐飲活動）"},{id:17,label:"組別 17（媒體出版）"},{id:18,label:"組別 18（人資福利）"},{id:19,label:"組別 19（交通建設）"},{id:20,label:"組別 20（L3-4 核心①）"},{id:21,label:"組別 21（商務②）"},{id:22,label:"組別 22（L3-4 核心②）"},{id:23,label:"組別 23（L3-4 核心③）"},{id:24,label:"組別 24（L3-4 核心④）"},{id:25,label:"組別 25（L3-4 核心⑤）"},{id:26,label:"組別 26（L3-4 核心⑥）"},{id:27,label:"組別 27（錯題同源字）"},{id:28,label:"組別 28（進階商務）"},{id:29,label:"組別 29（帳務差旅）"},{id:30,label:"組別 30（招募人資）"},{id:31,label:"組別 31（進階動詞①）"},{id:32,label:"組別 32（進階動詞②）"},{id:33,label:"組別 33（正式用語）"},{id:34,label:"組別 34（物流倉儲）"},{id:35,label:"組別 35（行銷顧客）"},{id:36,label:"組別 36（工安設施）"}];
+const GROUPS=[{id:0,label:"全部 445 字"},{id:1,label:"組別 1（0822）"},{id:2,label:"組別 2（0822-2）"},{id:3,label:"組別 3（0829）"},{id:4,label:"組別 4（人事）"},{id:5,label:"組別 5（採購財務）"},{id:6,label:"組別 6（行銷客服）"},{id:7,label:"組別 7（差旅設施）"},{id:8,label:"組別 8（報帳流程）"},{id:9,label:"組別 9（合約會議）"},{id:10,label:"組別 10（形副詞）"},{id:11,label:"組別 11（商務動詞）"},{id:12,label:"組別 12（生產品管）"},{id:13,label:"組別 13（租賃搬遷）"},{id:14,label:"組別 14（銀行金融）"},{id:15,label:"組別 15（IT辦公）"},{id:16,label:"組別 16（餐飲活動）"},{id:17,label:"組別 17（媒體出版）"},{id:18,label:"組別 18（人資福利）"},{id:19,label:"組別 19（交通建設）"},{id:20,label:"組別 20（L3-4 核心①）"},{id:21,label:"組別 21（商務②）"},{id:22,label:"組別 22（L3-4 核心②）"},{id:23,label:"組別 23（L3-4 核心③）"},{id:24,label:"組別 24（L3-4 核心④）"},{id:25,label:"組別 25（L3-4 核心⑤）"},{id:26,label:"組別 26（L3-4 核心⑥）"},{id:27,label:"組別 27（錯題同源字）"},{id:28,label:"組別 28（進階商務）"},{id:29,label:"組別 29（帳務差旅）"},{id:30,label:"組別 30（招募人資）"},{id:31,label:"組別 31（進階動詞①）"},{id:32,label:"組別 32（進階動詞②）"},{id:33,label:"組別 33（正式用語）"},{id:34,label:"組別 34（物流倉儲）"},{id:35,label:"組別 35（行銷顧客）"},{id:36,label:"組別 36（工安設施）"},{id:37,label:"組別 37（財務預算）"}];
 
 const GQ=[
  {id:"G1-1",t:"介連",q:"The annual report must be submitted ______ Friday.",o:["by","until","on to","at"],a:0,
