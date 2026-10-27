@@ -212,9 +212,9 @@
   </div>
   <div class="note hidden" id="emptyCards">這個範圍沒有標記「需複習」的單字。</div>
   <div class="actions" id="actionsCards">
+    <button class="btn again" id="againBtn">👈 需複習</button>
     <button class="btn speak" id="speakBtn">🔊</button>
-    <button class="btn know" id="knowBtn">認得</button>
-    <button class="btn again" id="againBtn">需複習</button>
+    <button class="btn know" id="knowBtn">認得 👉</button>
   </div>
   <div class="nav"><button id="prevBtn">上一張</button><span id="posInd" style="opacity:.65"></span><button id="shuffleBtn">洗牌</button></div>
   <div class="keyhint" id="keyHint"></div>
@@ -273,9 +273,9 @@
     <div class="t-prog"><div id="tBar" style="width:0%"></div></div>
     <div class="qcard"><div class="t-word" id="tWord"></div></div>
     <div class="actions">
+      <button class="btn again" id="tNo">不會</button>
       <button class="btn speak" id="tSpeak">🔊</button>
       <button class="btn know" id="tYes">會</button>
-      <button class="btn again" id="tNo">不會</button>
     </div>
     <div class="nav"><button id="tUndo">上一題</button><span></span><button id="tQuit">放棄</button></div>
   </div>
@@ -1925,8 +1925,8 @@ $("importBtn").onclick=async()=>{
 
 /* ============ 鍵盤快捷鍵 ============ */
 const KB_ACTIONS=[
-  {id:"know",label:"認得"},
   {id:"again",label:"需複習"},
+  {id:"know",label:"認得"},
   {id:"speak",label:"念一遍"},
   {id:"flip",label:"翻面"},
   {id:"prev",label:"上一張"}
