@@ -1528,6 +1528,114 @@ const LT_WORDS={
  BIZ:[["procurement","n.","採購"],["quarterly","adj.","每季的"],["merger","n.","合併"],["liability","n.","責任；負債"],["audit","n./v.","稽核"],["retailer","n.","零售商"],["vendor","n.","供應商、攤販"],["amenity","n.","便利設施"],["voucher","n.","優惠券、憑證"],["courier","n.","快遞"],["logistics","n.","物流"],["overtime","n.","加班"],["headquarters","n.","總部"],["stakeholder","n.","利害關係人"],["outsource","v.","外包"]]
 };
 const LT_FAKES=["brillent","plorkish","dentrify","fastidate","crovulent","mensible","tromage","sprudent"];
+// 測驗字的例句（加進單字卡時帶入；舊資料 ex 是空的，顯示時再查）
+const LT_EX={
+ answer:"Please answer all the questions on the form.",
+ busy:"The phone line has been busy all morning.",
+ careful:"Be careful when you carry the boxes downstairs.",
+ dinner:"The team will have dinner with the client tonight.",
+ early:"We arrived early to set up the meeting room.",
+ floor:"The accounting office is on the third floor.",
+ happen:"Nobody knows what will happen to the old factory.",
+ idea:"Ms. Lin came up with a great idea for the campaign.",
+ kitchen:"The staff kitchen will be closed for cleaning on Friday.",
+ letter:"We sent a letter to all our customers about the price change.",
+ money:"The company saved a lot of money by switching suppliers.",
+ nothing:"There is nothing on the schedule for Monday afternoon.",
+ price:"The price includes delivery and installation.",
+ story:"The local newspaper ran a story about our new store.",
+ weather:"The outdoor event was canceled because of bad weather.",
+ accept:"We accept all major credit cards.",
+ borrow:"You can borrow a laptop from the IT department.",
+ choice:"Customers have a choice of three payment plans.",
+ decide:"The board will decide on the budget next week.",
+ examine:"The inspector will examine the equipment on Tuesday.",
+ famous:"The hotel is famous for its rooftop restaurant.",
+ gather:"Please gather all the receipts before the end of the month.",
+ hurry:"There's no need to hurry; the train leaves at nine.",
+ include:"The package includes breakfast and airport transfer.",
+ knowledge:"Applicants should have a basic knowledge of accounting.",
+ local:"We buy our vegetables from local farms.",
+ medicine:"Keep this medicine in a cool, dry place.",
+ offer:"The store is offering a 20 percent discount this weekend.",
+ public:"The museum is open to the public on weekends.",
+ repair:"The elevator is being repaired this afternoon.",
+ ability:"She has the ability to explain complex ideas simply.",
+ attitude:"Our manager values a positive attitude.",
+ compare:"Compare prices before you place an order.",
+ delay:"The flight was delayed because of heavy fog.",
+ emergency:"In an emergency, use the stairs, not the elevator.",
+ frequent:"Frequent customers receive a free drink every tenth visit.",
+ identify:"Please identify yourself at the front desk.",
+ instance:"In this instance, the refund will be issued within a week.",
+ majority:"The majority of employees prefer flexible hours.",
+ observe:"Visitors must observe all safety rules in the factory.",
+ participate:"All staff are encouraged to participate in the training.",
+ promote:"Mr. Chen was promoted to sales manager last month.",
+ recommend:"I highly recommend the seafood restaurant near the station.",
+ reliable:"We need a more reliable shipping company.",
+ suitable:"This room is suitable for meetings of up to 20 people.",
+ adequate:"Make sure there is adequate parking for all guests.",
+ alternative:"If the bridge is closed, take the alternative route.",
+ assume:"Don't assume the client has read the contract.",
+ authority:"Only the manager has the authority to approve refunds.",
+ circumstance:"Under no circumstances should you share your password.",
+ consequence:"Late payment may have serious consequences.",
+ distinguish:"It's hard to distinguish the original from the copy.",
+ flexible:"We offer flexible working hours to all employees.",
+ fundamental:"Good communication is fundamental to teamwork.",
+ inevitable:"Some delays are inevitable during construction.",
+ obtain:"Visitors must obtain a pass at the security desk.",
+ precise:"Please give precise measurements for the order.",
+ relevant:"Attach all relevant documents to your application.",
+ substitute:"You may substitute rice for fries at no extra charge.",
+ vital:"Customer feedback is vital to improving our service.",
+ accumulate:"Members accumulate points with every purchase.",
+ allocate:"The company allocated more funds to marketing this year.",
+ ambiguous:"The wording of the contract is ambiguous.",
+ comprehensive:"New employees receive a comprehensive training program.",
+ compulsory:"Attendance at the safety briefing is compulsory.",
+ deteriorate:"Sales began to deteriorate after the price increase.",
+ diminish:"The noise diminished once the windows were closed.",
+ feasible:"The engineers say the plan is technically feasible.",
+ incentive:"Staff receive a cash incentive for meeting sales targets.",
+ prominent:"The logo should be placed in a prominent position.",
+ subsequent:"Subsequent meetings will be held online.",
+ versatile:"This printer is versatile enough for home or office use.",
+ coherent:"The report needs a more coherent structure.",
+ exclusive:"Members get exclusive access to the online sale.",
+ spontaneous:"The audience burst into spontaneous applause.",
+ arbitrary:"The new rules seemed arbitrary to many employees.",
+ contemplate:"The company is contemplating a move overseas.",
+ discrepancy:"There is a discrepancy between the invoice and the receipt.",
+ hierarchy:"The firm has a flat hierarchy with few managers.",
+ impartial:"An impartial committee will review the complaints.",
+ lucrative:"The company won a lucrative government contract.",
+ meticulous:"She is meticulous about checking every figure.",
+ notorious:"This intersection is notorious for traffic jams.",
+ prerequisite:"A bachelor's degree is a prerequisite for this position.",
+ scrutiny:"The budget will come under close scrutiny.",
+ tentative:"We have a tentative date for the launch in May.",
+ unprecedented:"The product saw unprecedented demand last quarter.",
+ aggravate:"Cutting staff would only aggravate the delays.",
+ anecdote:"The speaker opened with a funny anecdote.",
+ exquisite:"The hotel is known for its exquisite cuisine.",
+ procurement:"All purchases must go through the procurement department.",
+ quarterly:"The quarterly report will be released on Friday.",
+ merger:"The merger created the largest bank in the region.",
+ liability:"The company accepts no liability for lost items.",
+ audit:"The auditors will audit our accounts next month.",
+ retailer:"The retailer plans to open ten new stores.",
+ vendor:"We are looking for a new software vendor.",
+ amenity:"Hotel amenities include a gym and a pool.",
+ voucher:"Each guest receives a voucher for a free breakfast.",
+ courier:"The documents were sent by courier.",
+ logistics:"Our logistics team handles all international shipments.",
+ overtime:"Employees are paid extra for overtime.",
+ headquarters:"Our headquarters is located in Taipei.",
+ stakeholder:"All stakeholders were invited to the planning meeting.",
+ outsource:"Many companies outsource their customer service."
+};
 
 /* ============ 狀態與儲存 ============ */
 // Claude artifact 以外（例如 GitHub Pages）沒有 window.storage，改存 localStorage
@@ -1733,7 +1841,7 @@ function renderCards(){
   $("frontMain").textContent=ez?w.en:w.zh; $("frontMain").className=ez?"word":"zh";
   $("frontSub").textContent=ez?w.pos:"";
   $("backMain").textContent=ez?w.zh:w.en; $("backMain").className=ez?"zh":"word";
-  $("backEx").textContent=w.ex;
+  $("backEx").textContent=w.ex||LT_EX[w.en]||"";
 }
 GROUPS.push({id:97,label:"🔴 紅字複習"},{id:98,label:"今日任務單字"},{id:99,label:"測驗不會的字"});
 GROUPS.forEach(g=>{
@@ -2229,7 +2337,7 @@ async function tFinish(){
   // 不會的字加入單字卡
   const have=new Set(testWords.map(w=>w.en));
   unknown.forEach(it=>{
-    if(!have.has(it.en)){testWords.push({en:it.en,pos:it.pos,zh:it.zh,ex:"",g:99,dyn:1});have.add(it.en);res.added++;}
+    if(!have.has(it.en)){testWords.push({en:it.en,pos:it.pos,zh:it.zh,ex:LT_EX[it.en]||"",g:99,dyn:1});have.add(it.en);res.added++;}
     marks["t:"+it.en]=1;
   });
   try{await window.storage.set("toeic-testwords",JSON.stringify(testWords));}catch(e){}
