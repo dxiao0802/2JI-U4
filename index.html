@@ -111,6 +111,14 @@
   @keyframes blink{50%{opacity:.55}}
   @media (prefers-reduced-motion: reduce){.kb-key.listening{animation:none}}
   .kb-actions{display:flex;gap:8px;margin-top:12px}
+  .hdr-r{display:flex;align-items:center;gap:10px}
+  .sync-btn{background:none;border:1px solid #566868;color:#CFC9B8;border-radius:999px;padding:3px 10px;font-size:12px;cursor:pointer;white-space:nowrap}
+  .sync-btn.off{opacity:.55}
+  .sync-btn.err{border-color:var(--red);color:#E8B4A8}
+  .sync-panel{margin:0 0 14px}
+  .sync-panel ol{font-size:12.5px;line-height:1.7;padding-left:18px;margin-bottom:10px;opacity:.85}
+  .sync-panel a{color:#E8DFC8}
+  .sync-panel input{width:100%;background:#1C2626;border:1px solid #566868;color:#E9E4D6;border-radius:8px;padding:9px 10px;font-size:14px;font-family:monospace}
   .kb-actions button{flex:1;background:var(--chip);border:1px solid #566868;color:#E9E4D6;border-radius:8px;padding:9px 0;font-size:13px;cursor:pointer}
   .t-word{font-family:Georgia,serif;font-size:40px;font-weight:600;text-align:center;padding:36px 0 30px;color:var(--ink)}
   .t-prog{height:6px;background:#3D4B4C;border-radius:3px;overflow:hidden;margin-bottom:12px}
@@ -167,7 +175,25 @@
 </head>
 <body>
 <div class="wrap">
-<header><h1>多益練習室</h1><div class="count" id="count"></div></header>
+<header><h1>多益練習室</h1><div class="hdr-r"><div class="count" id="count"></div><button class="sync-btn off" id="syncBtn">☁️ 同步</button></div></header>
+<div class="kb-panel sync-panel hidden" id="syncPanel">
+  <h3>☁️ 雲端同步</h3>
+  <div class="sub">進度存在你自己 GitHub 帳號的私密 Gist，電腦、手機打開都是同一份。</div>
+  <div id="syncSetup">
+    <ol>
+      <li>打開 <a href="https://github.com/settings/tokens/new?scopes=gist&amp;description=toeic-sync" target="_blank" rel="noopener">GitHub 建立 token</a>（已幫你勾好 <b>gist</b>，其他都不用勾）</li>
+      <li>Expiration 選 <b>No expiration</b>，按最下面 Generate token</li>
+      <li>複製 ghp_ 開頭那串，貼到下面按「連結」</li>
+      <li>每台裝置都貼同一個 token 一次就好；第一次連結會把這台跟雲端的進度合併</li>
+    </ol>
+    <input id="syncTok" type="password" placeholder="ghp_xxxxxxxx" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div class="kb-actions"><button id="syncLink">連結</button><button id="syncClose1">關閉</button></div>
+  </div>
+  <div id="syncOnBox" class="hidden">
+    <div class="kb-actions"><button id="syncNow">立即同步</button><button id="syncUnlink">這台取消連結</button><button id="syncClose2">關閉</button></div>
+  </div>
+  <div class="kb-msg" id="syncMsg"></div>
+</div>
 <div class="tabs">
   <button class="tab on" data-t="daily">今日任務</button>
   <button class="tab" data-t="cards">單字卡</button>
@@ -1508,11 +1534,120 @@ const LT_FAKES=["brillent","plorkish","dentrify","fastidate","crovulent","mensib
 if(!window.storage){
   window.storage={
     async get(k){const v=localStorage.getItem(k);return v==null?null:{key:k,value:v};},
-    async set(k,v){localStorage.setItem(k,v);return{key:k,value:v};}
+    async set(k,v){localStorage.setItem(k,v);
+      if(typeof SYNC_DATA!=="undefined"&&SYNC_DATA.includes(k)){localStorage.setItem("toeic-sync-at",String(Date.now()));syncSchedule();}
+      return{key:k,value:v};},
+    __local:true
   };
 }
 const STORE_KEYS=["toeic-marks","toeic-quiz","toeic-testwords","toeic-leveltest","toeic-keys","toeic-wstat","toeic-daily"];
 let marks={}, quiz={}, testWords=[], lastTest=null, daily=null, wstat={};
+
+/* ============ 雲端同步（GitHub 私密 Gist） ============ */
+// 只在 localStorage 模式（GitHub Pages）啟用。整份資料 last-writer-wins，用 toeic-sync-at 比新舊；
+// 第一次在某台裝置連結時才做合併，避免各台原本的進度被蓋掉。按鍵設定每台不同，不同步。
+const SYNC={tok:"toeic-sync-token",gist:"toeic-sync-gist",at:"toeic-sync-at",file:"toeic.json",desc:"多益練習室 同步資料"};
+const SYNC_DATA=STORE_KEYS.filter(k=>k!=="toeic-keys");
+const SYNC_LOCAL=!!window.storage.__local;
+let syncTimer=null, syncBusy=false, syncPulledOK=false;
+const lsGet=k=>{try{return localStorage.getItem(k);}catch(e){return null;}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};
+const lsDel=k=>{try{localStorage.removeItem(k);}catch(e){}};
+function syncOn(){return SYNC_LOCAL&&!!(lsGet(SYNC.tok)&&lsGet(SYNC.gist));}
+function syncStatus(state,msg){
+  const b=document.getElementById("syncBtn");if(!b)return;
+  b.classList.toggle("off",state==="off");b.classList.toggle("err",state==="err");
+  b.textContent={off:"☁️ 同步",busy:"☁️ …",ok:"☁️ ✓",err:"☁️ ⚠"}[state];
+  b.title=msg||"";
+  const m=document.getElementById("syncMsg");if(m&&msg)m.textContent=msg;
+}
+async function gh(path,opt={}){
+  const h={Authorization:"Bearer "+lsGet(SYNC.tok),Accept:"application/vnd.github+json"};
+  if(opt.body)h["Content-Type"]="application/json";
+  const r=await fetch("https://api.github.com"+path,{...opt,cache:"no-store",headers:h});
+  if(r.status===401)throw new Error("token 無效或已過期");
+  if(r.status===404)throw new Error("找不到同步資料（token 要有 gist 權限）");
+  if(!r.ok)throw new Error("GitHub 錯誤 "+r.status);
+  return r.status===204?null:r.json();
+}
+function snapshot(){const data={};for(const k of SYNC_DATA){const v=lsGet(k);if(v!=null)data[k]=v;}return{at:+(lsGet(SYNC.at)||0),data};}
+async function readRemote(){
+  const g=await gh("/gists/"+lsGet(SYNC.gist));
+  const f=g.files&&g.files[SYNC.file];if(!f)return{at:0,data:{}};
+  const txt=f.truncated?await (await fetch(f.raw_url,{cache:"no-store"})).text():f.content;
+  try{return JSON.parse(txt||"{}");}catch(e){return{at:0,data:{}};}
+}
+async function push(keepalive){
+  await gh("/gists/"+lsGet(SYNC.gist),{method:"PATCH",keepalive:!!keepalive,
+    body:JSON.stringify({files:{[SYNC.file]:{content:JSON.stringify(snapshot())}}})});
+}
+// 回傳 "pulled"（本機被雲端取代）/"pushed"/"same"
+async function syncPull(){
+  const remote=await readRemote(), rAt=remote.at||0, lAt=+(lsGet(SYNC.at)||0);
+  syncPulledOK=true;
+  if(rAt>lAt&&remote.data){
+    for(const k of SYNC_DATA){if(k in remote.data)lsSet(k,remote.data[k]);else lsDel(k);}
+    lsSet(SYNC.at,String(rAt));return"pulled";
+  }
+  if(lAt>rAt){await push();return"pushed";}
+  return"same";
+}
+function syncSchedule(){
+  if(!syncOn())return;
+  clearTimeout(syncTimer);
+  syncTimer=setTimeout(syncFlush,2500);
+}
+async function syncFlush(keepalive){
+  clearTimeout(syncTimer);syncTimer=null;
+  if(!syncOn()||syncBusy)return;
+  syncBusy=true;syncStatus("busy");
+  try{
+    // 這次開頁還沒成功拉過雲端，就先拉（雲端較新會先套用再說）
+    if(!syncPulledOK){const r=await syncPull();if(r==="pulled"){location.reload();return;}}
+    else await push(keepalive);
+    syncStatus("ok","已同步 "+new Date().toLocaleTimeString().slice(0,-3));
+  }catch(e){syncStatus("err","同步失敗："+e.message);}
+  finally{syncBusy=false;}
+}
+// 第一次連結：雲端沒有就建立；雲端已有就和這台合併
+function mergeData(a,b){
+  const J=(o,k,d)=>{try{return o[k]!=null?JSON.parse(o[k]):d;}catch(e){return d;}};
+  const out={};
+  for(const k of ["toeic-quiz","toeic-wstat"]){  // 每題/每字取作答次數多的那份
+    const x=J(a,k,{}),y=J(b,k,{}),m={...x};
+    for(const[id,v]of Object.entries(y)){const u=m[id];if(!u||((v.r||0)+(v.w||0))>((u.r||0)+(u.w||0)))m[id]=v;}
+    out[k]=JSON.stringify(m);
+  }
+  out["toeic-marks"]=JSON.stringify({...J(a,"toeic-marks",{}),...J(b,"toeic-marks",{})});
+  const tw=J(a,"toeic-testwords",[]),seen=new Set(tw.map(w=>w.en));
+  for(const w of J(b,"toeic-testwords",[]))if(!seen.has(w.en)){tw.push(w);seen.add(w.en);}
+  out["toeic-testwords"]=JSON.stringify(tw);
+  const lt=J(b,"toeic-leveltest",null)||J(a,"toeic-leveltest",null);if(lt)out["toeic-leveltest"]=JSON.stringify(lt);
+  const da=J(a,"toeic-daily",null),db=J(b,"toeic-daily",null);
+  const done=d=>d?(d.rounds||0)*1000+(d.vDone||[]).length+(d.gDone||[]).length+(d.rDone||[]).length:-1;
+  const dd=!da?db:!db?da:da.date!==db.date?(da.date>db.date?da:db):(done(db)>done(da)?db:da);
+  if(dd)out["toeic-daily"]=JSON.stringify(dd);
+  return out;
+}
+async function syncLink(token){
+  lsSet(SYNC.tok,token);lsDel(SYNC.gist);
+  try{
+    const list=await gh("/gists?per_page=100");
+    const g=(list||[]).find(x=>x.description===SYNC.desc);
+    lsSet(SYNC.at,String(Date.now()));
+    if(!g){
+      const c=await gh("/gists",{method:"POST",body:JSON.stringify({description:SYNC.desc,public:false,
+        files:{[SYNC.file]:{content:JSON.stringify(snapshot())}}})});
+      lsSet(SYNC.gist,c.id);return"已建立雲端存檔，這台的進度已上傳。到另一台貼同一個 token 就能同步。";
+    }
+    lsSet(SYNC.gist,g.id);
+    const merged=mergeData((await readRemote()).data||{},snapshot().data);
+    for(const[k,v]of Object.entries(merged))lsSet(k,v);
+    lsSet(SYNC.at,String(Date.now()));
+    await push();syncPulledOK=true;
+    return"reload";
+  }catch(e){lsDel(SYNC.tok);lsDel(SYNC.gist);throw e;}
+}
 const WIN=5;   // quiz[qid] = {r:0, w:0}
 async function load(){
   try{const m=await window.storage.get("toeic-marks");if(m&&m.value)marks=JSON.parse(m.value);}catch(e){}
@@ -2446,7 +2581,61 @@ function renderDaily(){
 }
 
 /* ============ 啟動 ============ */
+function syncPanelRender(){
+  const on=syncOn();
+  $("syncSetup").classList.toggle("hidden",on);$("syncOnBox").classList.toggle("hidden",!on);
+}
+function syncUI(){
+  const panel=$("syncPanel"),btn=$("syncBtn");
+  if(!SYNC_LOCAL){btn.classList.add("hidden");return;}
+  btn.onclick=()=>{panel.classList.toggle("hidden");syncPanelRender();$("syncMsg").textContent=syncOn()?btn.title:"";};
+  $("syncClose1").onclick=$("syncClose2").onclick=()=>panel.classList.add("hidden");
+  $("syncLink").onclick=async()=>{
+    const t=$("syncTok").value.trim();
+    if(!/^(ghp_|github_pat_)/.test(t)){$("syncMsg").textContent="token 應該是 ghp_ 或 github_pat_ 開頭";return;}
+    $("syncMsg").textContent="連結中…";syncStatus("busy");
+    try{const r=await syncLink(t);$("syncTok").value="";
+      if(r==="reload"){location.reload();return;}
+      syncStatus("ok",r);syncPanelRender();
+    }catch(e){syncStatus("off");$("syncMsg").textContent="連結失敗："+e.message;}
+  };
+  $("syncNow").onclick=async()=>{
+    if(syncBusy)return;syncBusy=true;syncStatus("busy","同步中…");
+    try{const r=await syncPull();syncBusy=false;
+      if(r==="pulled"){location.reload();return;}
+      syncStatus("ok","已同步 "+new Date().toLocaleTimeString().slice(0,-3));
+    }catch(e){syncBusy=false;syncStatus("err","同步失敗："+e.message);}
+  };
+  $("syncUnlink").onclick=()=>{
+    if(!confirm("這台裝置取消雲端同步？（本機進度和雲端存檔都會保留）"))return;
+    lsDel(SYNC.tok);lsDel(SYNC.gist);syncStatus("off","");syncPanelRender();$("syncMsg").textContent="已取消，這台之後只存在本機。";
+  };
+  // 離開分頁時立刻上傳；回到分頁時看雲端有沒有別台的新進度
+  document.addEventListener("visibilitychange",async()=>{
+    if(!syncOn())return;
+    if(document.visibilityState==="hidden"){if(syncTimer)syncFlush(true);return;}
+    if(syncBusy||syncTimer)return;
+    syncBusy=true;
+    try{const r=await syncPull();syncBusy=false;
+      if(r==="pulled"){location.reload();return;}
+      syncStatus("ok","已同步 "+new Date().toLocaleTimeString().slice(0,-3));
+    }catch(e){syncBusy=false;syncStatus("err","同步失敗："+e.message);}
+  });
+}
+
 (async()=>{
+  syncUI();
+  if(syncOn()){
+    syncStatus("busy","同步中…");
+    try{
+      // 網路太慢就先用本機的，之後存檔時會再試一次
+      const p=syncPull();
+      let late=false;
+      p.then(r=>{if(late&&r==="pulled")location.reload();},()=>{});  // 逾時後才拉到新資料 → 重新載入
+      const r=await Promise.race([p,new Promise((_,j)=>setTimeout(()=>{late=true;j(new Error("連線逾時"));},5000))]);
+      syncStatus("ok",r==="pulled"?"已載入雲端最新進度":"已同步");
+    }catch(e){syncStatus("err","同步失敗："+e.message+"（先用本機資料）");}
+  }
   await load();
   await loadKeys();renderKeyHint();
   buildDeck();renderCards();
