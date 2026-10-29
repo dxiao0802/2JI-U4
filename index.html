@@ -170,6 +170,17 @@
   .recall.show .a{display:block}
   .recall .hintline{font-size:11px;color:#8D8776}
   .kb-msg{font-size:12px;color:#E8B4A8;min-height:16px;margin-top:8px;text-align:center}
+  .cz-step{margin:-4px 0 14px;padding:12px;background:#EFE7D2;border-radius:8px}
+  .cz-step .lbl{font-size:13px;color:#5C5749;margin-bottom:8px;font-weight:600}
+  .cz-step .row{display:flex;gap:8px}
+  .cz-step .row .opt{margin:0;text-align:center;font-family:inherit;font-size:14px}
+  .cz-step .msg{font-size:13.5px;line-height:1.6;margin-top:8px}
+  .cz-tag{display:inline-block;font-size:11px;font-family:-apple-system,"PingFang TC","Noto Sans TC",sans-serif;font-weight:600;
+    border-radius:4px;padding:1px 6px;margin-left:8px;vertical-align:1px;background:#E3DCC8;color:#5C5749}
+  .cz-tag.p{background:#D8E6EE;color:#2F5568}.cz-tag.c{background:#F0DDC9;color:#7A4A2A}
+  .cz-score{font-size:12.5px;opacity:.7;text-align:center;margin-top:10px}
+  .cz-sel{background:var(--chip);color:#CFC9B8;border:1px solid #566868;border-radius:999px;padding:6px 10px;font-size:13px}
+  .explain b.k{color:var(--red)}
   .hidden{display:none!important}
 </style>
 </head>
@@ -200,6 +211,7 @@
   <button class="tab" data-t="notes">筆記</button>
   <button class="tab" data-t="grammar">文法</button>
   <button class="tab" data-t="reading">閱讀</button>
+  <button class="tab" data-t="cloze">填空</button>
   <button class="tab" data-t="test">測驗</button>
   <button class="tab" data-t="stats">成績</button>
 </div>
@@ -279,6 +291,29 @@
   <div class="chips" id="rPick" style="margin-bottom:12px"></div>
   <div class="passage" id="rPassage"></div>
   <div id="rQs"></div>
+</section>
+
+<!-- 填空 -->
+<section id="sec-cloze" class="hidden">
+  <div class="chips" id="czMode" style="margin-bottom:6px">
+    <button class="chip on" data-m="vocab">單字填空</button>
+    <button class="chip" data-m="pc">介連兩步驟特訓</button>
+  </div>
+  <div class="chips" id="czScope" style="margin-bottom:12px"></div>
+  <div class="qcard">
+    <div class="qmeta"><span id="czType"></span><span id="czProg"></span></div>
+    <div class="qtext" id="czText"></div>
+    <div class="cz-step hidden" id="czStep">
+      <div class="lbl">第 1 步：空格後面接的是？</div>
+      <div class="row"><button class="opt" id="czN">名詞／V-ing</button><button class="opt" id="czC">句子（主詞＋動詞）</button></div>
+      <div class="msg" id="czStepMsg"></div>
+    </div>
+    <div id="czOpts"></div>
+    <div class="explain" id="czExplain"></div>
+    <div class="qnav"><button id="czShuffle">重新洗牌</button><button id="czNext">下一題</button></div>
+  </div>
+  <div class="cz-score" id="czScore"></div>
+  <div class="keyhint">電腦可以按 <kbd>1</kbd>～<kbd>4</kbd> 選答案、<kbd>Enter</kbd> 下一題（第 1 步用 <kbd>1</kbd> <kbd>2</kbd>）</div>
 </section>
 
 <!-- 測驗 -->
@@ -1316,7 +1351,47 @@ const GQ=[
  {id:"G28-9",t:"文法",q:"Not only ______ the new app affordable, but it is also easy to use.",o:["it is","does","being","is"],a:3,
   e:"Not only 放句首要倒裝：be 動詞移到主詞前 → Not only is the app affordable。"},
  {id:"G28-10",t:"文法",q:"Customers ______ vouchers have expired may contact the service desk for help.",o:["who","whose","which","whom"],a:1,
-  e:"★whose 複習（G27-8）：空格後面直接接名詞 vouchers，表示「顧客的禮券」→ 所有格 whose。"}
+  e:"★whose 複習（G27-8）：空格後面直接接名詞 vouchers，表示「顧客的禮券」→ 所有格 whose。"},
+ {id:"G29-1",t:"介連",q:"______ the heavy rain, the outdoor concert went ahead as planned.",o:["Although","Despite","Because","Unless"],a:1,
+  e:"the heavy rain 是名詞片語，沒有動詞 → 介系詞 Despite。Although 後面要接完整句子。"},
+ {id:"G29-2",t:"介連",q:"______ it rained heavily, the outdoor concert went ahead as planned.",o:["Despite","In spite of","Although","Regardless of"],a:2,
+  e:"it rained 有主詞＋動詞 → 連接詞 Although。Despite / In spite of 後面只能接名詞。（對照 G29-1）"},
+ {id:"G29-3",t:"介連",q:"Please keep your seatbelt fastened ______ the flight.",o:["while","during","when","as soon as"],a:1,
+  e:"the flight 是名詞 → 介系詞 during。while 後面要接句子。"},
+ {id:"G29-4",t:"介連",q:"Please keep your seatbelt fastened ______ the plane is moving.",o:["during","throughout","while","prior to"],a:2,
+  e:"the plane is moving 是句子 → 連接詞 while。during / throughout 後面接名詞。（對照 G29-3）"},
+ {id:"G29-5",t:"介連",q:"The shipment was delayed ______ a shortage of drivers.",o:["because","because of","since","although"],a:1,
+  e:"a shortage of drivers 是名詞 → because of。because 後面要接句子。"},
+ {id:"G29-6",t:"介連",q:"The shipment was delayed ______ there was a shortage of drivers.",o:["because of","due to","owing to","because"],a:3,
+  e:"there was… 是句子 → 連接詞 because。because of / due to / owing to 都是介系詞。（對照 G29-5）"},
+ {id:"G29-7",t:"介連",q:"______ arriving at the hotel, guests will receive a welcome drink.",o:["Upon","Although","Unless","Whereas"],a:0,
+  e:"arriving 是 V-ing（動名詞）→ 介系詞 Upon（一…就…）。"},
+ {id:"G29-8",t:"介連",q:"______ you arrive at the hotel, a staff member will show you to your room.",o:["Upon","Once","Prior to","Despite"],a:1,
+  e:"you arrive 是句子 → 連接詞 Once（一旦）。Upon 後面要接名詞或 V-ing。（對照 G29-7）"},
+ {id:"G29-9",t:"介連",q:"Employees must complete the training ______ accessing the new system.",o:["prior to","unless","although","whereas"],a:0,
+  e:"accessing 是 V-ing → 介系詞 prior to（在…之前）。"},
+ {id:"G29-10",t:"介連",q:"Employees cannot access the new system ______ they complete the training.",o:["unless","despite","regardless of","instead of"],a:0,
+  e:"they complete 是句子 → 連接詞 unless（除非）。其他三個都是介系詞。"},
+ {id:"G29-11",t:"介連",q:"______ its small size, the new office feels spacious.",o:["Although","Despite","While","Whereas"],a:1,
+  e:"its small size 是名詞 → Despite。"},
+ {id:"G29-12",t:"介連",q:"______ the new office is small, it feels spacious.",o:["Despite","In spite of","Although","Regardless of"],a:2,
+  e:"the new office is small 是句子 → Although。（對照 G29-11）"},
+ {id:"G29-13",t:"介連",q:"The store will remain open ______ the renovation.",o:["while","throughout","although","unless"],a:1,
+  e:"the renovation 是名詞 → 介系詞 throughout（整個…期間）。"},
+ {id:"G29-14",t:"介連",q:"Sales increased in Asia, ______ they declined slightly in Europe.",o:["despite","whereas","regardless of","because of"],a:1,
+  e:"they declined 是句子 → 連接詞 whereas（然而、相對地），前後對比。"},
+ {id:"G29-15",t:"介連",q:"All applications will be reviewed ______ the applicant's age.",o:["regardless of","although","even if","whether"],a:0,
+  e:"the applicant's age 是名詞 → 介系詞 regardless of（不論）。"},
+ {id:"G29-16",t:"介連",q:"The meeting was postponed ______ the manager was out of town.",o:["due to","owing to","because","during"],a:2,
+  e:"the manager was out of town 是句子 → because。"},
+ {id:"G29-17",t:"介連",q:"The meeting was postponed ______ the manager's absence.",o:["because","although","owing to","whereas"],a:2,
+  e:"the manager's absence 是名詞 → 介系詞 owing to（由於）。（對照 G29-16）"},
+ {id:"G29-18",t:"介連",q:"______ the budget is approved, construction will begin in March.",o:["Once","Following","Despite","During"],a:0,
+  e:"the budget is approved 是句子 → 連接詞 Once。Following 是介系詞，後面接名詞。"},
+ {id:"G29-19",t:"介連",q:"______ approval of the budget, construction will begin in March.",o:["Once","Following","Unless","Although"],a:1,
+  e:"approval of the budget 是名詞 → 介系詞 Following（在…之後）。（對照 G29-18）"},
+ {id:"G29-20",t:"介連",q:"Ms. Park worked from home ______ her office was being repainted.",o:["during","while","throughout","because of"],a:1,
+  e:"her office was being repainted 是句子 → 連接詞 while。"}
 ];
 
 const RQ=[
@@ -1803,7 +1878,8 @@ document.querySelectorAll(".tab").forEach(t=>{
   t.onclick=()=>{
     document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
     t.classList.add("on");
-    ["daily","cards","notes","grammar","reading","test","stats"].forEach(s=>$("sec-"+s).classList.toggle("hidden",s!==t.dataset.t));
+    ["daily","cards","notes","grammar","reading","cloze","test","stats"].forEach(s=>$("sec-"+s).classList.toggle("hidden",s!==t.dataset.t));
+    if(t.dataset.t==="cloze")czEnter();
     if(t.dataset.t==="stats")renderStats();
     if(t.dataset.t==="test")renderTestHome();
     if(t.dataset.t==="notes")renderNotes();
@@ -1950,7 +2026,8 @@ const GBATCH=[
  {k:"G25",label:"第25批 正式用語"},
  {k:"G26",label:"第26批 時態/被動"},
  {k:"G27",label:"第27批 物流倉儲"},
- {k:"G28",label:"第28批 行銷顧客"}
+ {k:"G28",label:"第28批 行銷顧客"},
+ {k:"G29",label:"第29批 介連判斷"}
 ];
 GBATCH.forEach(g=>{
   const b=document.createElement("button");
@@ -2120,6 +2197,8 @@ $("copyBtn").onclick=async()=>{
     const L=daily.log;
     if(L.vR+L.vW+L.gR+L.gW+L.rR+L.rW)
       lines.push(`今天：單字 ${L.vR+L.vW} 張(需複習 ${L.vW})、文法 對${L.gR} 錯${L.gW}、閱讀 對${L.rR} 錯${L.rW}　｜完成 ${daily.rounds||0} 輪`);
+    if((L.czR||0)+(L.czW||0))lines.push(`單字填空：對${L.czR||0} 錯${L.czW||0}`);
+    if((L.pcR||0)+(L.pcW||0))lines.push(`介連第1步（判斷後面接名詞還是句子）：對${L.pcR||0} 錯${L.pcW||0}`);
   }
   lines.push("—— 以下為累計 ——");
   const gr=groupRows();
@@ -2275,6 +2354,185 @@ document.addEventListener("keydown",async e=>{
 });
 document.addEventListener("keyup",e=>{
   if((!$("sec-cards").classList.contains("hidden")||!$("sec-test").classList.contains("hidden"))&&Object.values(keymap).includes(e.code))e.preventDefault();
+});
+
+/* ============ 填空 ============ */
+const CZ_PREP=["despite","in spite of","during","because of","due to","owing to","upon","throughout","prior to","following","regardless of","instead of","without","within","in addition to","on account of","as of","on behalf of"];
+const CZ_CONJ=["although","though","even though","while","whereas","because","unless","once","if","whether","so that","in case","now that","as soon as","provided that","providing that","as long as","even if","given that"];
+// 答案是 since / after / until 這種兩邊都能當的字，看題目手動標：n=後面接名詞、c=後面接句子
+const CZ_KIND={"G9-6":"c","G12-6":"c","G17-4":"c","G19-3":"c","G21-2":"c","G22-7":"c","G23-2":"c","G24-7":"c","G17-8":"n","G22-11":"n"};
+const czNorm=x=>x.toLowerCase().trim();
+function czRole(w){const x=czNorm(w);return CZ_PREP.includes(x)?"p":CZ_CONJ.includes(x)?"c":"";}
+function czKind(q){
+  if(CZ_KIND[q.id])return CZ_KIND[q.id];
+  const r=czRole(q.o[q.a]);if(!r)return "";
+  const os=q.o.map(czRole);
+  return os.includes(r==="p"?"c":"p")?(r==="p"?"n":"c"):"";
+}
+const PCQ=GQ.filter(q=>q.t==="介連"&&czKind(q));
+const czEsc=x=>x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+const czHtml=x=>x.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+// 在例句裡找到這個字（含 -s/-ed/-ing 等變化），找不到就不出這題
+function czFind(w){
+  if(!w.ex)return null;
+  const en=w.en.toLowerCase();
+  let m=new RegExp("\\b"+czEsc(en)+"\\b","i").exec(w.ex);
+  if(!m&&!/ /.test(en)){
+    const stem=en.length>4?en.replace(/(e|y)$/,""):en;
+    m=new RegExp("\\b"+czEsc(stem)+"[a-z]{0,4}\\b","i").exec(w.ex);
+  }
+  return m?{at:m.index,tok:m[0]}:null;
+}
+function czPos(w){return (w.pos||"").split("/")[0].replace(/\s/g,"");}
+let czMode="vocab",czScopeV="all",czList=[],czIdx=0,czItem=null,czSess={r:0,w:0},czStepDone=false,czAnswered=false;
+function czAllWords(){return WORDS.concat(testWords).map((w,i)=>({...w,i:w.dyn?"t:"+w.en:i}));}
+function czScopes(){
+  if(czMode==="pc")return [["all",`全部 ${PCQ.length} 題`],["wrong","錯過的"],["new","還沒做過的"]];
+  const s=[["all","全部單字"],["red","紅字單字"],["marked","需複習"]];
+  return s;
+}
+function czRenderScopes(){
+  const box=$("czScope");box.innerHTML="";
+  czScopes().forEach(([k,label])=>{
+    const b=document.createElement("button");
+    b.className="chip"+(k===czScopeV?" on":"");b.textContent=label;
+    b.onclick=()=>{czScopeV=k;czRenderScopes();czBuild();czRender();};
+    box.appendChild(b);
+  });
+  if(czMode==="vocab"){
+    const sel=document.createElement("select");sel.className="cz-sel";
+    sel.innerHTML='<option value="">選組別…</option>'+GROUPS.filter(g=>g.id>0).map(g=>`<option value="${g.id}">${czHtml(g.label)}</option>`).join("");
+    if(/^g\d+$/.test(czScopeV))sel.value=czScopeV.slice(1);
+    sel.onchange=()=>{if(!sel.value)return;czScopeV="g"+sel.value;czRenderScopes();czBuild();czRender();};
+    box.appendChild(sel);
+  }
+}
+function czBuild(){
+  if(czMode==="pc"){
+    czList=PCQ.filter(q=>czScopeV==="wrong"?(quiz[q.id]&&quiz[q.id].w>0&&(quiz[q.id].h||"").slice(-2)!=="11"):czScopeV==="new"?!quiz[q.id]:true);
+  }else{
+    const g=/^g\d+$/.test(czScopeV)?+czScopeV.slice(1):0;
+    czList=czAllWords().filter(w=>czFind(w)&&(czScopeV==="red"?isRed(w.i):czScopeV==="marked"?!!marks[w.i]:g?w.g===g:true));
+  }
+  shuffleArr(czList);czIdx=0;
+}
+function czDistractors(w){
+  const pool=czAllWords().filter(x=>x.en.toLowerCase()!==w.en.toLowerCase()&&!w.ex.toLowerCase().includes(x.en.toLowerCase()));
+  const same=shuffleArr(pool.filter(x=>czPos(x)===czPos(w)));
+  const out=[],seen=new Set([w.en.toLowerCase()]);
+  for(const x of same.concat(shuffleArr(pool.slice()))){if(out.length>=3)break;const k=x.en.toLowerCase();if(seen.has(k))continue;seen.add(k);out.push(x);}
+  return out;
+}
+function czEnter(){czRenderScopes();if(!czList.length)czBuild();czRender();}
+function czRender(){
+  czAnswered=false;czStepDone=false;
+  $("czExplain").style.display="none";$("czExplain").innerHTML="";
+  const box=$("czOpts");box.innerHTML="";
+  $("czScore").textContent=czSess.r+czSess.w?`這次：對 ${czSess.r}／錯 ${czSess.w}`:"";
+  $("count").textContent=czMode==="pc"?`介連特訓 ${czList.length} 題`:`填空 ${czList.length} 題`;
+  const it=czList[czIdx];
+  $("czStep").classList.add("hidden");
+  if(!it){
+    $("czType").textContent="";$("czProg").textContent="0 / 0";
+    $("czText").textContent=czMode==="pc"?(czScopeV==="wrong"?"沒有還在錯的介連題，很好！換「全部」再練一輪。":"這個範圍沒有題目。")
+      :czScopeV==="red"?"沒有紅字單字了。":czScopeV==="marked"?"沒有標記「需複習」的單字。":"這個範圍沒有可以出題的例句。";
+    return;
+  }
+  $("czProg").textContent=`${czIdx+1} / ${czList.length}`;
+  if(czMode==="pc"){
+    czItem={q:it,kind:czKind(it)};
+    $("czType").textContent=`介系詞／連接詞（${it.id}）`;
+    $("czText").textContent=it.q;
+    $("czStep").classList.remove("hidden");
+    ["czN","czC"].forEach(id=>{$(id).className="opt";$(id).disabled=false;});
+    $("czStepMsg").textContent="";
+    return;  // 第 1 步答完才出選項
+  }
+  const f=czFind(it);
+  const opts=shuffleArr([it,...czDistractors(it)]);
+  czItem={w:it,f,opts,a:opts.indexOf(it)};
+  const infl=f.tok.toLowerCase()!==it.en.toLowerCase();
+  $("czType").textContent=`單字填空・${gLabel(it.g).replace(/（.*/,"")}${infl?"　（空格是變化形，選原形）":""}`;
+  $("czText").textContent=it.ex.slice(0,f.at)+"______"+it.ex.slice(f.at+f.tok.length);
+  czShowOpts(opts.map(o=>o.en));
+}
+function czShowOpts(labels){
+  const box=$("czOpts");box.innerHTML="";
+  const L=["A","B","C","D"];
+  labels.forEach((t,i)=>{
+    const b=document.createElement("button");
+    b.className="opt";b.textContent=`(${L[i]}) ${t}`;
+    b.onclick=()=>czAnswer(i);
+    box.appendChild(b);
+  });
+}
+function czStep(kind){
+  if(czStepDone||!czItem||!czItem.q)return;
+  czStepDone=true;
+  const ok=kind===czItem.kind;
+  if(daily&&daily.date===todayKey()){if(!daily.log)daily.log={vR:0,vW:0,gR:0,gW:0,rR:0,rW:0};const k=ok?"pcR":"pcW";daily.log[k]=(daily.log[k]||0)+1;saveDaily();}
+  const right=czItem.kind==="n"?"czN":"czC";
+  $(right).classList.add("correct");if(!ok)$(kind==="n"?"czN":"czC").classList.add("wrong");
+  $("czN").disabled=$("czC").disabled=true;
+  $("czStepMsg").innerHTML=(ok?"✔ 對！":"✘ 再看一次：")+(czItem.kind==="n"
+    ?"空格後面是<b>名詞／V-ing</b>，沒有自己的動詞 → 要選<b>介系詞</b>。"
+    :"空格後面是<b>完整句子</b>（有主詞＋動詞）→ 要選<b>連接詞</b>。")+"<br>第 2 步：選答案 👇";
+  czShowOpts(czItem.q.o);
+}
+async function czAnswer(i){
+  if(czAnswered||!czItem)return;
+  if(czItem.q&&!czStepDone)return;
+  czAnswered=true;
+  const box=$("czOpts"),ex=$("czExplain");
+  if(czItem.q){
+    const q=czItem.q,ok=i===q.a;
+    record(q.id,ok);ok?czSess.r++:czSess.w++;
+    [...box.children].forEach((b,k)=>{
+      b.disabled=true;
+      const r=czRole(q.o[k]);
+      if(r)b.insertAdjacentHTML("beforeend",`<span class="cz-tag ${r}">${r==="p"?"介系詞":"連接詞"}</span>`);
+      else if(/^(however|therefore|meanwhile|nevertheless|moreover|furthermore|otherwise)$/i.test(q.o[k]))b.insertAdjacentHTML("beforeend",'<span class="cz-tag">副詞</span>');
+    });
+    box.children[i].classList.add(ok?"correct":"wrong");if(!ok)box.children[q.a].classList.add("correct");
+    ex.textContent=q.e;
+  }else{
+    const {w,f,opts,a}=czItem,ok=i===a;
+    recWord(w.i,ok);noteDailyWord(w.i);ok?czSess.r++:czSess.w++;
+    if(daily&&daily.date===todayKey()&&daily.log){const k=ok?"czR":"czW";daily.log[k]=(daily.log[k]||0)+1;saveDaily();}
+    if(ok&&marks[w.i]){delete marks[w.i];await saveMarks();}
+    if(!ok){marks[w.i]=1;await saveMarks();}
+    [...box.children].forEach(b=>b.disabled=true);
+    box.children[i].classList.add(ok?"correct":"wrong");if(!ok)box.children[a].classList.add("correct");
+    const sent=czHtml(w.ex.slice(0,f.at))+`<b class="k">${czHtml(f.tok)}</b>`+czHtml(w.ex.slice(f.at+f.tok.length));
+    ex.innerHTML=`<b>${czHtml(w.en)}</b> ${czHtml(w.pos||"")}　${czHtml(w.zh)}<br>${sent}`
+      +`<div style="margin-top:6px;color:#8D8776;font-size:13px">其他選項：${opts.filter((_,k)=>k!==a).map(o=>`${czHtml(o.en)} ${czHtml(o.zh)}`).join("、")}</div>`
+      +(ok?"":'<div style="margin-top:4px;color:#7A4438;font-size:13px">已標成「需複習」，單字卡會再出現。</div>');
+  }
+  ex.style.display="block";
+  $("czScore").textContent=`這次：對 ${czSess.r}／錯 ${czSess.w}`;
+}
+function czNext(){if(czIdx<czList.length-1)czIdx++;else{shuffleArr(czList);czIdx=0;}czRender();}
+$("czNext").onclick=czNext;
+$("czShuffle").onclick=()=>{czBuild();czRender();};
+$("czN").onclick=()=>czStep("n");
+$("czC").onclick=()=>czStep("c");
+[...$("czMode").children].forEach(b=>b.onclick=()=>{
+  czMode=b.dataset.m;czScopeV="all";
+  [...$("czMode").children].forEach(c=>c.classList.toggle("on",c===b));
+  czRenderScopes();czBuild();czRender();
+});
+document.addEventListener("keydown",e=>{
+  if($("sec-cloze").classList.contains("hidden")||listeningFor||e.repeat)return;
+  if(e.target&&/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName))return;
+  const n=/^Digit([1-4])$/.exec(e.code)||/^Numpad([1-4])$/.exec(e.code);
+  if(n){
+    e.preventDefault();
+    if(czMode==="pc"&&!czStepDone){if(n[1]==="1")czStep("n");else if(n[1]==="2")czStep("c");return;}
+    const b=$("czOpts").children[+n[1]-1];if(b&&!b.disabled)b.click();
+  }else if(e.code==="Enter"||e.code==="ArrowRight"){
+    if(!czAnswered)return;
+    e.preventDefault();czNext();
+  }
 });
 
 /* ============ 單字量測驗 ============ */
@@ -2634,7 +2892,7 @@ function noteToday(kind,ok){
 }
 function switchTab(name){
   document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.dataset.t===name));
-  ["daily","cards","notes","grammar","reading","test","stats"].forEach(s=>$("sec-"+s).classList.toggle("hidden",s!==name));
+  ["daily","cards","notes","grammar","reading","cloze","test","stats"].forEach(s=>$("sec-"+s).classList.toggle("hidden",s!==name));
   window.scrollTo(0,0);
 }
 function syncCardChips(){[...$("groupChips").children].forEach(c=>c.classList.toggle("on",c.textContent.indexOf("今日任務單字")>=0));
