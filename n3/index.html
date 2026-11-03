@@ -94,7 +94,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 .mt.badf{border-color:var(--bad);background:var(--badbg);animation:shake .35s}
 .timer{text-align:center;color:var(--mut);font-weight:700;margin-top:12px}
 /* feedback */
-.fb{transform:translateY(100%);transition:transform .22s ease-out;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
+.fb{position:absolute;left:0;right:0;bottom:0;z-index:2;border-top:2px solid var(--line);transform:translateY(105%);transition:transform .22s ease-out;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
 .fb.show{transform:none}
 .fb.ok{background:var(--okbg)}.fb.bad{background:var(--badbg)}
 .fbi{max-width:620px;margin:0 auto}
@@ -516,7 +516,7 @@ function setBar(){
 }
 function renderQ(){
   setBar();L.locked=false;
-  const it=L.q[L.pos];const lb=$("#lb");$("#fb").className="fb";$("#foot").innerHTML="";
+  const it=L.q[L.pos];const lb=$("#lb");lb.style.paddingBottom="";$("#fb").className="fb";$("#foot").innerHTML="";
   if(it.t==="match"){renderMatch(it);return;}
   const w=it.w,isNew=!S.ws[w.id];
   const label={meaning:"這個字是什麼意思？",reverse:"用日文怎麼說？",reading:"選出正確的讀音",listen:"聽聽看，是哪個字？",cloze:"填入最適合的字"}[it.t];
@@ -561,7 +561,7 @@ function showFb(ok,w,it){
    <p><span class="jp" style="font-size:20px;font-weight:800">${w.k}</span>${w.k!==w.r?`<span class="jp">（${w.r}）</span>`:""}　${w.m}</p>
    ${ok&&it.t!=="cloze"?"":`<p class="ex"><span class="jp">${ex}</span><br>${w.ez}</p>`}
    <button class="btn ${ok?"ok":"bad"}" id="cont">繼續</button>`;
-  requestAnimationFrame(()=>fb.classList.add("show"));
+  requestAnimationFrame(()=>{fb.classList.add("show");const lb=$("#lb");lb.style.paddingBottom=(fb.offsetHeight+16)+"px";});
   $("#say").onclick=()=>speak(w.ex.replace(/[\[\]]/g,""));
   $("#cont").onclick=next;
   if(!ok&&!L.practice&&S.hearts<=0)setTimeout(()=>heartModal(false),400);
