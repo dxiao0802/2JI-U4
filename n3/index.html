@@ -1,0 +1,772 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ff7a1a">
+<title>N3 衝刺島</title>
+<style>
+:root{--bg:#f6f5fb;--card:#fff;--ink:#1d1d2b;--mut:#6b6b80;--line:#e3e2ee;--pri:#ff7a1a;--pri2:#d95f00;--ok:#20a957;--ok2:#178343;--okbg:#e2f7ea;--bad:#e5484d;--bad2:#b8323a;--badbg:#fde7e8;--gold:#f5b400;--blue:#3b82f6;--blue2:#2563c9;--pur:#8b5cf6;--shadow:0 2px 0 var(--line)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121319;--card:#1c1d27;--ink:#ececf4;--mut:#9b9bb2;--line:#2d2e3c;--okbg:#10301d;--badbg:#3a1619}}
+:root[data-theme="dark"]{--bg:#121319;--card:#1c1d27;--ink:#ececf4;--mut:#9b9bb2;--line:#2d2e3c;--okbg:#10301d;--badbg:#3a1619}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI","Noto Sans TC","Noto Sans JP","Hiragino Sans","Microsoft JhengHei",sans-serif}
+body{min-height:100vh;overflow-x:hidden}
+.wrap{max-width:540px;margin:0 auto;padding:0 16px 96px}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+.jp{font-family:"Noto Sans JP","Hiragino Sans","Yu Gothic","Meiryo",system-ui,sans-serif}
+/* top bar */
+.top{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;justify-content:space-between;align-items:center;padding:12px 0 10px;border-bottom:2px solid var(--line)}
+.brand{font-weight:800;font-size:18px;display:flex;gap:6px;align-items:center}
+.pills{display:flex;gap:12px;font-weight:800}
+.pill{display:flex;gap:4px;align-items:center}
+.pill.fire{color:var(--pri)}.pill.gem{color:var(--blue)}.pill.heart{color:var(--bad)}
+.pill.off{filter:grayscale(1);opacity:.55}
+/* cards */
+.card{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:16px;margin-top:14px}
+.goal{display:flex;gap:14px;align-items:center}
+.ring{width:64px;height:64px;flex:none}
+.goal h3{margin:0 0 4px;font-size:16px}.goal p{margin:0;color:var(--mut);font-size:14px}
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.btn{display:block;width:100%;padding:14px 12px;border-radius:16px;font-weight:800;font-size:16px;text-align:center;border:2px solid var(--line);border-bottom-width:5px;background:var(--card);transition:transform .06s}
+.btn:active{transform:translateY(3px);border-bottom-width:2px;margin-bottom:3px}
+.btn.pri{background:var(--pri);border-color:var(--pri2);color:#fff}
+.btn.ok{background:var(--ok);border-color:var(--ok2);color:#fff}
+.btn.bad{background:var(--bad);border-color:var(--bad2);color:#fff}
+.btn.blue{background:var(--blue);border-color:var(--blue2);color:#fff}
+.btn small{display:block;font-weight:600;font-size:12px;opacity:.85;margin-top:2px}
+.btn[disabled]{opacity:.45;pointer-events:none}
+/* path */
+.unit{margin-top:22px}
+.uhead{border-radius:18px;padding:14px 16px;color:#fff;display:flex;justify-content:space-between;align-items:center;border-bottom:5px solid rgba(0,0,0,.18)}
+.uhead b{font-size:17px}.uhead span{font-size:13px;opacity:.92}
+.ubar{height:8px;background:rgba(255,255,255,.35);border-radius:9px;margin-top:8px;overflow:hidden;width:120px}
+.ubar i{display:block;height:100%;background:#fff;border-radius:9px}
+.nodes{display:flex;flex-direction:column;align-items:center;gap:14px;padding:18px 0 4px}
+.node{position:relative;width:76px;height:70px;border-radius:50%;font-size:30px;display:grid;place-items:center;border-bottom:7px solid rgba(0,0,0,.22);color:#fff;transition:transform .08s}
+.node:active{transform:translateY(4px);border-bottom-width:3px}
+.node.lock{background:var(--line)!important;color:var(--mut);border-bottom-color:rgba(0,0,0,.12)}
+.node .stars{position:absolute;bottom:-22px;font-size:12px;white-space:nowrap;color:var(--gold);letter-spacing:1px}
+.node .go{position:absolute;top:-34px;background:var(--card);border:2px solid var(--line);color:var(--pri);font-size:13px;font-weight:800;padding:3px 10px;border-radius:10px;animation:bob 1.2s ease-in-out infinite;white-space:nowrap}
+@keyframes bob{50%{transform:translateY(-5px)}}
+/* nav */
+.nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:2px solid var(--line);display:flex;justify-content:center;z-index:6;padding-bottom:env(safe-area-inset-bottom)}
+.nav button{flex:1;max-width:180px;padding:10px 0 12px;font-size:22px;display:flex;flex-direction:column;align-items:center;gap:2px;opacity:.55}
+.nav button span{font-size:12px;font-weight:700}
+.nav button.on{opacity:1;color:var(--pri)}
+/* lesson */
+.ov{position:fixed;inset:0;background:var(--bg);z-index:20;display:none;flex-direction:column}
+.ov.show{display:flex}
+.lt{max-width:620px;width:100%;margin:0 auto;padding:14px 16px 0;display:flex;align-items:center;gap:12px}
+.x{font-size:22px;color:var(--mut);padding:4px}
+.pbar{flex:1;height:16px;background:var(--line);border-radius:10px;overflow:hidden;position:relative}
+.pbar i{display:block;height:100%;width:0;background:var(--ok);border-radius:10px;transition:width .35s cubic-bezier(.3,1.4,.6,1),background .3s;position:relative}
+.pbar i::after{content:"";position:absolute;left:8px;right:8px;top:3px;height:4px;border-radius:4px;background:rgba(255,255,255,.35)}
+.pbar.hot i{background:linear-gradient(90deg,var(--pri),var(--gold))}
+.lh{font-weight:800;color:var(--bad);min-width:40px;text-align:right}
+.combo{height:26px;max-width:620px;width:100%;margin:6px auto 0;padding:0 16px;font-weight:900;color:var(--pri);font-size:15px;opacity:0;transition:opacity .2s}
+.combo.on{opacity:1}
+.combo.pop{animation:pop .35s}
+@keyframes pop{40%{transform:scale(1.25)}}
+.lb{flex:1;overflow:auto;max-width:620px;width:100%;margin:0 auto;padding:6px 16px 20px}
+.qlabel{font-weight:800;font-size:19px;margin:6px 0 16px;display:flex;align-items:center;gap:8px}
+.new{background:var(--pur);color:#fff;font-size:11px;padding:2px 7px;border-radius:7px}
+.prompt{text-align:center;margin:8px 0 24px}
+.big{font-size:52px;font-weight:800;line-height:1.2}
+.big.zh{font-size:30px}
+.sent{font-size:22px;line-height:1.8;text-align:left;background:var(--card);border:2px solid var(--line);border-radius:16px;padding:14px 16px}
+.blank{display:inline-block;min-width:3.2em;border-bottom:3px solid var(--pri);text-align:center;color:var(--pri)}
+.spk{width:96px;height:96px;border-radius:24px;background:var(--blue);border-bottom:6px solid var(--blue2);color:#fff;font-size:42px}
+.spk:active{transform:translateY(3px);border-bottom-width:3px}
+.opts{display:grid;gap:10px}
+.opt{padding:14px 16px;border-radius:16px;border:2px solid var(--line);border-bottom-width:5px;background:var(--card);font-size:20px;font-weight:700;text-align:left;display:flex;gap:12px;align-items:center}
+.opt .k{flex:none;width:26px;height:26px;border-radius:8px;border:2px solid var(--line);font-size:13px;display:grid;place-items:center;color:var(--mut)}
+.opt:active{transform:translateY(3px)}
+.opt.right{background:var(--okbg);border-color:var(--ok);color:var(--ok)}
+.opt.wrong{background:var(--badbg);border-color:var(--bad);color:var(--bad);animation:shake .35s}
+.opt.dim{opacity:.45}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.match{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mt{padding:14px 8px;border-radius:14px;border:2px solid var(--line);border-bottom-width:5px;background:var(--card);font-weight:700;font-size:18px;min-height:60px}
+.mt.sel{border-color:var(--blue);background:rgba(59,130,246,.12);color:var(--blue)}
+.mt.done{opacity:0;pointer-events:none;transition:opacity .35s .15s}
+.mt.okf{border-color:var(--ok);background:var(--okbg);color:var(--ok)}
+.mt.badf{border-color:var(--bad);background:var(--badbg);animation:shake .35s}
+.timer{text-align:center;color:var(--mut);font-weight:700;margin-top:12px}
+/* feedback */
+.fb{transform:translateY(100%);transition:transform .22s ease-out;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
+.fb.show{transform:none}
+.fb.ok{background:var(--okbg)}.fb.bad{background:var(--badbg)}
+.fbi{max-width:620px;margin:0 auto}
+.fb h4{margin:0 0 6px;font-size:21px;display:flex;align-items:center;gap:8px}
+.fb.ok h4{color:var(--ok)}.fb.bad h4{color:var(--bad)}
+.fb p{margin:2px 0 12px;font-size:16px;line-height:1.6}
+.fb .ex{font-size:15px;color:var(--mut)}
+.mini{font-size:18px;padding:2px 6px;border-radius:8px}
+.foot{padding:0 16px 16px;max-width:620px;width:100%;margin:0 auto}
+/* result */
+.res{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px 16px;max-width:520px;width:100%;margin:0 auto}
+.res h2{font-size:28px;margin:8px 0 4px;color:var(--gold)}
+.mascot{font-size:84px;animation:jump .8s ease-in-out infinite alternate}
+@keyframes jump{to{transform:translateY(-12px) rotate(-6deg)}}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;margin:20px 0}
+.st{border:2px solid;border-radius:16px;overflow:hidden}
+.st b{display:block;color:#fff;font-size:12px;padding:4px 0}
+.st div{padding:10px 0;font-size:22px;font-weight:900;background:var(--card)}
+.chest{font-size:64px;cursor:pointer;animation:wig 1s infinite}
+@keyframes wig{0%,100%{transform:rotate(0)}10%,30%{transform:rotate(-10deg)}20%,40%{transform:rotate(10deg)}50%{transform:rotate(0)}}
+.chest.open{animation:none}
+.gain{font-weight:900;color:var(--blue);font-size:22px;height:30px}
+/* toast & burst */
+.toast{position:fixed;left:50%;top:18%;transform:translate(-50%,-10px) scale(.9);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:16px;font-weight:800;z-index:50;opacity:0;transition:.25s;pointer-events:none;text-align:center;max-width:86vw}
+.toast.show{opacity:1;transform:translate(-50%,0) scale(1)}
+.burst{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);font-size:44px;font-weight:900;color:var(--pri);z-index:40;pointer-events:none;text-shadow:0 3px 0 rgba(0,0,0,.15);animation:burst .9s forwards;white-space:nowrap}
+@keyframes burst{0%{transform:translate(-50%,-50%) scale(.3);opacity:0}25%{transform:translate(-50%,-50%) scale(1.15);opacity:1}70%{opacity:1}100%{transform:translate(-50%,-90%) scale(1);opacity:0}}
+.xpfly{position:fixed;font-weight:900;color:var(--gold);z-index:41;pointer-events:none;animation:fly .8s forwards}
+@keyframes fly{to{transform:translateY(-50px);opacity:0}}
+canvas#cf{position:fixed;inset:0;pointer-events:none;z-index:60}
+/* modal */
+.md{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:70;display:none;align-items:flex-end;justify-content:center}
+.md.show{display:flex}
+.mdb{background:var(--card);width:100%;max-width:540px;border-radius:22px 22px 0 0;padding:22px 16px calc(22px + env(safe-area-inset-bottom));text-align:center}
+.mdb h3{margin:6px 0 6px;font-size:22px}.mdb p{color:var(--mut);margin:0 0 16px}
+.mdb .btn{margin-top:10px}
+/* words & me */
+.search{width:100%;padding:12px 14px;border-radius:14px;border:2px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:16px;margin-top:14px}
+.wl h4{margin:18px 0 6px;color:var(--mut);font-size:14px}
+.wr{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line);cursor:pointer}
+.wr .dot{width:10px;height:10px;border-radius:50%;background:var(--line);flex:none}
+.wr .dot.l{background:var(--gold)}.wr .dot.m{background:var(--ok)}.wr .dot.w{background:var(--bad)}
+.wr .wk{font-size:19px;font-weight:700;min-width:5.5em}
+.wr .wm{color:var(--mut);font-size:14px;flex:1}
+.wr .wrr{font-size:13px;color:var(--mut)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:12px 14px}
+.kpi b{display:block;font-size:24px}.kpi span{color:var(--mut);font-size:13px}
+.ach{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.a{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:12px 6px;text-align:center;font-size:12px;color:var(--mut)}
+.a i{display:block;font-style:normal;font-size:32px;margin-bottom:4px}
+.a.lock i{filter:grayscale(1);opacity:.35}
+.a.got{border-color:var(--gold);color:var(--ink)}
+.row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.seg{display:flex;gap:6px}.seg button{padding:6px 12px;border-radius:10px;border:2px solid var(--line);font-weight:700}
+.seg button.on{border-color:var(--pri);color:var(--pri)}
+h2.sec{font-size:18px;margin:24px 0 8px}
+.hint{color:var(--mut);font-size:13px;margin-top:8px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="top">
+    <div class="brand">🍙 N3 衝刺島</div>
+    <div class="pills">
+      <div class="pill fire" id="pFire">🔥 0</div>
+      <div class="pill gem" id="pGem">💎 0</div>
+      <div class="pill heart" id="pHeart">❤️ 5</div>
+    </div>
+  </div>
+  <div id="vHome"></div>
+  <div id="vWords" hidden></div>
+  <div id="vMe" hidden></div>
+</div>
+<nav class="nav">
+  <button class="on" data-v="Home">🗺️<span>闖關</span></button>
+  <button data-v="Words">📒<span>單字本</span></button>
+  <button data-v="Me">🏆<span>成就</span></button>
+</nav>
+
+<div class="ov" id="lesson">
+  <div class="lt"><button class="x" id="lx" aria-label="離開">✕</button><div class="pbar" id="pbar"><i></i></div><div class="lh" id="lh">❤️5</div></div>
+  <div class="combo" id="combo"></div>
+  <div class="lb" id="lb"></div>
+  <div class="foot" id="foot"></div>
+  <div class="fb" id="fb"><div class="fbi" id="fbi"></div></div>
+</div>
+<div class="ov" id="result"></div>
+<div class="md" id="md"><div class="mdb" id="mdb"></div></div>
+<div class="toast" id="toast"></div>
+<canvas id="cf"></canvas>
+
+<script>
+/* ============ 單字資料：漢字|讀音|中文|詞性|例句（[ ]＝目標字）|例句中文 ============ */
+const UNITS=[
+ {n:"日常動作",e:"🧹",c:"#ff7a1a"},{n:"心情個性",e:"💗",c:"#ec4899"},{n:"學校工作",e:"💼",c:"#3b82f6"},
+ {n:"交通旅行",e:"🚃",c:"#14b8a6"},{n:"身體健康",e:"🩺",c:"#22a559"},{n:"家事購物",e:"🛒",c:"#f59e0b"},
+ {n:"自然天氣",e:"⛅",c:"#0ea5e9"},{n:"抽象名詞",e:"🧠",c:"#8b5cf6"},{n:"必考副詞",e:"⚡",c:"#ef4444"},
+ {n:"擬態語・外來語",e:"🎵",c:"#6366f1"}
+];
+const RAW=`片付ける|かたづける|收拾、整理|動|出かける前に部屋を[片付け]なさい。|出門前把房間收拾好。
+預ける|あずける|寄放、託付|動|旅行の間、犬を友達に[預け]た。|旅行期間把狗寄放在朋友那裡。
+預かる|あずかる|代為保管|動|お荷物はこちらで[預かり]ます。|行李由我們這邊保管。
+断る|ことわる|拒絕|動|先輩の誘いを[断る]のは難しい。|很難拒絕前輩的邀約。
+慌てる|あわてる|慌張|動|地震のときは[慌て]ないで行動してください。|地震時請不要慌張，冷靜行動。
+諦める|あきらめる|放棄|動|最後まで[諦め]ないで頑張ろう。|堅持到最後，不要放棄。
+間に合う|まにあう|來得及|動|走れば電車に[間に合う]かもしれない。|用跑的話也許趕得上電車。
+迷う|まよう|迷路、猶豫|動|初めての町で道に[迷っ]た。|在第一次去的城市迷路了。
+比べる|くらべる|比較|動|去年と[比べる]と、今年は雨が多い。|跟去年比，今年雨比較多。
+届ける|とどける|送到、交給|動|拾った財布を交番に[届け]た。|把撿到的錢包送到派出所。
+温める|あたためる|加熱、溫熱|動|このお弁当を[温め]ますか。|這個便當要加熱嗎？
+冷える|ひえる|變冷、變涼|動|夜になると、だいぶ[冷え]てきた。|到了晚上變得相當冷。
+謝る|あやまる|道歉|動|遅れたことを先生に[謝っ]た。|為遲到的事向老師道歉。
+支払う|しはらう|支付|動|料金はカードで[支払う]ことができます。|費用可以用信用卡支付。
+揃える|そろえる|備齊、使一致|動|必要な書類を[揃え]てから申し込んでください。|請備齊必要文件後再申請。
+悔しい|くやしい|不甘心|形|試合に負けて、とても[悔しい]。|比賽輸了，非常不甘心。
+恥ずかしい|はずかしい|丟臉、害羞|形|人前で転んで[恥ずかしかっ]た。|在大家面前跌倒，好丟臉。
+懐かしい|なつかしい|懷念|形|この歌を聞くと、高校時代が[懐かしく]なる。|聽到這首歌就懷念起高中時代。
+羨ましい|うらやましい|羨慕|形|毎年海外旅行に行ける彼が[羨ましい]。|很羨慕每年都能出國旅行的他。
+大人しい|おとなしい|文靜、乖巧|形|弟は[大人しい]性格で、あまり話さない。|弟弟個性文靜，不太說話。
+素直|すなお|坦率、聽話|形|彼は[素直]に自分の間違いを認めた。|他坦率地承認了自己的錯誤。
+真面目|まじめ|認真|形|田中さんは[真面目]で、一度も遅刻したことがない。|田中很認真，從來沒遲到過。
+正直|しょうじき|老實、誠實|形|[正直]に言うと、その映画はつまらなかった。|老實說，那部電影很無聊。
+我慢|がまん|忍耐|名|痛くても少し[我慢]してください。|就算痛也請稍微忍耐一下。
+退屈|たいくつ|無聊|形|雨の日は外に出られなくて[退屈]だ。|下雨天不能出門，好無聊。
+面倒|めんどう|麻煩|形|毎日料理を作るのは[面倒]だ。|每天做飯很麻煩。
+不安|ふあん|不安|形|初めての一人暮らしで[不安]なことが多い。|第一次一個人住，有很多不安的事。
+夢中|むちゅう|著迷、熱衷|形|子どもたちはゲームに[夢中]になっている。|孩子們沉迷在遊戲裡。
+意地悪|いじわる|壞心眼、捉弄|形|妹に[意地悪]をしてはいけません。|不可以捉弄妹妹。
+緊張|きんちょう|緊張|名|面接の前はいつも[緊張]する。|面試前總是很緊張。
+締め切り|しめきり|截止期限|名|レポートの[締め切り]は来週の金曜日だ。|報告的截止日是下週五。
+提出|ていしゅつ|提交|名|宿題を明日までに[提出]してください。|請在明天之前交作業。
+出席|しゅっせき|出席|名|会議に[出席]する人は手を挙げてください。|要出席會議的人請舉手。
+欠席|けっせき|缺席|名|熱があるので、今日の授業は[欠席]します。|因為發燒，今天的課要缺席。
+給料|きゅうりょう|薪水|名|今月の[給料]はもう全部使ってしまった。|這個月的薪水已經全部花光了。
+残業|ざんぎょう|加班|名|最近は[残業]が多くて、疲れている。|最近加班很多，好累。
+面接|めんせつ|面試|名|明日、アルバイトの[面接]がある。|明天有打工的面試。
+担当|たんとう|負責（人）|名|この仕事の[担当]は山田さんです。|這份工作的負責人是山田。
+打ち合わせ|うちあわせ|事前討論、碰面開會|名|午後二時から客と[打ち合わせ]がある。|下午兩點起要和客戶開會討論。
+資料|しりょう|資料|名|会議の[資料]をコピーしておいてください。|請先把會議資料影印好。
+予約|よやく|預約|名|レストランを七時に[予約]した。|預約了七點的餐廳。
+経験|けいけん|經驗|名|海外で働いた[経験]がありますか。|你有在國外工作的經驗嗎？
+成績|せいせき|成績|名|今学期は[成績]が少し上がった。|這學期成績稍微進步了。
+合格|ごうかく|合格、考上|名|次こそN3に[合格]したい。|下次一定要考過 N3。
+受付|うけつけ|櫃台、受理|名|申し込みの[受付]は九時から始まります。|報名受理從九點開始。
+乗り換える|のりかえる|轉乘|動|新宿で山手線に[乗り換え]てください。|請在新宿轉乘山手線。
+往復|おうふく|來回|名|東京まで[往復]でいくらですか。|到東京來回要多少錢？
+片道|かたみち|單程|名|[片道]の切符を一枚ください。|請給我一張單程票。
+渋滞|じゅうたい|塞車|名|事故で道路が[渋滞]している。|因為車禍，道路正在塞車。
+遅れる|おくれる|遲到、誤點|動|雪のため、電車が三十分[遅れ]た。|因為下雪，電車誤點了三十分鐘。
+終点|しゅうてん|終點站|名|このバスの[終点]は駅前です。|這班公車的終點站是車站前。
+停留所|ていりゅうじょ|公車站|名|次の[停留所]で降ります。|我在下一站下車。
+運賃|うんちん|車資|名|子どもの[運賃]は大人の半分です。|兒童車資是大人的一半。
+窓口|まどぐち|窗口|名|切符は二番の[窓口]で買えます。|車票可以在二號窗口買。
+観光|かんこう|觀光|名|京都は[観光]客がとても多い。|京都的觀光客非常多。
+景色|けしき|景色|名|山の上から見た[景色]は最高だった。|從山上看到的景色棒極了。
+宿泊|しゅくはく|住宿|名|このホテルの[宿泊]料金は一泊一万円だ。|這間飯店住一晚一萬日圓。
+荷物|にもつ|行李|名|重い[荷物]を持ってあげましょうか。|要不要幫你拿重的行李？
+両替|りょうがえ|換錢|名|空港で円に[両替]した。|在機場換了日圓。
+到着|とうちゃく|抵達|名|飛行機は予定より早く[到着]した。|飛機比預定時間早抵達。
+怪我|けが|受傷|名|転んで足に[怪我]をした。|跌倒腳受傷了。
+咳|せき|咳嗽|名|風邪で[咳]が止まらない。|感冒咳個不停。
+頭痛|ずつう|頭痛|名|寝不足で[頭痛]がする。|睡眠不足所以頭痛。
+治る|なおる|痊癒|動|薬を飲んだら、風邪がすぐ[治っ]た。|吃了藥，感冒馬上就好了。
+診る|みる|看診|動|医者に[診て]もらったほうがいいよ。|最好給醫生看一下喔。
+体重|たいじゅう|體重|名|最近、[体重]が三キロ増えた。|最近體重增加了三公斤。
+汗|あせ|汗|名|走ったら[汗]をたくさんかいた。|跑步流了很多汗。
+眠い|ねむい|想睡|形|昨夜遅くまで勉強したので、[眠い]。|昨晚讀書讀到很晚，好睏。
+栄養|えいよう|營養|名|野菜は[栄養]がたっぷりある。|蔬菜營養豐富。
+健康|けんこう|健康|名|[健康]のために毎朝歩いている。|為了健康每天早上走路。
+痩せる|やせる|變瘦|動|運動して五キロ[痩せ]た。|運動之後瘦了五公斤。
+太る|ふとる|變胖|動|甘い物を食べすぎて[太っ]てしまった。|甜食吃太多變胖了。
+具合|ぐあい|（身體）狀況|名|今日は体の[具合]があまりよくない。|今天身體狀況不太好。
+手術|しゅじゅつ|手術|名|父は来週、目の[手術]を受ける。|爸爸下週要動眼睛的手術。
+症状|しょうじょう|症狀|名|どんな[症状]がありますか。|有什麼症狀呢？
+洗濯|せんたく|洗衣服|名|天気がいいから[洗濯]をしよう。|天氣很好，來洗衣服吧。
+掃除|そうじ|打掃|名|週末に部屋を[掃除]した。|週末打掃了房間。
+割引|わりびき|折扣|名|学生は二割の[割引]があります。|學生打八折。
+値段|ねだん|價格|名|この靴は[値段]のわりに品質がいい。|這雙鞋以價格來說品質很好。
+品物|しなもの|物品、商品|名|注文した[品物]がまだ届かない。|訂的東西還沒送到。
+領収書|りょうしゅうしょ|收據|名|すみません、[領収書]をください。|不好意思，請給我收據。
+包む|つつむ|包、包裝|動|プレゼント用に[包んで]もらえますか。|可以幫我包裝成禮物嗎？
+混む|こむ|擁擠|動|週末のスーパーはいつも[混んで]いる。|週末的超市總是很擠。
+売り切れ|うりきれ|賣完|名|人気のパンはもう[売り切れ]だった。|熱門的麵包已經賣完了。
+交換|こうかん|交換、更換|名|サイズが合わないので[交換]してもらった。|尺寸不合，請店家幫我換了。
+生ごみ|なまごみ|廚餘|名|[生ごみ]は火曜日と金曜日に出してください。|廚餘請在週二和週五丟。
+散らかる|ちらかる|凌亂|動|弟の部屋はいつも[散らかって]いる。|弟弟的房間總是亂七八糟。
+畳む|たたむ|摺疊|動|洗濯物を[畳んで]、たんすにしまった。|把洗好的衣服摺好收進衣櫃。
+節約|せつやく|節省|名|旅行のためにお金を[節約]している。|為了旅行正在省錢。
+支度|したく|準備|名|母は台所で夕食の[支度]をしている。|媽媽正在廚房準備晚餐。
+天気予報|てんきよほう|天氣預報|名|[天気予報]によると、明日は雪だそうだ。|根據天氣預報，明天好像會下雪。
+湿気|しっけ|濕氣|名|台湾の夏は[湿気]が多い。|台灣的夏天濕氣很重。
+晴れる|はれる|放晴|動|午後から[晴れる]らしい。|聽說下午開始會放晴。
+曇る|くもる|變陰|動|急に空が[曇って]きた。|天空突然變陰了。
+雷|かみなり|雷|名|夜中に[雷]の音で目が覚めた。|半夜被雷聲吵醒。
+台風|たいふう|颱風|名|[台風]で学校が休みになった。|因為颱風學校放假了。
+地震|じしん|地震|名|昨夜、大きな[地震]があった。|昨晚發生了大地震。
+季節|きせつ|季節|名|一番好きな[季節]は秋です。|最喜歡的季節是秋天。
+気温|きおん|氣溫|名|今日の最高[気温]は三十五度だ。|今天最高氣溫三十五度。
+涼しい|すずしい|涼爽|形|夕方になって、少し[涼しく]なった。|到了傍晚變得有點涼爽。
+蒸し暑い|むしあつい|悶熱|形|日本の夏は[蒸し暑い]。|日本的夏天很悶熱。
+空気|くうき|空氣|名|山の[空気]はおいしい。|山上的空氣很清新。
+波|なみ|浪|名|今日は[波]が高いので、泳がないでください。|今天浪很高，請不要游泳。
+枯れる|かれる|枯萎|動|水をやるのを忘れて、花が[枯れて]しまった。|忘了澆水，花枯掉了。
+凍る|こおる|結冰|動|寒さで池の水が[凍った]。|池水因為寒冷結冰了。
+目的|もくてき|目的|名|今回の旅行の[目的]は何ですか。|這次旅行的目的是什麼？
+原因|げんいん|原因|名|事故の[原因]はまだ分からない。|事故的原因還不清楚。
+結果|けっか|結果|名|試験の[結果]は来月発表される。|考試結果下個月公布。
+機会|きかい|機會|名|日本人と話す[機会]があまりない。|很少有跟日本人說話的機會。
+習慣|しゅうかん|習慣|名|寝る前に本を読むのが[習慣]だ。|睡前看書是我的習慣。
+責任|せきにん|責任|名|この失敗の[責任]は私にあります。|這次失敗的責任在我。
+印象|いんしょう|印象|名|東京の第一[印象]はどうでしたか。|對東京的第一印象如何？
+意見|いけん|意見|名|みんなの[意見]を聞いてから決めましょう。|聽完大家的意見再決定吧。
+関係|かんけい|關係|名|この問題は私とは[関係]がない。|這個問題跟我沒關係。
+状態|じょうたい|狀態|名|古い車だが、[状態]はとてもいい。|雖然是舊車，狀態非常好。
+理由|りゆう|理由|名|遅刻した[理由]を説明してください。|請說明遲到的理由。
+記憶|きおく|記憶|名|子どものころの[記憶]はあまりない。|小時候的記憶不太多。
+努力|どりょく|努力|名|毎日の[努力]が合格につながる。|每天的努力會帶來合格。
+自信|じしん|自信|名|今度の試験には[自信]がある。|這次的考試我有自信。
+現在|げんざい|現在|名|[現在]の時刻は午後三時です。|現在時刻是下午三點。
+ずいぶん|ずいぶん|相當、很|副|日本語が[ずいぶん]上手になりましたね。|你的日文進步很多耶。
+なかなか|なかなか|（＋否定）遲遲不…|副|バスが[なかなか]来ない。|公車遲遲不來。
+さっぱり|さっぱり|（＋否定）完全不|副|先生の説明が[さっぱり]分からなかった。|老師的說明我完全聽不懂。
+ちっとも|ちっとも|一點也不|副|この本は[ちっとも]面白くない。|這本書一點也不有趣。
+しばらく|しばらく|暫時、一會兒|副|[しばらく]ここで待っていてください。|請在這裡稍等一下。
+いきなり|いきなり|突然、冷不防|副|犬が[いきなり]走り出した。|狗突然跑了起來。
+とっくに|とっくに|早就|副|授業は[とっくに]始まっているよ。|課早就開始了喔。
+わざわざ|わざわざ|特地（專程）|副|雨の中、[わざわざ]来てくれてありがとう。|謝謝你下雨天還特地過來。
+せっかく|せっかく|難得、好不容易|副|[せっかく]作ったのに、誰も食べてくれなかった。|好不容易做好了，卻沒人吃。
+たまたま|たまたま|碰巧|副|駅で[たまたま]昔の友達に会った。|在車站碰巧遇到老朋友。
+たまに|たまに|偶爾|副|[たまに]映画館で映画を見る。|偶爾會去電影院看電影。
+必ず|かならず|一定|副|約束は[必ず]守ります。|一定會遵守約定。
+早速|さっそく|立刻、馬上|副|新しいカメラを[早速]使ってみた。|馬上試用了新相機。
+相変わらず|あいかわらず|依舊、照舊|副|彼は[相変わらず]忙しそうだ。|他看起來還是一樣忙。
+思わず|おもわず|不禁、忍不住|副|面白くて、[思わず]笑ってしまった。|太好笑了，忍不住笑出來。
+ぎりぎり|ぎりぎり|勉強、剛好趕上|副|試験に[ぎりぎり]間に合った。|勉強趕上了考試。
+のんびり|のんびり|悠閒|副|休みの日は家で[のんびり]過ごしたい。|放假想在家悠閒地過。
+わくわく|わくわく|興奮期待|副|明日から旅行なので[わくわく]している。|明天開始旅行，好期待。
+いらいら|いらいら|焦躁、煩躁|副|電車が来なくて[いらいら]した。|電車一直不來，很煩躁。
+ぺこぺこ|ぺこぺこ|肚子餓扁|副|お腹が[ぺこぺこ]だ。|肚子餓扁了。
+ぐっすり|ぐっすり|熟睡|副|疲れていたので、[ぐっすり]眠った。|因為很累，睡得很熟。
+どきどき|どきどき|心跳加速|副|発表の前は胸が[どきどき]する。|發表前心跳加速。
+すっきり|すっきり|舒暢、清爽|副|シャワーを浴びて[すっきり]した。|沖完澡整個人很清爽。
+うっかり|うっかり|不小心、一時疏忽|副|[うっかり]傘を電車に忘れてきた。|不小心把傘忘在電車上了。
+がっかり|がっかり|失望|副|楽しみにしていた店が閉まっていて[がっかり]した。|期待已久的店沒開，好失望。
+キャンセル|キャンセル|取消|名|予約を[キャンセル]したいんですが。|我想取消預約。
+アイデア|アイデア|點子、主意|名|いい[アイデア]が浮かんだ。|想到了一個好點子。
+スケジュール|スケジュール|行程、日程|名|来週の[スケジュール]を確認してください。|請確認下週的行程。
+チャンス|チャンス|機會、好時機|名|これは最後の[チャンス]かもしれない。|這也許是最後的機會。
+アドバイス|アドバイス|建議|名|先輩に[アドバイス]をもらった。|從前輩那裡得到了建議。`;
+const W=RAW.trim().split("\n").map((l,i)=>{const [k,r,m,p,ex,ez]=l.trim().split("|");return{id:i,k,r,m,p,ex,ez,u:Math.floor(i/15)};});
+// 意思太像、填空會兩個都對的組合，互相不當干擾選項
+const NG=[["機会","チャンス"],["意見","アドバイス"],["結果","成績"],["状態","具合"],["原因","理由"],["予約","キャンセル"],["交換","両替"],["値段","運賃"],["混む","散らかる"],["凍る","冷える"],["担当","受付"],["晴れる","曇る"],["往復","片道"],["ちっとも","さっぱり"],["わざわざ","せっかく"],["たまたま","たまに"],["わくわく","どきどき"],["いらいら","がっかり"],["ずいぶん","なかなか"],["いきなり","早速"],["掃除","片付ける"],["出席","欠席"]];
+const ngSet=new Set();NG.forEach(([a,b])=>{ngSet.add(a+"|"+b);ngSet.add(b+"|"+a);});
+const isNg=(a,b)=>ngSet.has(a.k+"|"+b.k);
+
+/* ============ 狀態 ============ */
+const LS="n3rush-v1";
+function def(){return{xp:0,gems:30,hearts:5,hAt:Date.now(),streak:0,best:0,last:"",freeze:0,day:{d:"",xp:0,n:0},goal:30,prog:{},ws:{},ach:[],snd:true,tts:true,lessons:0,maxCombo:0,perfect:0};}
+let S=def();
+try{const v=JSON.parse(localStorage.getItem(LS)||"null");if(v)S=Object.assign(def(),v);}catch(e){}
+function save(){try{localStorage.setItem(LS,JSON.stringify(S));}catch(e){}}
+const $=s=>document.querySelector(s);
+const dk=(d=new Date())=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const dayDiff=(a,b)=>{const p=s=>{const[y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d);};return Math.round((p(b)-p(a))/864e5);};
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const rint=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const HEART_MS=20*60e3;
+function tickHearts(){
+  if(S.hearts>=5){S.hearts=5;S.hAt=Date.now();return;}
+  const n=Math.floor((Date.now()-S.hAt)/HEART_MS);
+  if(n>0){S.hearts=Math.min(5,S.hearts+n);S.hAt+=n*HEART_MS;if(S.hearts>=5)S.hAt=Date.now();}
+}
+function tickDay(){
+  const t=dk();
+  if(S.day.d!==t)S.day={d:t,xp:0,n:0};
+  if(S.last&&S.streak>0){
+    const gap=dayDiff(S.last,t);
+    if(gap>=2){
+      const need=gap-1;
+      if(S.freeze>=need){S.freeze-=need;const y=new Date();y.setDate(y.getDate()-1);S.last=dk(y);setTimeout(()=>toast("🧊 用了 "+need+" 個連勝凍結，連勝保住了！"),600);}
+      else S.streak=0;
+    }
+  }
+}
+const wsOf=id=>S.ws[id]||(S.ws[id]={c:0,w:0,h:""});
+const mastered=id=>{const s=S.ws[id];return !!s&&s.c>=2&&s.h.slice(-2)==="11";};
+const weakScore=id=>{const s=S.ws[id];if(!s||!s.w)return 0;const recent=s.h.slice(-4);return (recent.split("0").length-1)*2+s.w-s.c*0.3;};
+
+/* ============ 聲音、震動、語音 ============ */
+let AC=null;
+function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(AC&&AC.state==="suspended")AC.resume();return AC;}
+function notes(fs,{type="sine",len=.11,gap=.075,vol=.16}={}){
+  if(!S.snd)return;const c=ac();if(!c)return;const t0=c.currentTime+.01;
+  fs.forEach((f,i)=>{const o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.value=f;
+    const t=t0+i*gap;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.012);g.gain.exponentialRampToValueAtTime(.0008,t+len+.12);
+    o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+len+.15);});
+}
+const SFX={
+  ok:k=>{const m=1+Math.min(k,12)*.045;notes([784*m,1175*m],{type:"triangle"});},
+  bad:()=>notes([233,175],{type:"square",vol:.07,len:.14,gap:.1}),
+  combo:()=>notes([659,880,1109,1319,1760],{type:"triangle",gap:.06,vol:.14}),
+  done:()=>notes([523,659,784,1047,784,1047,1319],{type:"triangle",gap:.09,len:.16}),
+  chest:()=>notes([1047,1319,1568,2093,2637],{type:"sine",gap:.05,vol:.13}),
+  tap:()=>notes([520],{type:"sine",len:.03,vol:.05}),
+  match:k=>notes([600+k*90,900+k*90],{type:"triangle",gap:.05,vol:.12})
+};
+const buzz=p=>{try{navigator.vibrate&&navigator.vibrate(p);}catch(e){}};
+let jaVoice=null,ttsOk=("speechSynthesis" in window);
+function pickVoice(){if(!ttsOk)return;const v=speechSynthesis.getVoices();jaVoice=v.find(x=>/ja[-_]JP/i.test(x.lang)&&/Google|Kyoko|Nanami|O-ren|Haruka/i.test(x.name))||v.find(x=>/^ja/i.test(x.lang))||null;}
+if(ttsOk){pickVoice();speechSynthesis.onvoiceschanged=pickVoice;}
+function speak(t,rate=.92){if(!ttsOk||!S.tts)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="ja-JP";if(jaVoice)u.voice=jaVoice;u.rate=rate;speechSynthesis.speak(u);}catch(e){}}
+const canListen=()=>ttsOk&&S.tts&&!!jaVoice;
+
+/* ============ 特效 ============ */
+function toast(t,ms=1800){const e=$("#toast");e.innerHTML=t;e.classList.add("show");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("show"),ms);}
+function burst(t,color){const e=document.createElement("div");e.className="burst";e.textContent=t;if(color)e.style.color=color;document.body.appendChild(e);setTimeout(()=>e.remove(),950);}
+function xpFly(el,t){const r=el.getBoundingClientRect();const e=document.createElement("div");e.className="xpfly";e.textContent=t;e.style.left=(r.right-50)+"px";e.style.top=(r.top)+"px";document.body.appendChild(e);setTimeout(()=>e.remove(),820);}
+const cf=$("#cf"),cx=cf.getContext("2d");let parts=[],cfRun=false;
+function confetti(n=120){
+  cf.width=innerWidth;cf.height=innerHeight;const cols=["#ff7a1a","#f5b400","#20a957","#3b82f6","#ec4899","#8b5cf6"];
+  for(let i=0;i<n;i++)parts.push({x:innerWidth/2+(Math.random()-.5)*80,y:innerHeight*.35,vx:(Math.random()-.5)*14,vy:-Math.random()*14-4,g:.42,s:Math.random()*7+4,r:Math.random()*6,vr:(Math.random()-.5)*.4,c:cols[i%cols.length],life:90+Math.random()*50});
+  if(!cfRun){cfRun=true;requestAnimationFrame(cfLoop);}
+}
+function cfLoop(){cx.clearRect(0,0,cf.width,cf.height);parts=parts.filter(p=>p.life-->0&&p.y<cf.height+20);
+  for(const p of parts){p.vy+=p.g;p.vx*=.99;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;cx.save();cx.translate(p.x,p.y);cx.rotate(p.r);cx.fillStyle=p.c;cx.fillRect(-p.s/2,-p.s/3,p.s,p.s*.66);cx.restore();}
+  if(parts.length)requestAnimationFrame(cfLoop);else{cfRun=false;cx.clearRect(0,0,cf.width,cf.height);}}
+
+/* ============ 讀音陷阱（長音、促音、濁音） ============ */
+const DAK={"か":"が","き":"ぎ","く":"ぐ","け":"げ","こ":"ご","さ":"ざ","し":"じ","す":"ず","せ":"ぜ","そ":"ぞ","た":"だ","て":"で","と":"ど","は":"ば","ひ":"び","ふ":"ぶ","へ":"べ","ほ":"ぼ"};
+const UND={};for(const[a,b]of Object.entries(DAK))UND[b]=a;
+const OROW="こそとのほもよろごぞどぼぽょお";
+const ROWS_TSU="かきくけこさしすせそたちつてとぱぴぷぺぽ";
+function mutate(r){
+  const a=[...r],ops=[];
+  a.forEach((ch,i)=>{if(DAK[ch])ops.push(()=>{const b=a.slice();b[i]=DAK[ch];return b.join("");});if(UND[ch])ops.push(()=>{const b=a.slice();b[i]=UND[ch];return b.join("");});});
+  a.forEach((ch,i)=>{
+    if(OROW.includes(ch)&&a[i+1]==="う")ops.push(()=>{const b=a.slice();b.splice(i+1,1);return b.join("");});
+    else if(OROW.includes(ch)&&i<a.length)ops.push(()=>{const b=a.slice();b.splice(i+1,0,"う");return b.join("");});
+    if(ch==="ゅ"&&a[i+1]==="う")ops.push(()=>{const b=a.slice();b.splice(i+1,1);return b.join("");});
+    else if(ch==="ゅ")ops.push(()=>{const b=a.slice();b.splice(i+1,0,"う");return b.join("");});
+    if((ch==="せ"||ch==="け"||ch==="て"||ch==="れ")&&a[i+1]==="い")ops.push(()=>{const b=a.slice();b.splice(i+1,1);return b.join("");});
+    if(ch==="ん")ops.push(()=>{const b=a.slice();b.splice(i,1);return b.join("");});
+    else if(i===1&&a[0]!=="っ"&&a.length<=4)ops.push(()=>{const b=a.slice();b.splice(i,0,"ん");return b.join("");});
+    if(ch==="っ")ops.push(()=>{const b=a.slice();b.splice(i,1);return b.join("");});
+    else if(i>0&&ROWS_TSU.includes(ch)&&a[i-1]!=="っ"&&a[i-1]!=="ん")ops.push(()=>{const b=a.slice();b.splice(i,0,"っ");return b.join("");});
+  });
+  return ops;
+}
+function readingOpts(w){
+  const out=new Set([w.r]),ops=mutate(w.r);
+  for(const f of shuffle(ops)){if(out.size>=4)break;out.add(f());}
+  let guard=0;
+  while(out.size<4&&guard++<40){const o2=mutate(shuffle(ops).length?shuffle(ops)[0]():w.r);if(o2.length)out.add(shuffle(o2)[0]());}
+  for(const x of shuffle(W)){if(out.size>=4)break;if(x.r!==w.r&&Math.abs(x.r.length-w.r.length)<=1&&x.k!==x.r)out.add(x.r);}
+  out.delete(w.r);return [w.r,...[...out].slice(0,3)];
+}
+
+/* ============ 出題 ============ */
+const pg=p=>p==="形"?"形":p==="動"?"動":p==="副"?"副":"名";
+function distract(w,n,key,{cross=false}={}){
+  const used=new Set([key(w)]),res=[];
+  const tiers=[x=>pg(x.p)===pg(w.p)&&(!cross||x.u!==w.u),x=>pg(x.p)===pg(w.p),x=>true];
+  for(const t of tiers){
+    for(const x of shuffle(W)){if(res.length>=n)break;if(x.id===w.id||isNg(w,x)||x.r===w.r||!t(x))continue;const k=key(x);if(used.has(k))continue;used.add(k);res.push(x);}
+    if(res.length>=n)break;
+  }
+  return res;
+}
+function mkItem(t,w){
+  let opts,ans=0;
+  if(t==="meaning"){opts=[w.m,...distract(w,3,x=>x.m).map(x=>x.m)];}
+  else if(t==="reverse"||t==="listen"){opts=[w.k,...distract(w,3,x=>x.k).map(x=>x.k)];}
+  else if(t==="reading"){opts=readingOpts(w);}
+  else if(t==="cloze"){opts=[w.k,...distract(w,3,x=>x.k,{cross:true}).map(x=>x.k)];}
+  const order=shuffle(opts.map((o,i)=>i));
+  return{t,w,opts:order.map(i=>opts[i]),ans:order.indexOf(0)};
+}
+function typesFor(w,hard){
+  const ts=hard?["reading","reading","cloze","cloze","cloze","listen","meaning","reverse"]:["meaning","meaning","reverse","reverse","listen","listen","cloze","cloze","reading"];
+  return ts.filter(t=>(t!=="reading"||w.k!==w.r)&&(t!=="listen"||canListen())&&(t!=="cloze"||w.ex.includes("[")));
+}
+function buildItems(words,hard,n=10){
+  const items=[];let pool=shuffle(words),i=0,last="";
+  while(items.length<n){
+    if(i>=pool.length){pool=shuffle(words);i=0;}
+    const w=pool[i++];
+    let ts=typesFor(w,hard);const seen=S.ws[w.id];
+    if(!seen&&!hard)ts=ts.filter(t=>t==="meaning"||t==="listen"||t==="reverse");
+    const pick=shuffle(ts.filter(t=>t!==last))[0]||ts[0];last=pick;
+    items.push(mkItem(pick,w));
+  }
+  if(words.length>=5)items.splice(Math.min(5,items.length),0,{t:"match",ws:shuffle(words).slice(0,5)});
+  return items;
+}
+
+/* ============ 課程流程 ============ */
+let L=null;
+function startLesson(kind,u,lv){
+  tickHearts();
+  const practice=kind!=="unit";
+  if(!practice&&S.hearts<=0){heartModal(true);return;}
+  let words,hard=false,title;
+  if(kind==="unit"){const uw=W.filter(w=>w.u===u);words=lv===1?uw.slice(0,8):lv===2?uw.slice(7,15):uw;hard=lv===3;title=UNITS[u].n+" · 第"+lv+"關";}
+  else if(kind==="weak"){words=W.filter(w=>weakScore(w.id)>0).sort((a,b)=>weakScore(b.id)-weakScore(a.id)).slice(0,10);hard=true;title="弱點特訓";}
+  else{const st=W.filter(w=>S.ws[w.id]);words=shuffle(st.length>=6?st:W).slice(0,12);hard=Math.random()<.5;title="快速複習";}
+  const items=buildItems(words,hard);
+  L={kind,u,lv,title,practice,items,q:items.map((it,i)=>({...it,key:i,tries:0})),done:new Set(),first:new Set(),wrongIds:new Set(),pos:0,combo:0,maxC:0,xp:0,t0:Date.now(),locked:false,mistakes:0};
+  $("#lesson").classList.add("show");$("#result").classList.remove("show");
+  renderQ();
+}
+function setBar(){
+  const p=L.done.size/L.items.length;$("#pbar i").style.width=(p*100)+"%";
+  $("#pbar").classList.toggle("hot",L.combo>=5);
+  $("#lh").textContent=L.practice?"🎯":"❤️"+S.hearts;
+  const c=$("#combo");
+  if(L.combo>=3){c.textContent="🔥 "+L.combo+" 連擊"+(L.combo>=10?"！超神":L.combo>=5?"！":"");c.classList.add("on");c.classList.remove("pop");void c.offsetWidth;c.classList.add("pop");}
+  else c.classList.remove("on");
+}
+function renderQ(){
+  setBar();L.locked=false;
+  const it=L.q[L.pos];const lb=$("#lb");$("#fb").className="fb";$("#foot").innerHTML="";
+  if(it.t==="match"){renderMatch(it);return;}
+  const w=it.w,isNew=!S.ws[w.id];
+  const label={meaning:"這個字是什麼意思？",reverse:"用日文怎麼說？",reading:"選出正確的讀音",listen:"聽聽看，是哪個字？",cloze:"填入最適合的字"}[it.t];
+  let pr="";
+  if(it.t==="meaning"||it.t==="reading")pr=`<div class="big jp">${w.k}</div>`;
+  else if(it.t==="reverse")pr=`<div class="big zh">${w.m}</div>`;
+  else if(it.t==="listen")pr=`<button class="spk" id="spk" aria-label="播放">🔊</button><div class="hint">點喇叭可以再聽一次</div>`;
+  else if(it.t==="cloze")pr=`<div class="sent jp">${w.ex.replace(/\[(.+?)\]/,'<span class="blank">？</span>')}</div>`;
+  lb.innerHTML=`<div class="qlabel">${label}${isNew?'<span class="new">新單字</span>':""}${it.tries?'<span class="new" style="background:var(--bad)">再一次</span>':""}</div>
+  <div class="prompt">${pr}</div>
+  <div class="opts">${it.opts.map((o,i)=>`<button class="opt ${it.t==="meaning"?"":"jp"}" data-i="${i}"><span class="k">${i+1}</span><span>${o}</span></button>`).join("")}</div>`;
+  lb.querySelectorAll(".opt").forEach(b=>b.onclick=()=>answer(+b.dataset.i));
+  if(it.t==="listen"){const f=()=>speak(w.r);$("#spk").onclick=f;setTimeout(f,250);}
+  lb.scrollTop=0;
+}
+function answer(i){
+  if(L.locked)return;L.locked=true;
+  const it=L.q[L.pos],w=it.w,ok=i===it.ans;
+  const bs=[...document.querySelectorAll(".opt")];
+  bs.forEach((b,j)=>{if(j===it.ans)b.classList.add("right");else if(j===i)b.classList.add("wrong");else b.classList.add("dim");});
+  const s=wsOf(w.id);s.h=(s.h+(ok?"1":"0")).slice(-6);ok?s.c++:s.w++;
+  if(ok){
+    L.combo++;L.maxC=Math.max(L.maxC,L.combo);L.done.add(it.key);if(!it.tries)L.first.add(it.key);
+    let g=1+(L.combo>=10?2:L.combo>=5?1:0);L.xp+=g;xpFly(bs[it.ans],"+"+g+" XP");
+    SFX.ok(L.combo);buzz(12);
+    if(L.combo>0&&L.combo%5===0){setTimeout(()=>{SFX.combo();burst("🔥 "+L.combo+" 連擊！");if(L.combo>=10)confetti(60);},180);}
+  }else{
+    L.combo=0;L.mistakes++;L.wrongIds.add(w.id);SFX.bad();buzz([40,30,40]);
+    if(!L.practice){if(S.hearts>=5)S.hAt=Date.now();S.hearts=Math.max(0,S.hearts-1);}
+    if(it.tries<2){const again=mkItem(it.t,w);L.q.push({...again,key:it.key,tries:it.tries+1});}
+    else L.done.add(it.key);
+  }
+  save();setBar();
+  if(S.tts&&it.t!=="listen")speak(w.r);
+  showFb(ok,w,it);
+}
+const PRAISE=["太強了！","完美！","讚啦！","答對了！","好耶！","就是這樣！","厲害！","穩！"];
+function showFb(ok,w,it){
+  const fb=$("#fb");fb.className="fb "+(ok?"ok":"bad");
+  const ex=w.ex.replace(/\[(.+?)\]/,"<b>$1</b>");
+  $("#fbi").innerHTML=`<h4>${ok?"✅ "+PRAISE[rint(0,PRAISE.length-1)]:"❌ 正確答案"}<button class="mini" id="say">🔊</button></h4>
+   <p><span class="jp" style="font-size:20px;font-weight:800">${w.k}</span>${w.k!==w.r?`<span class="jp">（${w.r}）</span>`:""}　${w.m}</p>
+   ${ok&&it.t!=="cloze"?"":`<p class="ex"><span class="jp">${ex}</span><br>${w.ez}</p>`}
+   <button class="btn ${ok?"ok":"bad"}" id="cont">繼續</button>`;
+  requestAnimationFrame(()=>fb.classList.add("show"));
+  $("#say").onclick=()=>speak(w.ex.replace(/[\[\]]/g,""));
+  $("#cont").onclick=next;
+  if(!ok&&!L.practice&&S.hearts<=0)setTimeout(()=>heartModal(false),400);
+}
+function next(){
+  if($("#md").classList.contains("show"))return;
+  SFX.tap();L.pos++;
+  if(L.pos>=L.q.length)return finish();
+  renderQ();
+}
+/* 配對遊戲 */
+function renderMatch(it){
+  const lb=$("#lb");const L5=it.ws;const left=shuffle(L5),right=shuffle(L5);
+  lb.innerHTML=`<div class="qlabel">⚡ 限時配對！<span class="new" style="background:var(--pri)">combo 加倍</span></div>
+   <div class="match">${left.map(w=>`<button class="mt jp" data-s="L" data-id="${w.id}">${w.k}</button>`).join("")}${""}</div>`;
+  const grid=lb.querySelector(".match");grid.innerHTML="";
+  for(let i=0;i<5;i++){grid.insertAdjacentHTML("beforeend",`<button class="mt jp" data-s="L" data-id="${left[i].id}">${left[i].k}</button><button class="mt" data-s="R" data-id="${right[i].id}">${right[i].m}</button>`);}
+  lb.insertAdjacentHTML("beforeend",`<div class="timer" id="mtim">0.0 秒</div>`);
+  let sel=null,got=0,k=0;const t0=Date.now();
+  const tm=setInterval(()=>{const e=$("#mtim");if(!e){clearInterval(tm);return;}e.textContent=((Date.now()-t0)/1000).toFixed(1)+" 秒";},100);
+  grid.querySelectorAll(".mt").forEach(b=>b.onclick=()=>{
+    if(b.classList.contains("done"))return;
+    if(b.dataset.s==="L")speak(W[+b.dataset.id].r,1);
+    if(!sel||sel.dataset.s===b.dataset.s){if(sel)sel.classList.remove("sel");sel=b;b.classList.add("sel");SFX.tap();return;}
+    const a=sel,c=b;sel=null;a.classList.remove("sel");
+    if(a.dataset.id===c.dataset.id){
+      k++;got++;SFX.match(k);buzz(10);[a,c].forEach(x=>{x.classList.add("okf");setTimeout(()=>x.classList.add("done"),50);});
+      L.combo++;L.maxC=Math.max(L.maxC,L.combo);L.xp+=1;xpFly(c,"+1");setBar();
+      if(got===5){clearInterval(tm);const sec=(Date.now()-t0)/1000;L.done.add(it.key);L.first.add(it.key);
+        let bonus=sec<10?5:sec<15?3:1;L.xp+=bonus;setTimeout(()=>{SFX.combo();burst(sec<10?"⚡ 神速 "+sec.toFixed(1)+"s":"✨ 配對完成 "+sec.toFixed(1)+"s");},250);
+        setTimeout(()=>{$("#foot").innerHTML=`<button class="btn ok" id="cont">繼續（+${bonus} XP 速度獎勵）</button>`;$("#cont").onclick=next;setBar();},500);}
+    }else{
+      k=0;L.combo=0;SFX.bad();buzz([30,20,30]);[a,c].forEach(x=>{x.classList.add("badf");setTimeout(()=>x.classList.remove("badf"),400);});setBar();
+    }
+  });
+}
+function heartModal(before){
+  tickHearts();
+  const mins=Math.ceil((HEART_MS-(Date.now()-S.hAt))/60000);
+  modal(`<div style="font-size:56px">💔</div><h3>愛心用完了</h3><p>每 20 分鐘回復 1 顆（下一顆約 ${mins} 分鐘後）<br>或去「弱點特訓」練習，完成可拿回 1 顆 ❤️</p>
+   <button class="btn blue" id="mRefill" ${S.gems<30?"disabled":""}>💎 30 補滿愛心<small>你有 ${S.gems} 💎</small></button>
+   <button class="btn ok" id="mWeak">🎯 去弱點特訓（不扣愛心）</button>
+   <button class="btn" id="mQuit">${before?"先不要":"結束這一關"}</button>`);
+  $("#mRefill").onclick=()=>{S.gems-=30;S.hearts=5;S.hAt=Date.now();save();closeModal();SFX.chest();toast("❤️ 愛心補滿！");renderTop();if(L)setBar();};
+  $("#mWeak").onclick=()=>{closeModal();quitLesson(true);startLesson(weakCount()>=4?"weak":"review");};
+  $("#mQuit").onclick=()=>{closeModal();if(!before)quitLesson(true);};
+}
+function quitLesson(silent){L=null;$("#lesson").classList.remove("show");if(!silent)toast("進度沒有保存喔");renderAll();}
+$("#lx").onclick=()=>{
+  if(!L)return;
+  modal(`<div style="font-size:52px">🥺</div><h3>真的要離開嗎？</h3><p>現在離開，這一關的進度會不見喔</p><button class="btn pri" id="mStay">繼續挑戰</button><button class="btn" id="mLeave">離開</button>`);
+  $("#mStay").onclick=closeModal;$("#mLeave").onclick=()=>{closeModal();quitLesson();};
+};
+function modal(h){$("#mdb").innerHTML=h;$("#md").classList.add("show");}
+function closeModal(){$("#md").classList.remove("show");}
+
+/* 結算 */
+function finish(){
+  const total=L.items.length,acc=Math.round(L.first.size/total*100),perfect=L.mistakes===0;
+  const secs=Math.round((Date.now()-L.t0)/1000);
+  let xp=L.xp+10+(perfect?5:0);
+  const today=dk(),wasFirst=S.last!==today;
+  if(wasFirst){S.streak=(S.last&&dayDiff(S.last,today)===1)?S.streak+1:1;S.last=today;S.best=Math.max(S.best,S.streak);}
+  const before=S.day.xp;S.day.xp+=xp;S.day.n++;S.xp+=xp;S.lessons++;S.maxCombo=Math.max(S.maxCombo,L.maxC);if(perfect)S.perfect++;
+  const goalHit=before<S.goal&&S.day.xp>=S.goal;
+  if(L.kind==="unit"){const key=L.u+"-"+L.lv;S.prog[key]=Math.max(S.prog[key]||0,perfect?3:acc>=80?2:1);}
+  if(L.kind!=="unit"&&S.hearts<5){S.hearts++;}
+  const gems=rint(5,12)+(perfect?5:0);
+  save();
+  const r=$("#result");$("#lesson").classList.remove("show");r.classList.add("show");
+  const title=perfect?"完美通關！":acc>=80?"過關！":"完成！";
+  r.innerHTML=`<div class="res">
+   <div class="mascot">${perfect?"🏆":"🍙"}</div>
+   <h2>${title}</h2><div style="color:var(--mut)">${L.title}</div>
+   <div class="stats">
+    <div class="st" style="border-color:var(--gold)"><b style="background:var(--gold)">總 XP</b><div id="cXp">0</div></div>
+    <div class="st" style="border-color:var(--ok)"><b style="background:var(--ok)">正確率</b><div>${acc}%</div></div>
+    <div class="st" style="border-color:var(--pri)"><b style="background:var(--pri)">最高連擊</b><div>🔥${L.maxC}</div></div>
+   </div>
+   <div style="color:var(--mut);font-size:14px;margin-bottom:10px">⏱ ${Math.floor(secs/60)}:${String(secs%60).padStart(2,"0")}${perfect?"　✨ 零失誤 +5 XP":""}${wasFirst?"　🔥 連勝 "+S.streak+" 天":""}</div>
+   <div class="chest" id="chest">🎁</div><div class="gain" id="gain">點寶箱打開！</div>
+   ${L.wrongIds.size?`<div class="hint">這關錯過的字已加入「弱點特訓」：<span class="jp">${[...L.wrongIds].map(id=>W[id].k).join("、")}</span></div>`:""}
+   <button class="btn pri" id="rCont" style="margin-top:18px">繼續</button></div>`;
+  SFX.done();confetti(perfect?180:110);buzz([20,40,20]);
+  let n=0;const el=$("#cXp");const iv=setInterval(()=>{n=Math.min(xp,n+Math.ceil(xp/20));el.textContent="+"+n;if(n>=xp)clearInterval(iv);},40);
+  let opened=false;
+  $("#chest").onclick=()=>{if(opened)return;opened=true;S.gems+=gems;save();const c=$("#chest");c.classList.add("open");c.textContent="💎";SFX.chest();confetti(60);$("#gain").textContent="+"+gems+" 寶石！";renderTop();};
+  $("#rCont").onclick=()=>{if(!opened){$("#chest").onclick();}
+    const after=()=>{r.classList.remove("show");L=null;renderAll();checkAch();};
+    if(goalHit){S.gems+=10;save();burst("🎯 每日目標達成！","#20a957");SFX.combo();confetti(140);toast("每日目標達成 +10 💎",2200);setTimeout(after,900);}
+    else after();};
+}
+
+/* ============ 成就 ============ */
+const ACH=[
+ {id:"first",i:"🐣",n:"第一步",d:"完成第一關",f:()=>S.lessons>=1},
+ {id:"c5",i:"🔥",n:"手感發燙",d:"一關內 5 連擊",f:()=>S.maxCombo>=5},
+ {id:"c10",i:"☄️",n:"停不下來",d:"一關內 10 連擊",f:()=>S.maxCombo>=10},
+ {id:"c20",i:"🌋",n:"連擊之神",d:"一關內 20 連擊",f:()=>S.maxCombo>=20},
+ {id:"perf",i:"💯",n:"零失誤",d:"完美通關一次",f:()=>S.perfect>=1},
+ {id:"perf10",i:"👑",n:"完美主義",d:"完美通關 10 次",f:()=>S.perfect>=10},
+ {id:"s3",i:"📅",n:"三天打魚",d:"連勝 3 天",f:()=>S.best>=3},
+ {id:"s7",i:"🗓️",n:"一週不斷",d:"連勝 7 天",f:()=>S.best>=7},
+ {id:"s30",i:"🏯",n:"修行者",d:"連勝 30 天",f:()=>S.best>=30},
+ {id:"x100",i:"⭐",n:"百點",d:"累積 100 XP",f:()=>S.xp>=100},
+ {id:"x1000",i:"🌟",n:"千點",d:"累積 1000 XP",f:()=>S.xp>=1000},
+ {id:"m30",i:"📗",n:"30 字到手",d:"熟記 30 個字",f:()=>W.filter(w=>mastered(w.id)).length>=30},
+ {id:"m100",i:"📚",n:"百字斬",d:"熟記 100 個字",f:()=>W.filter(w=>mastered(w.id)).length>=100},
+ {id:"all",i:"🗾",n:"全島制霸",d:"所有關卡都過關",f:()=>UNITS.every((u,i)=>[1,2,3].every(l=>S.prog[i+"-"+l]))},
+ {id:"n3",i:"🎌",n:"N3 合格！",d:"全部單字都熟記",f:()=>W.every(w=>mastered(w.id))}
+];
+function checkAch(){
+  const got=ACH.filter(a=>!S.ach.includes(a.id)&&a.f());
+  got.forEach((a,i)=>setTimeout(()=>{S.ach.push(a.id);S.gems+=15;save();renderTop();SFX.chest();confetti(80);toast(`<div style="font-size:40px">${a.i}</div>解鎖成就「${a.n}」<br><small>+15 💎</small>`,2400);},i*2600));
+}
+
+/* ============ 畫面 ============ */
+function renderTop(){
+  tickHearts();
+  $("#pFire").innerHTML="🔥 "+S.streak;$("#pFire").classList.toggle("off",S.last!==dk());
+  $("#pGem").innerHTML="💎 "+S.gems;$("#pHeart").innerHTML="❤️ "+S.hearts;
+}
+const weakCount=()=>W.filter(w=>weakScore(w.id)>0).length;
+function ring(p){const r=26,c=2*Math.PI*r;return `<svg class="ring" viewBox="0 0 64 64"><circle cx="32" cy="32" r="${r}" fill="none" stroke="var(--line)" stroke-width="8"/><circle cx="32" cy="32" r="${r}" fill="none" stroke="${p>=1?"var(--ok)":"var(--gold)"}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c*(1-Math.min(1,p))}" transform="rotate(-90 32 32)"/><text x="32" y="38" text-anchor="middle" font-size="18">${p>=1?"🎯":"⚡"}</text></svg>`;}
+function renderHome(){
+  const p=S.day.xp/S.goal,wc=weakCount(),studied=Object.keys(S.ws).length;
+  let firstOpen=null;
+  for(let u=0;u<UNITS.length&&!firstOpen;u++)for(let l=1;l<=3;l++)if(!S.prog[u+"-"+l]){firstOpen=u+"-"+l;break;}
+  let h=`<div class="card goal">${ring(p)}<div><h3>今日目標 ${Math.min(S.day.xp,S.goal)} / ${S.goal} XP</h3><p>${p>=1?"目標達成！繼續刷可以衝更高 🔥":S.last===dk()?"再 "+(S.goal-S.day.xp)+" XP 就達標":"今天還沒練，連勝 🔥"+S.streak+" 天要斷了！"}</p></div></div>
+  <div class="quick">
+   <button class="btn pri" id="qWeak" ${wc<4?"disabled":""}>🎯 弱點特訓<small>${wc<4?"錯 4 個字後解鎖":wc+" 個弱點字・不扣愛心"}</small></button>
+   <button class="btn blue" id="qRev" ${studied<6?"disabled":""}>⚡ 快速複習<small>${studied<6?"先玩幾關":"隨機 12 字・不扣愛心"}</small></button>
+  </div>`;
+  const icons=["📖","✏️","👑"],off=["-60px","40px","-20px"];
+  UNITS.forEach((u,ui)=>{
+    const uw=W.filter(w=>w.u===ui),m=uw.filter(w=>mastered(w.id)).length;
+    h+=`<div class="unit"><div class="uhead" style="background:${u.c}"><div><span>第 ${ui+1} 區</span><br><b>${u.e} ${u.n}</b><div class="ubar"><i style="width:${m/uw.length*100}%"></i></div></div><span>熟記 ${m}/${uw.length}</span></div><div class="nodes">`;
+    [1,2,3].forEach((l,li)=>{
+      const k=ui+"-"+l,st=S.prog[k]||0,cur=k===firstOpen;
+      h+=`<button class="node ${st||cur?"":"lock"}" style="background:${u.c};transform:translateX(${off[li]})" data-u="${ui}" data-l="${l}">${st?"⭐":icons[li]}${cur?'<span class="go">開始！</span>':""}${st?`<span class="stars">${"★".repeat(st)}${"☆".repeat(3-st)}</span>`:""}</button>`;
+    });
+    h+=`</div></div>`;
+  });
+  h+=`<div class="hint" style="text-align:center;margin-top:30px">第 1 關：前 8 字・第 2 關：後 8 字・第 3 關👑：全區混合（讀音＋填空加重）<br>灰色關卡也可以直接點，跳關挑戰 💪</div>`;
+  $("#vHome").innerHTML=h;
+  $("#vHome").querySelectorAll(".node").forEach(b=>b.onclick=()=>{SFX.tap();startLesson("unit",+b.dataset.u,+b.dataset.l);});
+  const qw=$("#qWeak"),qr=$("#qRev");if(qw)qw.onclick=()=>startLesson("weak");if(qr)qr.onclick=()=>startLesson("review");
+}
+let wq="";
+function renderWords(){
+  const m=W.filter(w=>mastered(w.id)).length,l=Object.keys(S.ws).length;
+  $("#vWords").innerHTML=`<input class="search" id="ws" placeholder="搜尋漢字、假名或中文…"><div class="hint">🟢 熟記 ${m}　🟡 學習中 ${l-m}　⚪ 還沒碰 ${W.length-l}　・點一下聽發音</div><div class="wl" id="wlist"></div>`;
+  const inp=$("#ws");inp.value=wq;inp.oninput=()=>{wq=inp.value;renderWordList();};
+  renderWordList();
+}
+function renderWordList(){
+  let h="";
+  const f=wq.trim();
+  UNITS.forEach((u,ui)=>{
+    const ws=W.filter(w=>w.u===ui&&(!f||w.k.includes(f)||w.r.includes(f)||w.m.includes(f)));
+    if(!ws.length)return;
+    h+=`<h4>${u.e} ${u.n}</h4>`+ws.map(w=>{const s=S.ws[w.id];const cls=!s?"":mastered(w.id)?"m":weakScore(w.id)>0?"w":"l";
+      return `<div class="wr" data-id="${w.id}"><span class="dot ${cls}"></span><span class="wk jp">${w.k}</span><span class="wm">${w.k!==w.r?`<span class="jp">${w.r}</span>・`:""}${w.m}</span>${s?`<span class="wrr">${s.c}✓ ${s.w}✗</span>`:""}</div>`;}).join("");
+  });
+  $("#wlist").innerHTML=h||'<div class="hint">找不到這個字</div>';
+  $("#wlist").querySelectorAll(".wr").forEach(r=>r.onclick=()=>{const w=W[+r.dataset.id];speak(w.r);toast(`<span class="jp">${w.ex.replace(/[\[\]]/g,"")}</span><br><small>${w.ez}</small>`,2600);});
+}
+function renderMe(){
+  const m=W.filter(w=>mastered(w.id)).length;
+  let h=`<h2 class="sec">📊 戰績</h2><div class="grid2">
+   <div class="kpi"><b>⚡ ${S.xp}</b><span>總 XP</span></div><div class="kpi"><b>🔥 ${S.best}</b><span>最長連勝（天）</span></div>
+   <div class="kpi"><b>📗 ${m}/${W.length}</b><span>熟記單字</span></div><div class="kpi"><b>☄️ ${S.maxCombo}</b><span>最高連擊</span></div></div>
+  <h2 class="sec">🏆 成就 ${S.ach.length}/${ACH.length}</h2><div class="ach">${ACH.map(a=>`<div class="a ${S.ach.includes(a.id)?"got":"lock"}"><i>${a.i}</i><b>${a.n}</b><br>${a.d}</div>`).join("")}</div>
+  <h2 class="sec">💎 商店</h2>
+  <div class="card" style="margin-top:0"><div class="row" style="padding-top:0"><div>🧊 連勝凍結<div class="hint" style="margin:2px 0 0">漏一天自動用掉，連勝不中斷（擁有 ${S.freeze}）</div></div><button class="btn blue" style="width:auto;padding:8px 14px" id="bFreeze" ${S.gems<50||S.freeze>=2?"disabled":""}>50 💎</button></div>
+  <div class="row" style="border:0;padding-bottom:0"><div>❤️ 補滿愛心</div><button class="btn blue" style="width:auto;padding:8px 14px" id="bHeart" ${S.gems<30||S.hearts>=5?"disabled":""}>30 💎</button></div></div>
+  <h2 class="sec">⚙️ 設定</h2><div class="card" style="margin-top:0">
+   <div class="row" style="padding-top:0"><span>每日目標</span><div class="seg" id="sGoal">${[20,30,50,80].map(g=>`<button class="${S.goal===g?"on":""}" data-g="${g}">${g}</button>`).join("")}</div></div>
+   <div class="row"><span>音效</span><div class="seg" id="sSnd"><button class="${S.snd?"on":""}" data-v="1">開</button><button class="${S.snd?"":"on"}" data-v="0">關</button></div></div>
+   <div class="row" style="border:0;padding-bottom:0"><span>日文發音${ttsOk&&!jaVoice?"（找不到日文語音）":""}</span><div class="seg" id="sTts"><button class="${S.tts?"on":""}" data-v="1">開</button><button class="${S.tts?"":"on"}" data-v="0">關</button></div></div>
+  </div>
+  <h2 class="sec">🔄 換裝置</h2><div class="card" style="margin-top:0"><div class="quick" style="margin-top:0"><button class="btn" id="bExp">📤 複製進度碼</button><button class="btn" id="bImp">📥 貼上進度碼</button></div><div class="hint">進度存在這個瀏覽器。換手機／電腦時，在舊裝置按「複製」，到新裝置按「貼上」。</div></div>`;
+  $("#vMe").innerHTML=h;
+  $("#bFreeze").onclick=()=>{S.gems-=50;S.freeze++;save();SFX.chest();toast("🧊 買了連勝凍結");renderAll();};
+  $("#bHeart").onclick=()=>{S.gems-=30;S.hearts=5;S.hAt=Date.now();save();SFX.chest();toast("❤️ 愛心補滿");renderAll();};
+  $("#sGoal").querySelectorAll("button").forEach(b=>b.onclick=()=>{S.goal=+b.dataset.g;save();renderAll();});
+  $("#sSnd").querySelectorAll("button").forEach(b=>b.onclick=()=>{S.snd=b.dataset.v==="1";save();renderAll();SFX.ok(0);});
+  $("#sTts").querySelectorAll("button").forEach(b=>b.onclick=()=>{S.tts=b.dataset.v==="1";save();renderAll();speak("がんばって");});
+  $("#bExp").onclick=async()=>{const code=btoa(unescape(encodeURIComponent(JSON.stringify(S))));try{await navigator.clipboard.writeText(code);toast("📋 已複製進度碼");}catch(e){prompt("複製這段進度碼：",code);}};
+  $("#bImp").onclick=()=>{const c=prompt("貼上進度碼：");if(!c)return;try{const v=JSON.parse(decodeURIComponent(escape(atob(c.trim()))));if(typeof v.xp!=="number")throw 0;S=Object.assign(def(),v);save();toast("✅ 進度已匯入");renderAll();}catch(e){toast("❌ 進度碼不正確");}};
+}
+let view="Home";
+function renderAll(){tickHearts();tickDay();renderTop();if(view==="Home")renderHome();else if(view==="Words")renderWords();else renderMe();save();}
+document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>{view=b.dataset.v;document.querySelectorAll(".nav button").forEach(x=>x.classList.toggle("on",x===b));["Home","Words","Me"].forEach(v=>$("#v"+v).hidden=v!==view);SFX.tap();renderAll();scrollTo(0,0);});
+$("#pHeart").onclick=()=>{tickHearts();if(S.hearts<5){const mins=Math.ceil((HEART_MS-(Date.now()-S.hAt))/60000);toast("❤️ 下一顆約 "+mins+" 分鐘後回復");}else toast("❤️ 愛心是滿的！");};
+$("#pFire").onclick=()=>toast(S.last===dk()?"🔥 今天已經練過了，連勝 "+S.streak+" 天":"今天還沒練！完成一關點燃連勝 🔥");
+$("#pGem").onclick=()=>toast("💎 過關開寶箱、達成每日目標、解鎖成就都能拿");
+document.addEventListener("keydown",e=>{
+  if(!L||!$("#lesson").classList.contains("show")||$("#md").classList.contains("show"))return;
+  if(/^[1-4]$/.test(e.key)&&!L.locked){const b=document.querySelectorAll(".opt")[+e.key-1];if(b)b.click();}
+  else if(e.key==="Enter"){const c=$("#cont");if(c)c.click();}
+});
+document.addEventListener("pointerdown",()=>ac(),{once:true});
+setInterval(()=>{if(!L)renderTop();},30000);
+renderAll();
+</script>
+</body>
+</html>
