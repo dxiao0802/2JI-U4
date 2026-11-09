@@ -1,0 +1,581 @@
+<!doctype html><html><head><title>自動控制從零開始</title><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+/* Layout: one reading column like a lab notebook; each chapter = plain-language idea → interactive figure → worked example */
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --fg:#1a2130; --muted:#5a6476; --line:#dde2ea; --grid:#e6eaf0;
+  --accent:#2453b8; --accent-soft:#e6edfa; --hot:#d2481a; --hot-soft:#fcebe4; --ok:#25803a; --ok-soft:#e5f3e8;
+  --rhp:rgba(210,72,26,.07);
+  --font-ui:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --font-math:"STIX Two Text","Times New Roman",serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#12151b; --panel:#1a1e26; --fg:#e4e8ef; --muted:#97a1b2; --line:#2c3340; --grid:#262c37;
+  --accent:#7aa5ff; --accent-soft:#1d2a44; --hot:#ff8a5c; --hot-soft:#3a2219; --ok:#6fcf86; --ok-soft:#1b3022;
+  --rhp:rgba(255,138,92,.08); color-scheme:dark; } }
+:root[data-theme="dark"]{
+  --bg:#12151b; --panel:#1a1e26; --fg:#e4e8ef; --muted:#97a1b2; --line:#2c3340; --grid:#262c37;
+  --accent:#7aa5ff; --accent-soft:#1d2a44; --hot:#ff8a5c; --hot-soft:#3a2219; --ok:#6fcf86; --ok-soft:#1b3022;
+  --rhp:rgba(255,138,92,.08); color-scheme:dark; }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-ui);font-size:16px;line-height:1.75}
+.wrap{max-width:780px;margin:0 auto;padding-block:28px 80px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+h1{font-size:2rem;line-height:1.3;margin:0 0 6px;text-wrap:balance}
+h2{font-size:1.45rem;line-height:1.35;margin:0 0 4px;text-wrap:balance}
+h3{font-size:1.08rem;margin:26px 0 8px;color:var(--accent)}
+p{margin:8px 0}
+.lede{color:var(--muted);margin:0 0 18px}
+.nav{display:flex;gap:8px;overflow-x:auto;padding:8px 0 14px;margin-bottom:8px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);z-index:5;border-bottom:1px solid var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.nav a{flex:none;font-size:.85rem;text-decoration:none;color:var(--fg);border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:3px 12px}
+.nav a:hover,.nav a:focus-visible{border-color:var(--accent);color:var(--accent);outline:none}
+section{padding-top:34px;scroll-margin-top:60px}
+.chap{font-size:.78rem;letter-spacing:.08em;color:var(--muted);font-weight:500}
+.q{font-size:1.02rem;background:var(--accent-soft);border-radius:8px;padding:10px 14px;margin:12px 0}
+.q b{color:var(--accent)}
+.key{background:var(--hot-soft);border-radius:8px;padding:10px 14px;margin:12px 0}
+.key b:first-child{color:var(--hot)}
+.ok{background:var(--ok-soft);border-radius:8px;padding:10px 14px;margin:12px 0}
+.ok b:first-child{color:var(--ok)}
+.m{font-family:var(--font-math);font-size:1.08em;white-space:nowrap}
+.fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;line-height:1.2;margin:0 2px}
+.fr>span:first-child{border-bottom:1px solid currentColor;padding:0 3px}
+.fr>span:last-child{padding:0 3px}
+.eq{font-family:var(--font-math);font-size:1.15rem;text-align:center;margin:12px 0;overflow-x:auto;padding:4px 0}
+.fig{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin:14px 0}
+.fig .cap{font-size:.86rem;color:var(--muted);margin-top:6px}
+.fig h4{margin:0 0 8px;font-size:.95rem}
+canvas{display:block;width:100%;height:240px}
+canvas.sq{height:220px}
+canvas.short{height:170px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row>*{min-width:0}
+@media (max-width:620px){.row{grid-template-columns:1fr}}
+.ctrl{display:grid;grid-template-columns:auto 1fr auto;gap:6px 12px;align-items:center;margin:8px 0 4px;font-size:.92rem}
+.ctrl label{white-space:nowrap}
+.ctrl output{font-family:var(--font-math);min-width:4.5em;text-align:right;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--accent)}
+input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.readout{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.92rem;margin-top:8px}
+.readout span b{font-family:var(--font-math);font-weight:600}
+.pill{display:inline-block;border-radius:999px;padding:1px 10px;font-size:.85rem;font-weight:700}
+.pill.good{background:var(--ok-soft);color:var(--ok)} .pill.mid{background:var(--accent-soft);color:var(--accent)} .pill.bad{background:var(--hot-soft);color:var(--hot)}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+button{font:inherit;font-size:.86rem;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:6px;padding:3px 12px;cursor:pointer}
+button:hover{border-color:var(--accent);color:var(--accent)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--panel)}
+ol.steps{list-style:none;padding:0;margin:12px 0;counter-reset:st;display:grid;gap:10px}
+ol.steps>li{counter-increment:st;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px 10px 50px;position:relative}
+ol.steps>li::before{content:counter(st);position:absolute;left:14px;top:11px;width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--panel);font-weight:700;font-size:.85rem;display:grid;place-items:center}
+ol.steps>li>b:first-child{display:block;margin-bottom:2px}
+.ex{border:2px solid var(--accent);border-radius:10px;padding:10px 14px;margin:16px 0 6px;background:var(--panel)}
+.ex .tag{font-size:.78rem;font-weight:700;color:var(--accent);letter-spacing:.06em}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;font-size:.92rem;margin:8px 0}
+th,td{border:1px solid var(--line);padding:5px 12px;text-align:center}
+th{background:var(--accent-soft)}
+td.l,th.l{text-align:left}
+.routh td:first-child{font-family:var(--font-math);color:var(--muted);background:var(--bg)}
+.routh td{font-family:var(--font-math);min-width:64px}
+.routh td.neg{color:var(--hot);font-weight:700}
+svg text{fill:var(--fg);font-family:var(--font-ui)}
+svg .mut{fill:var(--muted)}
+svg .ac{fill:var(--accent)}
+svg .box{fill:var(--panel);stroke:var(--fg);stroke-width:1.5}
+svg .ln{stroke:var(--fg);stroke-width:1.5;fill:none}
+svg .fb{stroke:var(--accent);stroke-width:1.5;fill:none}
+.vids{display:grid;gap:10px}
+.vids a{display:block;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;text-decoration:none;color:var(--fg)}
+.vids a:hover,.vids a:focus-visible{border-color:var(--accent);outline:none}
+.vids a b{color:var(--accent)}
+.vids small{color:var(--muted);display:block}
+footer{margin-top:40px;color:var(--muted);font-size:.85rem}
+</style>
+
+<div class="wrap">
+<h1>自動控制從零開始</h1>
+<p class="lede">先懂這門課在幹嘛，再一章一章看圖、拉滑桿、跟著例題算。每章都只用一個最簡單的例子。</p>
+
+<nav class="nav" aria-label="章節">
+<a href="#map">0 大地圖</a><a href="#ch2">Ch2 拉氏</a><a href="#ch3">Ch3 方塊圖</a><a href="#ch4">Ch4 穩定</a><a href="#ch5">Ch5 響應</a><a href="#ch6">Ch6 根軌跡</a><a href="#ch7">Ch7 波德圖</a><a href="#videos">影片</a>
+</nav>
+
+<!-- ================= 0 ================= -->
+<section id="map">
+<div class="chap">先看這個</div>
+<h2>這門課到底在幹嘛：用冷氣來想</h2>
+<p>你把冷氣設 26°C。溫度計量到現在 30°C，差了 4 度，冷氣就開強一點。差越少就開越弱。這種「量結果、跟目標比、再修正」的架構就叫<b>回授控制</b>。整本講義都在研究這張圖：</p>
+
+<div class="fig scroll">
+<svg viewBox="0 0 720 230" style="min-width:560px;width:100%" role="img" aria-label="回授控制方塊圖：設定值經比較器、控制器、受控體輸出，再經感測器回到比較器">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--fg)"/></marker>
+<marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--accent)"/></marker></defs>
+<text x="8" y="70" font-size="20" font-style="italic" style="font-family:var(--font-math)">r</text>
+<text x="4" y="112" font-size="12" class="mut">設定 26°C</text>
+<line x1="28" y1="80" x2="110" y2="80" class="ln" marker-end="url(#ar)"/>
+<circle cx="130" cy="80" r="18" class="box"/><text x="122" y="86" font-size="18">Σ</text>
+<text x="96" y="70" font-size="15">+</text><text x="136" y="118" font-size="17" class="ac">−</text>
+<line x1="148" y1="80" x2="218" y2="80" class="ln" marker-end="url(#ar)"/>
+<text x="176" y="70" font-size="18" font-style="italic" style="font-family:var(--font-math)">e</text>
+<text x="160" y="112" font-size="12" class="mut">差幾度</text>
+<rect x="220" y="52" width="120" height="56" rx="6" class="box"/><text x="244" y="77" font-size="14">控制器 K</text><text x="250" y="97" font-size="11" class="mut">冷氣的大腦</text>
+<line x1="340" y1="80" x2="418" y2="80" class="ln" marker-end="url(#ar)"/>
+<text x="352" y="112" font-size="12" class="mut">壓縮機出力</text>
+<rect x="420" y="52" width="130" height="56" rx="6" class="box"/><text x="445" y="77" font-size="14">受控體 G</text><text x="462" y="97" font-size="11" class="mut">你的房間</text>
+<line x1="550" y1="80" x2="700" y2="80" class="ln" marker-end="url(#ar)"/>
+<text x="680" y="70" font-size="20" font-style="italic" style="font-family:var(--font-math)">y</text>
+<text x="640" y="112" font-size="12" class="mut">實際室溫</text>
+<circle cx="620" cy="80" r="3.5" fill="var(--fg)"/>
+<polyline points="620,80 620,180 452,180" class="fb" marker-end="url(#arb)"/>
+<rect x="320" y="155" width="130" height="50" rx="6" class="box" style="stroke:var(--accent)"/><text x="345" y="178" font-size="14">感測器 H</text><text x="357" y="196" font-size="11" class="mut">溫度計</text>
+<polyline points="320,180 130,180 130,100" class="fb" marker-end="url(#arb)"/>
+</svg>
+<div class="cap">藍色那條就是「回授」：把輸出量回來，跟目標相減。</div>
+</div>
+
+<p>整門課只在問三個問題：</p>
+<table>
+<tr><th class="l">問題</th><th class="l">冷氣版</th><th>章節</th></tr>
+<tr><td class="l">① 會不會失控？</td><td class="l">開太猛，室溫忽冷忽熱越晃越大</td><td>Ch4 穩定度</td></tr>
+<tr><td class="l">② 反應好不好？</td><td class="l">多快降到 26°C？會不會衝過頭降到 24°C？</td><td>Ch5 暫態</td></tr>
+<tr><td class="l">③ 最後準不準？</td><td class="l">穩定後停在 26.5°C 還是剛好 26°C？</td><td>Ch5 穩態誤差</td></tr>
+</table>
+<p>其他章是工具：Ch2 拉氏轉換是數學工具；Ch3 把系統畫成圖再算成一個式子；Ch6 根軌跡看「旋鈕 K 越轉越大時」會怎樣；Ch7 波德圖是換一個角度看同一件事。</p>
+<div class="key"><b>整門課最重要的一句話：</b>把系統寫成一個分數 <span class="m">T(s)</span>，<b>分母 = 0 的根叫「極點」</b>。極點的位置決定了上面三個問題的答案。後面每一章其實都在找極點、看極點。</div>
+</section>
+
+<!-- ================= Ch2 ================= -->
+<section id="ch2">
+<div class="chap">CH 2</div>
+<h2>拉氏轉換：把微分變成乘法的翻譯機</h2>
+<p>系統的行為是用<b>微分方程</b>描述的（有 <span class="m">y′</span>、<span class="m">y″</span> 那種），很難直接解。拉氏轉換把它翻譯成 <span class="m">s</span> 的代數式，用國中代數解完，再查表翻回來。</p>
+<div class="q"><b>翻譯規則只要記一條：</b>微分一次 = 乘一個 <span class="m">s</span>；積分一次 = 除一個 <span class="m">s</span>。<br>
+另外常用的查表：<span class="m">u(t)</span>（步階，一個從 0 跳到 1 的輸入）→ <span class="m"><span class="fr"><span>1</span><span>s</span></span></span>；<span class="m">e<sup>−at</sup></span> → <span class="m"><span class="fr"><span>1</span><span>s+a</span></span></span></div>
+
+<div class="ex"><div class="tag">例題</div>
+解 <span class="m">y″ + 3y′ + 2y = u(t)</span>，初始條件都是 0。</div>
+<ol class="steps">
+<li><b>翻譯成 s</b><span class="m">y″→s²Y</span>、<span class="m">y′→sY</span>、<span class="m">y→Y</span>、<span class="m">u(t)→1/s</span>
+<div class="eq">s²Y + 3sY + 2Y = <span class="fr"><span>1</span><span>s</span></span></div></li>
+<li><b>用代數解出 Y</b>把 Y 提出來，再把分母因式分解：
+<div class="eq">Y = <span class="fr"><span>1</span><span>s(s² + 3s + 2)</span></span> = <span class="fr"><span>1</span><span>s(s+1)(s+2)</span></span></div></li>
+<li><b>拆成部分分式（遮蓋法）</b>要拆成 <span class="m"><span class="fr"><span>A</span><span>s</span></span> + <span class="fr"><span>B</span><span>s+1</span></span> + <span class="fr"><span>C</span><span>s+2</span></span></span>。<br>
+求 A：用手指<b>蓋住</b>分母的 <span class="m">s</span>，剩下 <span class="m">1/((s+1)(s+2))</span>，代 <span class="m">s=0</span> → <span class="m">A = 1/2</span><br>
+求 B：蓋住 <span class="m">(s+1)</span>，剩 <span class="m">1/(s(s+2))</span>，代 <span class="m">s=−1</span> → <span class="m">B = 1/((−1)(1)) = −1</span><br>
+求 C：蓋住 <span class="m">(s+2)</span>，剩 <span class="m">1/(s(s+1))</span>，代 <span class="m">s=−2</span> → <span class="m">C = 1/((−2)(−1)) = 1/2</span></li>
+<li><b>查表翻回來</b><span class="m">1/s → 1</span>、<span class="m">1/(s+1) → e<sup>−t</sup></span>、<span class="m">1/(s+2) → e<sup>−2t</sup></span>
+<div class="eq">y(t) = <span class="fr"><span>1</span><span>2</span></span> − e<sup>−t</sup> + <span class="fr"><span>1</span><span>2</span></span>e<sup>−2t</sup></div></li>
+<li><b>檢查</b><span class="m">t=0</span>：<span class="m">½ − 1 + ½ = 0</span>，符合初始條件。<span class="m">t→∞</span>：指數都消失，剩 <span class="m">½</span>。下面就是它的圖。</li>
+</ol>
+<div class="fig"><h4>y(t) = ½ − e<sup>−t</sup> + ½e<sup>−2t</sup></h4><canvas id="cv-ch2" aria-label="y(t) 從 0 平滑上升到 0.5 的曲線"></canvas>
+<div class="cap">從 0 慢慢爬到 0.5 停住。</div></div>
+<div class="key"><b>注意到了嗎？</b>答案裡的 <span class="m">e<sup>−t</sup></span>、<span class="m">e<sup>−2t</sup></span> 來自分母的根 <span class="m">s=−1</span>、<span class="m">s=−2</span>。這兩個就是<b>極點</b>。極點是負的，指數就會衰減，所以 y 會停下來。這就是 Ch4 穩定度的全部精神。</div>
+</section>
+
+<!-- ================= Ch3 ================= -->
+<section id="ch3">
+<div class="chap">CH 3</div>
+<h2>轉移函數與方塊圖：把系統變成一個方塊</h2>
+<p><b>轉移函數</b> = 輸出 ÷ 輸入（都用 s 寫，初始條件當 0）。上一題 <span class="m">s²Y + 3sY + 2Y = U</span>，所以</p>
+<div class="eq">G(s) = <span class="fr"><span>Y</span><span>U</span></span> = <span class="fr"><span>1</span><span>s² + 3s + 2</span></span></div>
+<p>有了它，整個系統就是一個方塊：<b>輸入乘上 G 就是輸出</b>。很多方塊接在一起時：</p>
+<table>
+<tr><th class="l">接法</th><th>結果</th><th class="l">白話</th></tr>
+<tr><td class="l">串聯（一個接一個）</td><td class="m">G₁ · G₂</td><td class="l">一路乘下去</td></tr>
+<tr><td class="l">並聯（分兩路再加起來）</td><td class="m">G₁ + G₂</td><td class="l">兩路相加</td></tr>
+<tr><td class="l">負回授</td><td class="m"><span class="fr"><span>G</span><span>1 + GH</span></span></td><td class="l">考試最常用，一定要會推</td></tr>
+</table>
+
+<h3>回授公式怎麼來的（3 行）</h3>
+<ol class="steps">
+<li><b>比較器</b>誤差 = 目標 − 量回來的：<span class="m">E = R − H·Y</span></li>
+<li><b>前向路徑</b>輸出 = G × 誤差：<span class="m">Y = G·E = G(R − HY)</span></li>
+<li><b>移項</b><span class="m">Y + GHY = GR</span> ⇒ <span class="m">Y(1 + GH) = GR</span> ⇒ <span class="m">T = <span class="fr"><span>Y</span><span>R</span></span> = <span class="fr"><span>G</span><span>1+GH</span></span></span></li>
+</ol>
+
+<div class="ex"><div class="tag">例題</div>
+<span class="m">G = <span class="fr"><span>10</span><span>s(s+1)</span></span></span>，<span class="m">H = 1</span>（單位回授），求閉迴路轉移函數 <span class="m">T(s)</span>。</div>
+<ol class="steps">
+<li><b>套公式</b><span class="m">T = <span class="fr"><span>10/(s(s+1))</span><span>1 + 10/(s(s+1))</span></span></span></li>
+<li><b>上下同乘 s(s+1)，把繁分數消掉</b><span class="m">T = <span class="fr"><span>10</span><span>s(s+1) + 10</span></span> = <span class="fr"><span>10</span><span>s² + s + 10</span></span></span></li>
+</ol>
+<p>小技巧：單位回授時，<b>T 的分母 = G 的分母 + G 的分子</b>。<span class="m">s(s+1) + 10</span>，一秒寫完。</p>
+
+<h3>Mason 公式：方塊圖太亂時的萬用解</h3>
+<p>方塊圖有好幾個迴圈、一步步化簡容易錯時，就用 Mason。看這個有兩個迴圈的例子：</p>
+<div class="fig scroll">
+<svg viewBox="0 0 720 250" style="min-width:560px;width:100%" role="img" aria-label="兩層回授方塊圖：外圈 H2 回到第一個比較器，內圈 H1 繞過 G2">
+<text x="8" y="72" font-size="20" font-style="italic" style="font-family:var(--font-math)">R</text>
+<line x1="30" y1="80" x2="92" y2="80" class="ln" marker-end="url(#ar)"/>
+<circle cx="110" cy="80" r="16" class="box"/><text x="103" y="86" font-size="16">Σ</text><text x="116" y="116" font-size="16" class="ac">−</text>
+<line x1="126" y1="80" x2="178" y2="80" class="ln" marker-end="url(#ar)"/>
+<rect x="180" y="56" width="90" height="48" rx="6" class="box"/><text x="210" y="87" font-size="17" style="font-family:var(--font-math)">G₁</text>
+<line x1="270" y1="80" x2="322" y2="80" class="ln" marker-end="url(#ar)"/>
+<circle cx="340" cy="80" r="16" class="box"/><text x="333" y="86" font-size="16">Σ</text><text x="346" y="116" font-size="16" class="ac">−</text>
+<line x1="356" y1="80" x2="408" y2="80" class="ln" marker-end="url(#ar)"/>
+<rect x="410" y="56" width="90" height="48" rx="6" class="box"/><text x="440" y="87" font-size="17" style="font-family:var(--font-math)">G₂</text>
+<line x1="500" y1="80" x2="700" y2="80" class="ln" marker-end="url(#ar)"/>
+<text x="682" y="70" font-size="20" font-style="italic" style="font-family:var(--font-math)">Y</text>
+<circle cx="540" cy="80" r="3.5" fill="var(--fg)"/><circle cx="630" cy="80" r="3.5" fill="var(--fg)"/>
+<polyline points="540,80 540,150 482,150" class="fb" marker-end="url(#arb)"/>
+<rect x="400" y="128" width="80" height="44" rx="6" class="box" style="stroke:var(--accent)"/><text x="427" y="157" font-size="16" style="font-family:var(--font-math)">H₁</text>
+<polyline points="400,150 340,150 340,98" class="fb" marker-end="url(#arb)"/>
+<polyline points="630,80 630,215 402,215" class="fb" marker-end="url(#arb)"/>
+<rect x="320" y="193" width="80" height="44" rx="6" class="box" style="stroke:var(--accent)"/><text x="347" y="222" font-size="16" style="font-family:var(--font-math)">H₂</text>
+<polyline points="320,215 110,215 110,98" class="fb" marker-end="url(#arb)"/>
+<text x="555" y="140" font-size="12" class="mut">內圈 L₁</text><text x="645" y="200" font-size="12" class="mut">外圈 L₂</text>
+</svg></div>
+<ol class="steps">
+<li><b>找前進路徑（從 R 走到 Y，不走回頭路）</b>只有一條：<span class="m">P₁ = G₁G₂</span></li>
+<li><b>找所有迴圈（繞一圈回到原點，負回授要帶負號）</b>內圈 <span class="m">L₁ = −G₂H₁</span>；外圈 <span class="m">L₂ = −G₁G₂H₂</span></li>
+<li><b>算 Δ</b>兩個迴圈都經過 G₂，有碰到，所以沒有「互不接觸」的組合：
+<div class="eq">Δ = 1 − (L₁ + L₂) = 1 + G₂H₁ + G₁G₂H₂</div></li>
+<li><b>算 Δ₁</b>把碰到路徑 P₁ 的迴圈刪掉。兩個迴圈都碰到，全刪光 → <span class="m">Δ₁ = 1</span></li>
+<li><b>代入 T = P₁Δ₁ / Δ</b><div class="eq">T = <span class="fr"><span>G₁G₂</span><span>1 + G₂H₁ + G₁G₂H₂</span></span></div></li>
+</ol>
+<div class="ok"><b>一般化：</b><span class="m">Δ = 1 − (所有迴圈相加) + (兩兩互不接觸的迴圈乘積) − …</span>。大部分考題迴圈都互相碰到，所以只要算到第一項，<span class="m">Δₖ</span> 也常常就是 1。</div>
+</section>
+
+<!-- ================= Ch4 ================= -->
+<section id="ch4">
+<div class="chap">CH 4</div>
+<h2>穩定度：極點在左邊就穩，在右邊就爆</h2>
+<p>Ch2 看到了：分母的根（極點）<span class="m">p</span> 會在輸出產生一項 <span class="m">e<sup>pt</sup></span>。極點是複數 <span class="m">p = σ ± jω</span> 時，那一項長這樣：</p>
+<div class="eq">e<sup>σt</sup> · cos(ωt)</div>
+<p><span class="m">σ</span>（實部，左右位置）決定振幅<b>變大還變小</b>；<span class="m">ω</span>（虛部，上下位置）決定<b>晃多快</b>。自己拉看看：</p>
+
+<div class="fig">
+<h4>拖動極點的位置，看系統的反應</h4>
+<div class="ctrl"><label for="s4">實部 σ（左右）</label><input type="range" id="s4" min="-1.5" max="0.5" step="0.05" value="-0.3"><output id="s4o"></output>
+<label for="w4">虛部 ω（上下）</label><input type="range" id="w4" min="0" max="6" step="0.1" value="3"><output id="w4o"></output></div>
+<div class="btns"><button type="button" data-p4="-0.8,0">左半面・實數</button><button type="button" data-p4="-0.3,3">左半面・複數</button><button type="button" data-p4="0,3">剛好在虛軸</button><button type="button" data-p4="0.15,3">右半面</button></div>
+<div class="row"><canvas id="cv-s4" class="sq" aria-label="s 平面上的極點位置"></canvas><canvas id="cv-y4" class="sq" aria-label="對應的反應曲線"></canvas></div>
+<div class="readout"><span>判定：<span id="v4" class="pill"></span></span></div>
+<div class="cap">左圖：s 平面（淡紅色是右半面）。右圖：<span class="m">e<sup>σt</sup>cos ωt</span>。</div>
+</div>
+<table>
+<tr><th class="l">極點位置</th><th class="l">反應</th><th>結論</th></tr>
+<tr><td class="l">全部在左半面（σ &lt; 0）</td><td class="l">越來越小，最後停住</td><td><span class="pill good">穩定</span></td></tr>
+<tr><td class="l">在虛軸上（σ = 0）</td><td class="l">永遠一樣大地晃</td><td><span class="pill mid">臨界穩定</span></td></tr>
+<tr><td class="l">有任一個在右半面（σ &gt; 0）</td><td class="l">越晃越大，爆掉</td><td><span class="pill bad">不穩定</span></td></tr>
+</table>
+
+<h3>Routh 表：不用解根，就知道右半面有幾個根</h3>
+<p>分母是三次、四次方程式時很難解。Routh 表只靠係數就能數出「右半面有幾個根」。</p>
+<div class="ex"><div class="tag">例題 1</div><span class="m">s³ + s² + 2s + 8 = 0</span>，右半面有幾個根？</div>
+<ol class="steps">
+<li><b>前兩列：係數「跳著」填</b>第 1 列放第 1、3 個係數，第 2 列放第 2、4 個。
+<div class="scroll"><table class="routh"><tr><td>s³</td><td>1</td><td>2</td></tr><tr><td>s²</td><td>1</td><td>8</td></tr></table></div></li>
+<li><b>算下一列：交叉相乘</b>
+<div class="eq">(左下 × 右上 − 左上 × 右下) ÷ 左下 = (1×2 − 1×8) ÷ 1 = −6</div>
+最後一列 <span class="m">s⁰</span> 用同樣算法，會剛好等於最後一個係數 8。
+<div class="scroll"><table class="routh"><tr><td>s³</td><td>1</td><td>2</td></tr><tr><td>s²</td><td>1</td><td>8</td></tr><tr><td>s¹</td><td class="neg">−6</td><td>0</td></tr><tr><td>s⁰</td><td>8</td><td></td></tr></table></div></li>
+<li><b>只看第一欄，數變號次數</b><span class="m">1 → 1 → −6 → 8</span>：正變負一次、負變正一次，<b>共 2 次</b>。所以右半面有 2 個根，系統<b>不穩定</b>。
+<p class="cap" style="margin:4px 0 0">（驗算：它等於 <span class="m">(s+2)(s²−s+4)</span>，根是 −2 和 0.5 ± j1.94，真的有兩個在右邊。）</p></li>
+</ol>
+
+<div class="ex"><div class="tag">例題 2（最常考：求 K 的範圍）</div><span class="m">s³ + 2s² + 3s + K = 0</span>，K 在什麼範圍內系統穩定？</div>
+<ol class="steps">
+<li><b>建表</b>
+<div class="scroll"><table class="routh"><tr><td>s³</td><td>1</td><td>3</td></tr><tr><td>s²</td><td>2</td><td>K</td></tr><tr><td>s¹</td><td>(2·3 − 1·K)/2 = (6−K)/2</td><td>0</td></tr><tr><td>s⁰</td><td>K</td><td></td></tr></table></div></li>
+<li><b>第一欄全部要 &gt; 0（不能變號）</b><span class="m">(6−K)/2 &gt; 0</span> → <span class="m">K &lt; 6</span>；<span class="m">K &gt; 0</span><br>⇒ 答案 <b><span class="m">0 &lt; K &lt; 6</span></b></li>
+<li><b>K = 6 會怎樣？</b><span class="m">s¹</span> 列變 0，系統剛好在虛軸上，會<b>一直晃</b>。拿上一列 <span class="m">2s² + 6 = 0</span> 解出 <span class="m">s = ±j√3</span>，晃動頻率 <span class="m">ω = √3</span> rad/s。</li>
+</ol>
+<div class="ok"><b>三次方程式秒殺：</b><span class="m">s³ + as² + bs + c</span> 穩定 ⇔ 係數全正且 <span class="m">a·b &gt; c</span>。上一題 <span class="m">2·3 &gt; K</span>，一行就得到 <span class="m">K &lt; 6</span>。</div>
+</section>
+
+<!-- ================= Ch5 ================= -->
+<section id="ch5">
+<div class="chap">CH 5</div>
+<h2>時間響應：反應多快、會不會衝過頭、最後準不準</h2>
+<p>把輸入突然從 0 變成 1（步階），看輸出怎麼追上去。大部分考題都是這個<b>二階標準形</b>：</p>
+<div class="eq">T(s) = <span class="fr"><span>ωₙ²</span><span>s² + 2ζωₙs + ωₙ²</span></span></div>
+<p>只有兩個旋鈕，想成<b>汽車避震器</b>：</p>
+<table>
+<tr><th>旋鈕</th><th class="l">意思</th><th class="l">調大會怎樣</th></tr>
+<tr><td class="m">ζ（阻尼比）</td><td class="l">避震器多「硬」</td><td class="l">比較不晃，但爬得比較慢</td></tr>
+<tr><td class="m">ωₙ（自然頻率）</td><td class="l">彈簧多「緊」</td><td class="l">整體變快</td></tr>
+</table>
+
+<div class="fig">
+<h4>調 ζ 和 ωₙ，看步階響應</h4>
+<div class="ctrl"><label for="z5">阻尼比 ζ</label><input type="range" id="z5" min="0.05" max="1.5" step="0.01" value="0.5"><output id="z5o"></output>
+<label for="n5">自然頻率 ωₙ</label><input type="range" id="n5" min="0.5" max="5" step="0.1" value="2"><output id="n5o"></output></div>
+<div class="btns"><button type="button" data-p5="0.2,2">ζ = 0.2 很晃</button><button type="button" data-p5="0.5,2">ζ = 0.5（例題）</button><button type="button" data-p5="0.7,2">ζ = 0.7 剛好</button><button type="button" data-p5="1,2">ζ = 1 臨界</button><button type="button" data-p5="1.5,2">ζ = 1.5 過阻尼</button></div>
+<canvas id="cv-y5" aria-label="步階響應曲線"></canvas>
+<div class="row" style="margin-top:8px"><canvas id="cv-s5" class="short" aria-label="極點位置"></canvas>
+<div class="readout" style="align-content:start;flex-direction:column;gap:4px" id="r5"></div></div>
+<div class="cap">上圖淡色帶是 1 ± 2%，進入後不再出去的時間就是 <span class="m">tₛ</span>。下左圖是兩個極點的位置：ζ 越小，極點越靠近虛軸，就越晃。</div>
+</div>
+
+<table>
+<tr><th>規格</th><th class="l">意思</th><th>公式</th></tr>
+<tr><td class="m">Mₒ 最大超越量</td><td class="l">衝過頭多少 %</td><td class="m">e<sup>−πζ/√(1−ζ²)</sup></td></tr>
+<tr><td class="m">tₚ 峰值時間</td><td class="l">衝到最高點的時間</td><td class="m"><span class="fr"><span>π</span><span>ωₙ√(1−ζ²)</span></span></td></tr>
+<tr><td class="m">tₛ 安定時間（2%）</td><td class="l">穩定在 ±2% 內的時間</td><td class="m"><span class="fr"><span>4</span><span>ζωₙ</span></span></td></tr>
+</table>
+
+<div class="ex"><div class="tag">例題 1（正向：給 T 求規格）</div><span class="m">T = <span class="fr"><span>4</span><span>s² + 2s + 4</span></span></span>，求 <span class="m">Mₒ、tₚ、tₛ</span>。<button type="button" data-p5="0.5,2" style="margin-left:8px">把上面的滑桿設成這題</button></div>
+<ol class="steps">
+<li><b>跟標準形對照係數</b>常數項 <span class="m">ωₙ² = 4</span> → <span class="m">ωₙ = 2</span>；s 的係數 <span class="m">2ζωₙ = 2</span> → <span class="m">ζ = 2/(2·2) = 0.5</span></li>
+<li><b>代 Mₒ</b><span class="m">e<sup>−π·0.5/√0.75</sup> = e<sup>−1.81</sup> ≈ 0.163</span> → <b>衝過頭 16.3%</b></li>
+<li><b>代 tₚ</b><span class="m">π / (2·√0.75) = π / 1.732 ≈ 1.81</span> 秒</li>
+<li><b>代 tₛ</b><span class="m">4 / (0.5·2) = 4</span> 秒</li>
+</ol>
+<div class="ex"><div class="tag">例題 2（反向：要求規格，求 K）</div>單位回授，<span class="m">G = <span class="fr"><span>K</span><span>s(s+2)</span></span></span>。要讓超越量剛好 16.3%，K 要多少？</div>
+<ol class="steps">
+<li><b>先算閉迴路</b>分母 = G 的分母 + 分子：<span class="m">T = <span class="fr"><span>K</span><span>s² + 2s + K</span></span></span></li>
+<li><b>16.3% 對應 ζ = 0.5</b>（上一題剛算過；考試直接用 Mₒ 公式反解）</li>
+<li><b>對係數</b><span class="m">2ζωₙ = 2</span> → <span class="m">ωₙ = 2</span>；<span class="m">ωₙ² = K</span> → <b><span class="m">K = 4</span></b></li>
+</ol>
+
+<h3>穩態誤差：最後差多少</h3>
+<p>誤差 = 想要的 − 實際的，等到穩定以後還剩多少。關鍵在 <b>G 裡有幾個 <span class="m">1/s</span></b>（叫做 Type 幾）。</p>
+<div class="q"><b>直覺：</b><span class="m">1/s</span> 是積分器，像一個會記帳的人：只要還有一點誤差，就一直累加、一直加大出力，直到誤差歸零。所以 G 裡有 <span class="m">1/s</span> 的系統，追固定目標最後一定追得到。</div>
+<div class="ex"><div class="tag">例題</div>單位回授，<span class="m">G = <span class="fr"><span>10</span><span>s(s+2)</span></span></span>。輸入是步階、以及斜坡 <span class="m">r = t</span> 時，穩態誤差各是多少？</div>
+<ol class="steps">
+<li><b>先確認穩定（一定要做！）</b>閉迴路分母 <span class="m">s² + 2s + 10</span>，二次式係數全正 → 穩定。不穩定的話後面全部不能算。</li>
+<li><b>數 Type</b>分母有 1 個 <span class="m">s</span> → <b>Type 1</b></li>
+<li><b>步階輸入</b><span class="m">Kₚ = lim<sub>s→0</sub> G = 10/0 = ∞</span> → <span class="m">eₛₛ = 1/(1+Kₚ) = 0</span>（追得到）</li>
+<li><b>斜坡輸入</b><span class="m">Kᵥ = lim<sub>s→0</sub> s·G = lim 10/(s+2) = 5</span> → <span class="m">eₛₛ = 1/Kᵥ = 0.2</span>（永遠落後 0.2）</li>
+</ol>
+<table>
+<tr><th>Type</th><th>步階 1/(1+Kₚ)</th><th>斜坡 1/Kᵥ</th><th>拋物線 1/Kₐ</th></tr>
+<tr><td>0（沒有 1/s）</td><td>有限值</td><td>∞</td><td>∞</td></tr>
+<tr><td>1（一個 1/s）</td><td>0</td><td>有限值</td><td>∞</td></tr>
+<tr><td>2（兩個 1/s）</td><td>0</td><td>0</td><td>有限值</td></tr>
+</table>
+<p class="cap" style="color:var(--muted)"><span class="m">Kₚ = lim G</span>，<span class="m">Kᵥ = lim sG</span>，<span class="m">Kₐ = lim s²G</span>（都是 s→0）。</p>
+</section>
+
+<!-- ================= Ch6 ================= -->
+<section id="ch6">
+<div class="chap">CH 6</div>
+<h2>根軌跡：把旋鈕 K 越轉越大，極點怎麼跑</h2>
+<p>控制器的增益 K 就像冷氣的「強度旋鈕」。K 一改，閉迴路的極點就會移動，系統的行為跟著變。<b>根軌跡就是把極點移動的路線畫出來。</b></p>
+
+<div class="fig">
+<h4>拉 K，看極點怎麼移動</h4>
+<div class="btns" role="group" aria-label="選擇系統"><button type="button" id="sysA" aria-pressed="true">系統 A：K / s(s+2)</button><button type="button" id="sysB" aria-pressed="false">系統 B：K / s(s+1)(s+2)</button></div>
+<div class="ctrl"><label for="k6">增益 K</label><input type="range" id="k6" min="0" max="12" step="0.05" value="0.5"><output id="k6o"></output></div>
+<div class="row"><canvas id="cv-s6" class="sq" aria-label="根軌跡與目前極點"></canvas><canvas id="cv-y6" class="sq" aria-label="目前 K 的步階響應"></canvas></div>
+<div class="readout" id="r6"></div>
+<div class="cap">左：淡藍點是 K 從 0 到 12 所有極點走過的路（根軌跡），紅色 × 是目前 K 的極點。右：目前 K 的步階響應。</div>
+</div>
+
+<div class="ex"><div class="tag">例題（系統 A，可以直接解根）</div>單位回授 <span class="m">G = <span class="fr"><span>K</span><span>s(s+2)</span></span></span>，畫根軌跡。</div>
+<ol class="steps">
+<li><b>閉迴路分母</b><span class="m">s² + 2s + K = 0</span> → 公式解 <span class="m">s = −1 ± √(1−K)</span></li>
+<li><b>K = 0</b><span class="m">s = 0, −2</span>：就是 G 自己的極點。<b>根軌跡從開迴路極點出發。</b></li>
+<li><b>0 &lt; K &lt; 1</b>根號裡是正的，兩個實數根，從 0 和 −2 往中間靠近。</li>
+<li><b>K = 1</b>兩根在 <span class="m">s = −1</span> 撞在一起，這叫<b>分離點</b>。</li>
+<li><b>K &gt; 1</b>根號裡變負，<span class="m">s = −1 ± j√(K−1)</span>，沿著 <span class="m">Re = −1</span> 的直線往上下分開。K 越大越晃，但永遠在左半面，永遠穩定。</li>
+</ol>
+
+<h3>考試不能直接解根時：用規則畫（拿系統 A 驗證）</h3>
+<table>
+<tr><th class="l">規則</th><th class="l">做法</th><th class="l">系統 A</th></tr>
+<tr><td class="l">① 起點</td><td class="l">G 的極點（分母 = 0）</td><td class="l">0、−2 ✓</td></tr>
+<tr><td class="l">② 實軸上哪段有線</td><td class="l">某段<b>右邊</b>的極點＋零點總數是<b>奇數</b></td><td class="l">0 到 −2 之間（右邊有 1 個）✓</td></tr>
+<tr><td class="l">③ 漸近線</td><td class="l">條數 = 極點數 − 零點數；角度 <span class="m">180°×(奇數)/(條數)</span>；交點 <span class="m">(Σ極點 − Σ零點)/(條數)</span></td><td class="l">2 條、±90°、交在 <span class="m">(0−2)/2 = −1</span> ✓</td></tr>
+<tr><td class="l">④ 分離點</td><td class="l">把 K 解出來，對 s 微分 = 0</td><td class="l"><span class="m">K = −s²−2s</span>，<span class="m">−2s−2 = 0</span> → <span class="m">s = −1</span> ✓</td></tr>
+<tr><td class="l">⑤ 穿過虛軸</td><td class="l">用 Routh 求臨界 K</td><td class="l">不會穿過（永遠穩定）</td></tr>
+</table>
+<div class="ok"><b>換系統 B 看看：</b>3 個極點 → 3 條漸近線（±60°、180°），交在 <span class="m">(0−1−2)/3 = −1</span>。分母 <span class="m">s³ + 3s² + 2s + K</span>，三次秒殺 <span class="m">3·2 &gt; K</span> → <b>K &lt; 6 才穩定</b>，K = 6 時在 <span class="m">ω = √2 ≈ 1.41</span> 穿過虛軸。把滑桿拉過 6，右邊的圖就會爆掉。</div>
+<div class="key"><b>觀念題：</b>加一個<b>極點</b>（像 A→B）會把根軌跡往右推，系統比較容易不穩；加一個<b>零點</b>會把它往左拉，系統比較穩。</div>
+</section>
+
+<!-- ================= Ch7 ================= -->
+<section id="ch7">
+<div class="chap">CH 7</div>
+<h2>頻率響應與波德圖：餵正弦波進去看看</h2>
+<p>換一種測法：輸入一個正弦波。線性系統的輸出<b>還是同頻率的正弦波</b>，只會改變兩件事：</p>
+<ul><li><b>大小</b>被放大或縮小：乘上 <span class="m">|G(jω)|</span></li><li><b>時間</b>被延遲：相位差 <span class="m">∠G(jω)</span></li></ul>
+<p><b>波德圖 = 把每個頻率的「放大倍數」和「延遲角度」畫成兩張圖。</b>放大倍數用 dB 表示：<span class="m">dB = 20 log₁₀|G|</span>。</p>
+<table><tr><th>倍數</th><td>10</td><td>1</td><td>0.707</td><td>0.1</td><td>0.01</td></tr><tr><th>dB</th><td>+20</td><td>0</td><td>−3</td><td>−20</td><td>−40</td></tr></table>
+
+<div class="fig">
+<h4><span class="m">G(s) = 1/(1+s)</span>：調輸入頻率 ω</h4>
+<div class="ctrl"><label for="w7">輸入頻率 ω</label><input type="range" id="w7" min="-2" max="2" step="0.01" value="0"><output id="w7o"></output></div>
+<canvas id="cv-t7" class="short" aria-label="輸入與輸出正弦波"></canvas>
+<div class="row" style="margin-top:8px"><canvas id="cv-m7" class="short" aria-label="波德大小圖"></canvas><canvas id="cv-p7" class="short" aria-label="波德相位圖"></canvas></div>
+<div class="readout" id="r7"></div>
+<div class="cap">上：灰色是輸入，紅色是輸出（橫軸以週期為單位）。下：波德大小圖、相位圖，紅點是目前的頻率。</div>
+</div>
+<p>拉一拉你會發現：低頻時輸出跟輸入幾乎一樣；到 <span class="m">ω = 1</span>（轉角頻率）時剩 0.707 倍（−3 dB）、慢 45°；再往高頻，<b>頻率每乘 10，輸出就變成 1/10（−20 dB）</b>，延遲趨近 90°。這就是講義說的「−20 dB/decade」。</p>
+
+<div class="ex"><div class="tag">例題：畫波德大小圖</div><span class="m">G(s) = <span class="fr"><span>100</span><span>(s+1)(s+10)</span></span></span></div>
+<ol class="steps">
+<li><b>改寫成「1 + s/轉角」的形式</b>把 <span class="m">(s+10)</span> 寫成 <span class="m">10(1 + s/10)</span>：
+<div class="eq">G = <span class="fr"><span>100</span><span>10(1+s)(1+s/10)</span></span> = <span class="fr"><span>10</span><span>(1+s)(1+s/10)</span></span></div></li>
+<li><b>低頻高度</b>前面的常數 10 → <span class="m">20 log 10 = 20</span> dB，先畫一條 20 dB 的水平線。</li>
+<li><b>找轉角</b><span class="m">(1+s)</span> 的轉角在 ω = 1；<span class="m">(1+s/10)</span> 的轉角在 ω = 10。</li>
+<li><b>每過一個分母的轉角，斜率就 −20 dB/dec</b>ω &lt; 1：水平 20 dB。1 到 10：−20 dB/dec，到 ω=10 掉到 0 dB。&gt; 10：−40 dB/dec，到 ω=100 掉到 −40 dB。</li>
+</ol>
+<div class="fig"><h4>折線（虛線）＝ 手畫的近似，實線 ＝ 真正的曲線</h4><canvas id="cv-b7" aria-label="例題的波德大小圖"></canvas></div>
+<div class="ok"><b>反過來就是「系統鑑別」（Ch7 最後一節）：</b>看圖找出斜率在哪裡轉彎，就知道分母有哪些 <span class="m">(1+s/轉角)</span>；看低頻高度就能算出前面的常數。</div>
+</section>
+
+<!-- ================= Videos ================= -->
+<section id="videos">
+<div class="chap">補充</div>
+<h2>影片</h2>
+<p>這個系列是公認講控制最直覺的影片，每支約 10 分鐘，用手繪動畫解釋。英文發音清楚，YouTube 可以開自動翻譯成中文字幕。照這個順序看：Transfer Functions → Routh-Hurwitz → Root Locus → Bode Plots → Steady State Error。</p>
+<div class="vids">
+<a href="https://www.youtube.com/channel/UCq0imsn84ShAe9PBOFnoIrg" target="_blank" rel="noopener"><b>Brian Douglas · Control System Lectures（YouTube）</b><small>頻道首頁，找 Classical Control 系列。可開自動翻譯字幕。</small></a>
+<a href="https://www.bilibili.com/video/av33858630/" target="_blank" rel="noopener"><b>同系列 Bilibili 搬運版（46 集）</b><small>英文原音、沒有中文字幕，但集數排好了，方便照順序看。</small></a>
+<a href="https://www.youtube.com/results?search_query=%E6%A0%B9%E8%BB%8C%E8%B7%A1+%E8%87%AA%E5%8B%95%E6%8E%A7%E5%88%B6" target="_blank" rel="noopener"><b>YouTube 搜尋：根軌跡 自動控制</b><small>中文教學，挑有實際畫題目的看。</small></a>
+<a href="https://www.youtube.com/results?search_query=Routh+%E7%A9%A9%E5%AE%9A%E5%BA%A6+%E5%88%A4%E5%88%A5" target="_blank" rel="noopener"><b>YouTube 搜尋：Routh 穩定度判別</b><small>中文教學。</small></a>
+<a href="https://www.youtube.com/results?search_query=%E6%B3%A2%E5%BE%B7%E5%9C%96+%E7%95%AB%E6%B3%95+%E8%87%AA%E5%8B%95%E6%8E%A7%E5%88%B6" target="_blank" rel="noopener"><b>YouTube 搜尋：波德圖 畫法</b><small>中文教學。</small></a>
+</div>
+<footer>例題都是為了講觀念而選的最簡單版本。看懂之後，回去寫講義的 HW1、2、3、7，詳解在講義後面。</footer>
+</section>
+</div>
+
+<script>
+(function(){
+const root=document.documentElement;
+const css=n=>getComputedStyle(root).getPropertyValue(n).trim();
+const draws=[];
+function setup(cv){const r=cv.getBoundingClientRect();const d=window.devicePixelRatio||1;cv.width=Math.max(1,Math.round(r.width*d));cv.height=Math.max(1,Math.round(r.height*d));const c=cv.getContext('2d');c.setTransform(d,0,0,d,0,0);return{c,w:r.width,h:r.height};}
+function range(a,b,s){const o=[];for(let v=a;v<=b+1e-9;v+=s)o.push(+v.toFixed(6));return o;}
+function plot(cv,o){
+  const {c,w,h}=setup(cv);const P={l:o.padl||40,r:12,t:14,b:26};
+  const lx=v=>Math.log10(v);
+  const X=v=>P.l+(o.logx?(lx(v)-lx(o.xmin))/(lx(o.xmax)-lx(o.xmin)):(v-o.xmin)/(o.xmax-o.xmin))*(w-P.l-P.r);
+  const Y=v=>P.t+(1-(v-o.ymin)/(o.ymax-o.ymin))*(h-P.t-P.b);
+  c.clearRect(0,0,w,h);
+  const font='11px '+css('--font-ui');c.font=font;c.lineWidth=1;
+  if(o.bands)for(const b of o.bands){c.fillStyle=b.color;c.fillRect(P.l,Y(b.y1),w-P.l-P.r,Y(b.y0)-Y(b.y1));}
+  for(const t of o.xt){c.strokeStyle=css('--grid');c.beginPath();c.moveTo(X(t),P.t);c.lineTo(X(t),h-P.b);c.stroke();c.fillStyle=css('--muted');c.textAlign='center';c.fillText(o.xf?o.xf(t):t,X(t),h-P.b+15);}
+  for(const t of o.yt){c.strokeStyle=(t===0)?css('--muted'):css('--grid');c.beginPath();c.moveTo(P.l,Y(t));c.lineTo(w-P.r,Y(t));c.stroke();c.fillStyle=css('--muted');c.textAlign='right';c.fillText(o.yf?o.yf(t):t,P.l-5,Y(t)+4);}
+  c.save();c.beginPath();c.rect(P.l,P.t-2,w-P.l-P.r,h-P.t-P.b+4);c.clip();
+  const span=o.ymax-o.ymin;
+  for(const s of o.series){c.strokeStyle=s.color;c.lineWidth=s.width||2;c.setLineDash(s.dash||[]);c.beginPath();let first=true;
+    for(let i=0;i<s.x.length;i++){let yv=s.y[i];if(!isFinite(yv))yv=yv>0?o.ymax+span:o.ymin-span;yv=Math.max(o.ymin-span,Math.min(o.ymax+span,yv));const px=X(s.x[i]),py=Y(yv);if(first){c.moveTo(px,py);first=false}else c.lineTo(px,py);}
+    c.stroke();}
+  c.setLineDash([]);
+  if(o.vlines)for(const v of o.vlines){c.strokeStyle=v.color;c.setLineDash([4,4]);c.lineWidth=1.2;c.beginPath();c.moveTo(X(v.x),P.t);c.lineTo(X(v.x),h-P.b);c.stroke();c.setLineDash([]);}
+  if(o.dots)for(const d of o.dots){c.fillStyle=d.color;c.beginPath();c.arc(X(d.x),Y(d.y),d.r||4.5,0,7);c.fill();}
+  c.restore();
+  if(o.labels)for(const L of o.labels){c.fillStyle=L.color||css('--fg');c.textAlign=L.align||'left';c.font=(L.bold?'600 ':'')+'12px '+css('--font-ui');c.fillText(L.text,X(L.x)+(L.dx||0),Y(L.y)+(L.dy||0));}
+  c.font=font;c.fillStyle=css('--muted');c.textAlign='right';if(o.xl)c.fillText(o.xl,w-P.r,h-P.b-5);c.textAlign='left';if(o.yl)c.fillText(o.yl,P.l+5,P.t+10);
+}
+function splane(cv,o){
+  const {c,w,h}=setup(cv);const P={l:30,r:10,t:10,b:22};
+  const X=v=>P.l+(v-o.xmin)/(o.xmax-o.xmin)*(w-P.l-P.r);const Y=v=>P.t+(1-(v-o.ymin)/(o.ymax-o.ymin))*(h-P.t-P.b);
+  c.clearRect(0,0,w,h);c.font='11px '+css('--font-ui');
+  c.fillStyle=css('--rhp');c.fillRect(X(0),P.t,w-P.r-X(0),h-P.t-P.b);
+  for(const t of range(Math.ceil(o.xmin),Math.floor(o.xmax),o.xs||1)){c.strokeStyle=t===0?css('--muted'):css('--grid');c.lineWidth=t===0?1.4:1;c.beginPath();c.moveTo(X(t),P.t);c.lineTo(X(t),h-P.b);c.stroke();c.fillStyle=css('--muted');c.textAlign='center';c.fillText(t,X(t),h-P.b+14);}
+  for(const t of range(Math.ceil(o.ymin/(o.ys||1))*(o.ys||1),o.ymax,o.ys||1)){c.strokeStyle=Math.abs(t)<1e-9?css('--muted'):css('--grid');c.lineWidth=Math.abs(t)<1e-9?1.4:1;c.beginPath();c.moveTo(P.l,Y(t));c.lineTo(w-P.r,Y(t));c.stroke();c.fillStyle=css('--muted');c.textAlign='right';c.fillText(t,P.l-4,Y(t)+4);}
+  c.textAlign='right';c.fillText('Re',w-P.r-2,Y(0)-5);c.textAlign='left';c.fillText('jω',X(0)+5,P.t+10);
+  c.save();c.beginPath();c.rect(P.l,P.t,w-P.l-P.r,h-P.t-P.b);c.clip();
+  if(o.trail){c.fillStyle=css('--accent');c.globalAlpha=.35;for(const p of o.trail){c.beginPath();c.arc(X(p[0]),Y(p[1]),1.6,0,7);c.fill();}c.globalAlpha=1;}
+  if(o.open){c.strokeStyle=css('--muted');c.lineWidth=1.5;for(const p of o.open){const x=X(p[0]),y=Y(p[1]);c.beginPath();c.moveTo(x-5,y-5);c.lineTo(x+5,y+5);c.moveTo(x+5,y-5);c.lineTo(x-5,y+5);c.stroke();}}
+  c.strokeStyle=css('--hot');c.lineWidth=2.6;for(const p of o.poles){const x=X(p[0]),y=Y(p[1]);c.beginPath();c.moveTo(x-6,y-6);c.lineTo(x+6,y+6);c.moveTo(x+6,y-6);c.lineTo(x-6,y+6);c.stroke();}
+  c.restore();
+}
+// complex helpers + Durand-Kerner
+const cm=(a,b)=>[a[0]*b[0]-a[1]*b[1],a[0]*b[1]+a[1]*b[0]],cs=(a,b)=>[a[0]-b[0],a[1]-b[1]],cd=(a,b)=>{const d=b[0]*b[0]+b[1]*b[1];return[(a[0]*b[0]+a[1]*b[1])/d,(a[1]*b[0]-a[0]*b[1])/d]};
+function roots(co){const n=co.length-1;const a=co.map(v=>v/co[0]);const R=1+Math.max(...a.slice(1).map(Math.abs));let z=[];for(let k=0;k<n;k++){const t=2*Math.PI*k/n+.4;z.push([.6*R*Math.cos(t),.6*R*Math.sin(t)]);}
+  for(let it=0;it<400;it++){let md=0;for(let k=0;k<n;k++){let p=[1,0];for(let i=1;i<=n;i++)p=[p[0]*z[k][0]-p[1]*z[k][1]+a[i],p[0]*z[k][1]+p[1]*z[k][0]];let q=[1,0];for(let j=0;j<n;j++)if(j!==k)q=cm(q,cs(z[k],z[j]));const d=cd(p,q);z[k]=cs(z[k],d);md=Math.max(md,Math.hypot(d[0],d[1]));}if(md<1e-12)break;}
+  return z.map(p=>[p[0],Math.abs(p[1])<1e-7?0:p[1]]);}
+function step(num,den,T,dt){const n=den.length-1;const a=den.map(v=>v/den[0]);const b=new Array(n).fill(0);const nr=num.slice().reverse();for(let i=0;i<nr.length&&i<n;i++)b[i]=nr[i]/den[0];
+  const f=x=>{const d=new Array(n);for(let i=0;i<n-1;i++)d[i]=x[i+1];let s=1;for(let i=0;i<n;i++)s-=a[n-i]*x[i];d[n-1]=s;return d;};
+  let x=new Array(n).fill(0);const t=[],y=[];let blown=false;
+  for(let k=0;k*dt<=T+1e-9;k++){let yy=0;for(let i=0;i<n;i++)yy+=b[i]*x[i];t.push(k*dt);y.push(blown?(yy>0?1e9:-1e9):yy);if(Math.abs(yy)>1e6){blown=true;continue;}
+    const k1=f(x),k2=f(x.map((v,i)=>v+dt/2*k1[i])),k3=f(x.map((v,i)=>v+dt/2*k2[i])),k4=f(x.map((v,i)=>v+dt*k3[i]));x=x.map((v,i)=>v+dt/6*(k1[i]+2*k2[i]+2*k3[i]+k4[i]));}
+  return{t,y};}
+const fx=(v,d=2)=>(Math.abs(v)<1e-9?0:v).toFixed(d);
+const cplx=p=>p[1]===0?fx(p[0]):`${fx(p[0])} ${p[1]<0?'−':'+'} j${fx(Math.abs(p[1]))}`;
+
+// ---- Ch2
+draws.push(()=>{const t=range(0,6,0.02);plot(document.getElementById('cv-ch2'),{xmin:0,xmax:6,ymin:0,ymax:0.6,xt:range(0,6,1),yt:[0,0.1,0.2,0.3,0.4,0.5,0.6],xl:'t（秒）',
+  series:[{x:[0,6],y:[0.5,0.5],color:css('--muted'),width:1,dash:[5,4]},{x:t,y:t.map(v=>0.5-Math.exp(-v)+0.5*Math.exp(-2*v)),color:css('--accent'),width:2.5}],
+  labels:[{x:6,y:0.5,text:'最後停在 0.5',align:'right',dy:-6,color:css('--muted')}]});});
+
+// ---- Ch4
+const s4=document.getElementById('s4'),w4=document.getElementById('w4');
+function d4(){const s=+s4.value,w=+w4.value;document.getElementById('s4o').textContent=fx(s);document.getElementById('w4o').textContent=fx(w,1);
+  const poles=w>0?[[s,w],[s,-w]]:[[s,0]];splane(document.getElementById('cv-s4'),{xmin:-2,xmax:1,ymin:-7,ymax:7,ys:2,xs:1,poles});
+  const t=range(0,10,0.01);const y=t.map(v=>Math.exp(s*v)*Math.cos(w*v));
+  plot(document.getElementById('cv-y4'),{xmin:0,xmax:10,ymin:-3,ymax:3,xt:range(0,10,2),yt:[-3,-2,-1,0,1,2,3],xl:'t',padl:30,series:[{x:t,y,color:css('--hot'),width:2}]});
+  const v=document.getElementById('v4');if(Math.abs(s)<1e-9){v.className='pill mid';v.textContent=w>0?'臨界穩定：永遠一樣大地晃':'臨界穩定：停在原處不動';}else if(s<0){v.className='pill good';v.textContent='穩定：越來越小';}else{v.className='pill bad';v.textContent='不穩定：越來越大';}}
+[s4,w4].forEach(e=>e.addEventListener('input',d4));
+document.querySelectorAll('[data-p4]').forEach(b=>b.addEventListener('click',()=>{const[a,c]=b.dataset.p4.split(',');s4.value=a;w4.value=c;d4();}));
+draws.push(d4);
+
+// ---- Ch5
+const z5=document.getElementById('z5'),n5=document.getElementById('n5');
+function d5(){const z=+z5.value,wn=+n5.value;document.getElementById('z5o').textContent=fx(z);document.getElementById('n5o').textContent=fx(wn,1);
+  const T=15;const r=step([wn*wn],[1,2*z*wn,wn*wn],T,0.01);
+  let mi=0;for(let i=1;i<r.y.length;i++)if(r.y[i]>r.y[mi])mi=i;const mx=r.y[mi];
+  let ts=null;for(let i=r.y.length-1;i>=0;i--){if(Math.abs(r.y[i]-1)>0.02){ts=r.t[i];break;}} if(ts!==null&&ts>=T-0.02)ts=null;
+  const lines=[];if(ts!==null)lines.push({x:ts,color:css('--ok')});
+  const dots=[];const labels=[];if(z<1&&mx>1.001){dots.push({x:r.t[mi],y:mx,color:css('--hot')});labels.push({x:r.t[mi],y:mx,text:'Mₒ '+((mx-1)*100).toFixed(1)+'%',dx:8,dy:-4,color:css('--hot'),bold:true});}
+  if(ts!==null)labels.push({x:ts,y:0.15,text:'tₛ',dx:5,color:css('--ok'),bold:true});
+  plot(document.getElementById('cv-y5'),{xmin:0,xmax:T,ymin:0,ymax:2,xt:range(0,T,3),yt:[0,0.5,1,1.5,2],xl:'t（秒）',bands:[{y0:0.98,y1:1.02,color:css('--ok-soft')}],
+    series:[{x:[0,T],y:[1,1],color:css('--muted'),width:1,dash:[5,4]},{x:r.t,y:r.y,color:css('--accent'),width:2.5}],vlines:lines,dots,labels});
+  const p=roots([1,2*z*wn,wn*wn]);splane(document.getElementById('cv-s5'),{xmin:-6,xmax:1,ymin:-5,ymax:5,ys:2.5,xs:1,poles:p});
+  const kind=z<1?'欠阻尼（會晃）':(Math.abs(z-1)<1e-9?'臨界阻尼（剛好不晃）':'過阻尼（慢慢爬）');
+  const Mo=z<1?Math.exp(-Math.PI*z/Math.sqrt(1-z*z))*100:0;const tp=z<1?Math.PI/(wn*Math.sqrt(1-z*z)):null;
+  document.getElementById('r5').innerHTML=`<span><span class="pill ${z<1?'mid':'good'}">${kind}</span></span>
+  <span>極點 <b>${cplx(p[0])}</b>${p.length>1?'，<b>'+cplx(p[1])+'</b>':''}</span>
+  <span>Mₒ（公式）<b>${z<1?Mo.toFixed(1)+'%':'0%'}</b></span>
+  <span>tₚ（公式）<b>${tp?tp.toFixed(2)+' s':'—'}</b></span>
+  <span>tₛ ≈ 4/(ζωₙ) <b>${(4/(z*wn)).toFixed(2)} s</b></span>`;}
+[z5,n5].forEach(e=>e.addEventListener('input',d5));
+document.querySelectorAll('[data-p5]').forEach(b=>b.addEventListener('click',()=>{const[a,c]=b.dataset.p5.split(',');z5.value=a;n5.value=c;d5();if(b.closest('.ex'))document.getElementById('cv-y5').scrollIntoView({behavior:'smooth',block:'center'});}));
+draws.push(d5);
+
+// ---- Ch6
+const k6=document.getElementById('k6');let sys='A';const trails={};
+const den6=(K)=>sys==='A'?[1,2,K]:[1,3,2,K];
+function trail(){if(trails[sys])return trails[sys];const pts=[];for(let i=0;i<=600;i++){const K=12*Math.pow(i/600,1.6);for(const r of roots(den6(K)))pts.push(r);}return trails[sys]=pts;}
+function d6(){const K=+k6.value;document.getElementById('k6o').textContent=fx(K);
+  const p=roots(den6(K));const open=sys==='A'?[[0,0],[-2,0]]:[[0,0],[-1,0],[-2,0]];
+  splane(document.getElementById('cv-s6'),{xmin:-4,xmax:1.5,ymin:-4,ymax:4,ys:1,xs:1,poles:p,trail:trail(),open});
+  const r=step([K],den6(K),20,0.01);
+  plot(document.getElementById('cv-y6'),{xmin:0,xmax:20,ymin:-0.5,ymax:2,xt:range(0,20,5),yt:[-0.5,0,0.5,1,1.5,2],xl:'t（秒）',padl:34,series:[{x:[0,20],y:[1,1],color:css('--muted'),width:1,dash:[5,4]},{x:r.t,y:r.y,color:css('--accent'),width:2.2}]});
+  const maxRe=Math.max(...p.map(q=>q[0]));let st,cl;if(K===0){st='K = 0：沒有控制';cl='mid';}else if(maxRe<-1e-6){st='穩定';cl='good';}else if(maxRe<1e-3){st='臨界：持續振盪';cl='mid';}else{st='不穩定：有極點跑到右半面';cl='bad';}
+  document.getElementById('r6').innerHTML=`<span><span class="pill ${cl}">${st}</span></span><span>閉迴路極點：<b>${p.map(cplx).join('，')}</b></span>`;}
+k6.addEventListener('input',d6);
+function setSys(s){sys=s;document.getElementById('sysA').setAttribute('aria-pressed',s==='A');document.getElementById('sysB').setAttribute('aria-pressed',s==='B');d6();}
+document.getElementById('sysA').addEventListener('click',()=>setSys('A'));document.getElementById('sysB').addEventListener('click',()=>setSys('B'));
+draws.push(d6);
+
+// ---- Ch7
+const w7=document.getElementById('w7');
+const logt=[0.01,0.1,1,10,100],lf=v=>v>=1?String(v):String(v);
+function d7(){const w=Math.pow(10,+w7.value);const M=1/Math.sqrt(1+w*w),ph=-Math.atan(w);
+  document.getElementById('w7o').textContent=w<1?w.toFixed(2):w<10?w.toFixed(1):w.toFixed(0);
+  const t=range(0,2,0.005);
+  plot(document.getElementById('cv-t7'),{xmin:0,xmax:2,ymin:-1.2,ymax:1.2,xt:[0,0.5,1,1.5,2],yt:[-1,0,1],xl:'時間（週期）',padl:30,series:[{x:t,y:t.map(v=>Math.sin(2*Math.PI*v)),color:css('--muted'),width:1.6},{x:t,y:t.map(v=>M*Math.sin(2*Math.PI*v+ph)),color:css('--hot'),width:2.4}]});
+  const ws=[];for(let e=-2;e<=2.0001;e+=0.02)ws.push(Math.pow(10,e));
+  plot(document.getElementById('cv-m7'),{logx:true,xmin:0.01,xmax:100,ymin:-45,ymax:5,xt:logt,xf:lf,yt:[-40,-20,0],yl:'大小 (dB)',padl:34,series:[{x:ws,y:ws.map(v=>-10*Math.log10(1+v*v)),color:css('--accent'),width:2.2}],dots:[{x:w,y:20*Math.log10(M),color:css('--hot')}]});
+  plot(document.getElementById('cv-p7'),{logx:true,xmin:0.01,xmax:100,ymin:-100,ymax:10,xt:logt,xf:lf,yt:[-90,-45,0],yf:v=>v+'°',yl:'相位',padl:38,series:[{x:ws,y:ws.map(v=>-Math.atan(v)*180/Math.PI),color:css('--accent'),width:2.2}],dots:[{x:w,y:ph*180/Math.PI,color:css('--hot')}]});
+  document.getElementById('r7').innerHTML=`<span>放大倍數 <b>${M.toFixed(3)}</b>（<b>${(20*Math.log10(M)).toFixed(1)} dB</b>）</span><span>延遲 <b>${(-ph*180/Math.PI).toFixed(1)}°</b></span>`;}
+w7.addEventListener('input',d7);draws.push(d7);
+draws.push(()=>{const ws=[];for(let e=-1;e<=3.0001;e+=0.02)ws.push(Math.pow(10,e));
+  const ex=ws.map(v=>20-10*Math.log10(1+v*v)-10*Math.log10(1+v*v/100));
+  const as=ws.map(v=>v<1?20:v<10?20-20*Math.log10(v):-20*Math.log10(v/10)*2);
+  plot(document.getElementById('cv-b7'),{logx:true,xmin:0.1,xmax:1000,ymin:-80,ymax:40,xt:[0.1,1,10,100,1000],yt:[-80,-60,-40,-20,0,20,40],xl:'ω (rad/s)',yl:'大小 (dB)',padl:36,
+    series:[{x:ws,y:as,color:css('--hot'),width:2,dash:[6,4]},{x:ws,y:ex,color:css('--accent'),width:2.4}],
+    labels:[{x:0.2,y:20,text:'水平 20 dB',dy:-10,color:css('--muted')},{x:2.6,y:12,text:'−20 dB/dec',dx:6,dy:-10,color:css('--hot'),bold:true},{x:30,y:-19,text:'−40 dB/dec',dx:8,dy:-8,color:css('--hot'),bold:true}],
+    dots:[{x:1,y:20,color:css('--hot'),r:3.5},{x:10,y:0,color:css('--hot'),r:3.5},{x:100,y:-40,color:css('--hot'),r:3.5}]});});
+
+function all(){for(const d of draws){try{d();}catch(e){console.error(e);}}}
+let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(all,120);});
+try{window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',all);}catch(e){}
+new MutationObserver(all).observe(root,{attributes:true,attributeFilter:['data-theme']});
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(all);
+all();
+})();
+</script>
+
+</body></html>
