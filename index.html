@@ -64,8 +64,8 @@ applyNight();
   header h1{font-size:23px;font-weight:900;letter-spacing:.5px;color:var(--ink)}
   header .count{font-size:12px;color:var(--mute)}
   /* 分頁：像表單格子，選到的格子被塗黑 */
-  .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-bottom:18px}
-  @media (min-width:560px){.tabs{grid-template-columns:repeat(8,1fr)}}
+  .tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-bottom:18px}
+  @media (min-width:560px){.tabs{grid-template-columns:repeat(9,1fr)}}
   .tab{border:none;background:var(--sheet);color:var(--print);padding:10px 0;font-size:14px;font-weight:500;cursor:pointer;text-align:center}
   .tab:hover{background:var(--print-tint)}
   .tab.on,.tab.on:hover{background:var(--mark);color:var(--mark-ink);font-weight:700}
@@ -342,6 +342,16 @@ applyNight();
     .sk-girl.cheer .sk-arm-l{transform:rotate(125deg)}.sk-girl.cheer .sk-arm-r{transform:rotate(-125deg)}
   }
   .hidden{display:none!important}
+  /* 例句中文、限時、聽力 */
+  .ex-zh{margin-top:4px;font-size:.92em;color:var(--ink2)}
+  .tbar{position:relative;height:18px;background:var(--line);border-radius:9px;overflow:hidden;margin:-2px 0 12px}
+  .tbar>div{height:100%;background:var(--ok);transition:width .2s linear}
+  .tbar>div.low{background:var(--red)}
+  .tbar>span{position:absolute;right:9px;top:0;font-size:11.5px;line-height:18px;color:var(--ink);font-variant-numeric:tabular-nums}
+  .rtimer{font-size:13.5px;color:var(--ink2);margin:0 0 10px;font-variant-numeric:tabular-nums}
+  .rtimer.over{color:var(--red);font-weight:700}
+  .lplay{display:block;width:100%;margin:0 0 12px}
+  @media (max-width:559px){.tabs .tab:last-child{grid-column:span 2}}
 </style>
 </head>
 <body>
@@ -371,6 +381,7 @@ applyNight();
   <button class="tab" data-t="notes">筆記</button>
   <button class="tab" data-t="grammar">文法</button>
   <button class="tab" data-t="reading">閱讀</button>
+  <button class="tab" data-t="listen">聽力</button>
   <button class="tab" data-t="cloze">填空</button>
   <button class="tab" data-t="test">測驗</button>
   <button class="tab" data-t="stats">成績</button>
@@ -436,9 +447,11 @@ applyNight();
 <!-- 文法 -->
 <section id="sec-grammar" class="hidden">
   <div class="chips" id="gFilter" style="margin-bottom:6px"></div>
-  <div class="chips" id="gBatch" style="margin-bottom:12px"></div>
+  <div class="chips" id="gBatch" style="margin-bottom:6px"></div>
+  <div class="chips" style="margin-bottom:12px"><button class="chip" id="gTimed">⏱ 限時模式（每題 20 秒）</button></div>
   <div class="qcard">
     <div class="qmeta"><span id="gType"></span><span id="gProg"></span></div>
+    <div class="tbar hidden" id="gTimer"><div></div><span></span></div>
     <div class="qtext" id="gText"></div>
     <div id="gOpts"></div>
     <div class="explain" id="gExplain"></div>
@@ -448,9 +461,33 @@ applyNight();
 
 <!-- 閱讀 -->
 <section id="sec-reading" class="hidden">
-  <div class="chips" id="rPick" style="margin-bottom:12px"></div>
+  <div class="chips" id="rPick" style="margin-bottom:6px"></div>
+  <div class="chips" style="margin-bottom:12px"><button class="chip" id="rTimed">⏱ 限時模式（顯示建議時間）</button></div>
+  <div class="rtimer hidden" id="rTimer"></div>
   <div class="passage" id="rPassage"></div>
   <div id="rQs"></div>
+</section>
+
+<!-- 聽力 -->
+<section id="sec-listen" class="hidden">
+  <div class="chips" id="lMode" style="margin-bottom:6px">
+    <button class="chip on" data-m="p2">Part 2 應答</button>
+    <button class="chip" data-m="sent">聽句選意</button>
+  </div>
+  <div class="chips" id="lRate" style="margin-bottom:12px">
+    <button class="chip" data-r="0.8">慢速</button><button class="chip" data-r="0.95">正常</button><button class="chip" data-r="1.1">快速</button>
+    <button class="chip" id="lShowText">顯示文字</button>
+  </div>
+  <div class="qcard">
+    <div class="qmeta"><span id="lType"></span><span id="lProg"></span></div>
+    <button class="copybtn lplay" id="lPlay">▶ 播放</button>
+    <div class="qtext" id="lText"></div>
+    <div id="lOpts"></div>
+    <div class="explain" id="lExplain"></div>
+    <div class="qnav"><button id="lReplay">再聽一次</button><button id="lNext">下一題（自動播放）</button></div>
+  </div>
+  <div class="cz-score" id="lScore"></div>
+  <div class="note" id="lNote">用瀏覽器內建語音朗讀。沒聲音的話先檢查音量，或改用 Chrome、Edge、Safari。</div>
 </section>
 
 <!-- 填空 -->
@@ -511,6 +548,7 @@ applyNight();
     <div class="legend">只看每個字<b>最近 5 次</b>的結果。同一個字連續答對 5 次就會完全退出紅字，所以複習真的會讓數字掉下來。括號裡是累計。</div>
     <div id="statGroups"></div>
   </div>
+  <div class="statbox"><h3>預估多益分數（粗估）</h3><div id="statScore"></div></div>
   <div class="statbox"><h3>文法 — 各題型正確率</h3><div id="statTypes"></div></div>
   <div class="statbox"><h3>答錯過的題目</h3><div class="wronglist" id="wrongList">還沒有紀錄。</div></div>
   <button class="copybtn" id="copyBtn">複製結果給 Claude</button>
@@ -1046,621 +1084,621 @@ const GROUPS=[{id:0,label:"全部 514 字"},{id:1,label:"組別 1（0822）"},{i
 
 const GQ=[
  {id:"G1-1",t:"介連",q:"The annual report must be submitted ______ Friday.",o:["by","until","on to","at"],a:0,
-  e:"by + 時間點＝期限之前。until 表持續動作，交件是一次性動作。"},
+  qz:"年度報告必須在星期五之前繳交。",e:"by + 時間點＝期限之前。until 表持續動作，交件是一次性動作。"},
  {id:"G1-2",t:"詞性",q:"Ms. Chen was praised for ______ the project ahead of schedule.",o:["complete","completing","completed","completion"],a:1,
-  e:"介系詞 for 後接動名詞；後面有受詞 the project，只有 V-ing 可以接。"},
+  qz:"陳小姐因為提前完成專案而受到稱讚。",e:"介系詞 for 後接動名詞；後面有受詞 the project，只有 V-ing 可以接。"},
  {id:"G1-3",t:"介連",q:"______ the weather was bad, the outdoor event proceeded as planned.",o:["Despite","Although","Because","However"],a:1,
-  e:"空格後是完整句子 → 用連接詞 Although。Despite 是介系詞只能接名詞。"},
+  qz:"雖然天氣不好，戶外活動仍照計畫進行。",e:"空格後是完整句子 → 用連接詞 Although。Despite 是介系詞只能接名詞。"},
  {id:"G1-4",t:"詞性",q:"All employees are required to attend the ______ training session.",o:["mandatory","mandate","mandatorily","mandating"],a:0,
-  e:"the ___ + 名詞 → 用形容詞。-ory 是形容詞字尾。"},
+  qz:"所有員工都必須參加這場強制性的訓練課程。",e:"the ___ + 名詞 → 用形容詞。-ory 是形容詞字尾。"},
  {id:"G1-5",t:"搭配",q:"The new policy will take ______ next month.",o:["affect","effect","effective","effectively"],a:1,
-  e:"take effect 固定片語＝生效。affect 是動詞、effect 是名詞。"},
+  qz:"新政策將在下個月生效。",e:"take effect 固定片語＝生效。affect 是動詞、effect 是名詞。"},
  {id:"G1-6",t:"文法",q:"Applicants ______ resumes are received by May 1 will be contacted.",o:["who","whose","which","whom"],a:1,
-  e:"後面接名詞 resumes 表所有格關係（申請者「的」履歷）→ whose。"},
+  qz:"履歷在 5 月 1 日前收到的應徵者將會被聯絡。",e:"後面接名詞 resumes 表所有格關係（申請者「的」履歷）→ whose。"},
  {id:"G2-1",t:"詞性",q:"The manager asked the team to respond to customer inquiries ______.",o:["prompt","promptly","promptness","prompted"],a:1,
-  e:"修飾動詞 respond → 用副詞 promptly。"},
+  qz:"經理要求團隊迅速回覆顧客的詢問。",e:"修飾動詞 respond → 用副詞 promptly。"},
  {id:"G2-2",t:"介連",q:"______ heavy rain, the delivery arrived on time.",o:["Although","Because","Despite","Since"],a:2,
-  e:"空格後只有名詞片語 heavy rain → 用介系詞 Despite。跟 G1-3 相反方向。"},
+  qz:"儘管下大雨，貨物仍準時送達。",e:"空格後只有名詞片語 heavy rain → 用介系詞 Despite。跟 G1-3 相反方向。"},
  {id:"G2-3",t:"介連",q:"The contract must be signed ______ both parties before the end of the month.",o:["by","until","with","at"],a:0,
-  e:"被動語態的動作者用 by：be signed by both parties。"},
+  qz:"合約必須在月底前由雙方簽署。",e:"被動語態的動作者用 by：be signed by both parties。"},
  {id:"G2-4",t:"詞性",q:"Employees interested in the position should submit an ______ by email.",o:["apply","applicant","application","applicable"],a:2,
-  e:"an ___ → 名詞。applicant 是「人」，這裡交的是「申請書」application。"},
+  qz:"對這個職位有興趣的員工應以電子郵件提交申請書。",e:"an ___ → 名詞。applicant 是「人」，這裡交的是「申請書」application。"},
  {id:"G2-5",t:"介連",q:"The store offers a full refund ______ customers return items within 14 days.",o:["despite","unless","if","during"],a:2,
-  e:"語意是「如果 14 天內退回就全額退費」→ if。unless＝如果不，語意相反。"},
+  qz:"如果顧客在 14 天內退回商品，本店提供全額退款。",e:"語意是「如果 14 天內退回就全額退費」→ if。unless＝如果不，語意相反。"},
  {id:"G2-6",t:"搭配",q:"Ms. Park will take ______ of the marketing department starting next month.",o:["charge","charged","charging","charges"],a:0,
-  e:"take charge of 固定片語＝接管、負責。"},
+  qz:"朴小姐從下個月起將接管行銷部。",e:"take charge of 固定片語＝接管、負責。"},
  {id:"G3-1",t:"搭配",q:"Attendees should register ______ because seats are limited.",o:["in advance","at once time","on ahead","for early"],a:0,
-  e:"in advance 固定片語＝事先。其他三個都是不存在的搭配。"},
+  qz:"因為座位有限，參加者應事先報名。",e:"in advance 固定片語＝事先。其他三個都是不存在的搭配。"},
  {id:"G3-2",t:"詞性",q:"The seminar was ______ attended, with over 300 participants.",o:["wide","widely","width","widen"],a:1,
-  e:"修飾過去分詞 attended → 副詞 widely。widely attended＝出席踴躍。"},
+  qz:"這場研討會出席踴躍，超過 300 名參加者。",e:"修飾過去分詞 attended → 副詞 widely。widely attended＝出席踴躍。"},
  {id:"G3-3",t:"文法",q:"______ you have any questions, please contact the organizer directly.",o:["Despite","Should","Unless","Whether"],a:1,
-  e:"Should you have... = If you should have... 的倒裝，正式書信常見。"},
+  qz:"如果您有任何問題，請直接聯絡主辦單位。",e:"Should you have... = If you should have... 的倒裝，正式書信常見。"},
  {id:"G3-4",t:"介連",q:"The keynote speech will begin ______ 10 a.m. in the main hall.",o:["in","on","at","by"],a:2,
-  e:"時刻用 at（at 10 a.m.）；日期用 on、月份年份用 in。"},
+  qz:"主題演講將在早上 10 點於主廳開始。",e:"時刻用 at（at 10 a.m.）；日期用 on、月份年份用 in。"},
  {id:"G3-5",t:"詞性",q:"Due to a scheduling conflict, the workshop has been ______ until October.",o:["postpone","postponing","postponed","postponement"],a:2,
-  e:"has been + p.p. 被動完成式 → postponed。"},
+  qz:"由於時間衝突，研習會已延到十月。",e:"has been + p.p. 被動完成式 → postponed。"},
  {id:"G3-6",t:"介連",q:"Participants are asked to turn off their phones ______ the presentation.",o:["while","during","when","meanwhile"],a:1,
-  e:"後面是名詞 the presentation → 介系詞 during。while 要接句子。"},
+  qz:"簡報進行期間，請參加者關閉手機。",e:"後面是名詞 the presentation → 介系詞 during。while 要接句子。"},
  {id:"G4-1",t:"介連",q:"______ the delay, all passengers reached their destination safely.",o:["Although","Despite","Because","While"],a:1,
-  e:"後面只有名詞 the delay → 介系詞 Despite。"},
+  qz:"儘管延誤，所有乘客都安全抵達目的地。",e:"後面只有名詞 the delay → 介系詞 Despite。"},
  {id:"G4-2",t:"介連",q:"______ the machine was still under warranty, the repair was free of charge.",o:["Despite","During","Because","Because of"],a:2,
-  e:"後面是完整句子 → 連接詞 Because。Because of 是介系詞，只接名詞。"},
+  qz:"因為機器還在保固期內，維修免費。",e:"後面是完整句子 → 連接詞 Because。Because of 是介系詞，只接名詞。"},
  {id:"G4-3",t:"介連",q:"Employees may not use personal phones ______ working hours.",o:["while","when","during","although"],a:2,
-  e:"後面是名詞 working hours → during。"},
+  qz:"上班時間員工不得使用私人手機。",e:"後面是名詞 working hours → during。"},
  {id:"G4-4",t:"介連",q:"______ the manager approves the budget, the project cannot begin.",o:["Unless","If","Despite","During"],a:0,
-  e:"unless＝if not。「除非核准，否則不能開始」。用 If 會語意矛盾。"},
+  qz:"除非經理核准預算，否則專案無法開始。",e:"unless＝if not。「除非核准，否則不能開始」。用 If 會語意矛盾。"},
  {id:"G4-5",t:"介連",q:"The office will remain open ______ the renovation work continues on the upper floors.",o:["despite","during","while","because of"],a:2,
-  e:"陷阱題：renovation work 看起來像名詞，但後面有動詞 continues，整個是句子 → while。"},
+  qz:"樓上進行整修期間，辦公室將照常開放。",e:"陷阱題：renovation work 看起來像名詞，但後面有動詞 continues，整個是句子 → while。"},
  {id:"G4-6",t:"介連",q:"______ bad weather conditions, the flight was delayed for two hours.",o:["Although","Because","Since","Because of"],a:3,
-  e:"後面只有名詞片語 → Because of。跟 G4-2 對照：Because 接句子。"},
+  qz:"因為天候不佳，班機延誤了兩小時。",e:"後面只有名詞片語 → Because of。跟 G4-2 對照：Because 接句子。"},
  {id:"G4-7",t:"介連",q:"Visitors must wear ID badges ______ they are inside the building.",o:["during","while","despite","in spite of"],a:1,
-  e:"後面是句子 they are inside → while。"},
+  qz:"訪客在大樓內時必須配戴識別證。",e:"後面是句子 they are inside → while。"},
  {id:"G4-8",t:"介連",q:"The event will be held outdoors ______ it rains, in which case it will move to the main hall.",o:["unless","if","despite","during"],a:0,
-  e:"「除非下雨，否則在戶外」→ unless。後半句 in which case 是提示。"},
+  qz:"活動將在戶外舉行，除非下雨，那樣就會移到主廳。",e:"「除非下雨，否則在戶外」→ unless。後半句 in which case 是提示。"},
  {id:"G5-1",t:"介連",q:"______ the rising cost of materials, the company raised its prices.",o:["Although","Because","Because of","While"],a:2,
-  e:"the rising cost of materials 沒有動詞 → 名詞片語 → Because of。"},
+  qz:"因為原料成本上漲，公司調漲了價格。",e:"the rising cost of materials 沒有動詞 → 名詞片語 → Because of。"},
  {id:"G5-2",t:"介連",q:"______ several delays, the shipment arrived before the deadline.",o:["Despite","Although","Even though","Because"],a:0,
-  e:"several delays 沒有動詞 → Despite。Although/Even though 都要接句子。"},
+  qz:"儘管有幾次延誤，貨物仍在截止日前送達。",e:"several delays 沒有動詞 → Despite。Although/Even though 都要接句子。"},
  {id:"G5-3",t:"介連",q:"______ the annual inventory check, the warehouse will be closed to visitors.",o:["While","During","Although","Since"],a:1,
-  e:"the annual inventory check 是名詞片語 → During。"},
+  qz:"年度盤點期間，倉庫將不開放訪客。",e:"the annual inventory check 是名詞片語 → During。"},
  {id:"G5-4",t:"介連",q:"______ its high price, the software has become popular among small businesses.",o:["Because","In spite of","Since","Whereas"],a:1,
-  e:"its high price 沒有動詞 → In spite of（＝Despite）。",},
+  qz:"儘管價格很高，這套軟體在小型企業間已經很受歡迎。",e:"its high price 沒有動詞 → In spite of（＝Despite）。",},
  {id:"G5-5",t:"介連",q:"______ the supplier failed to deliver on time, we canceled the contract.",o:["Because of","Despite","Because","In spite of"],a:2,
-  e:"the supplier failed... 有主詞有動詞 → 連接詞 Because。跟 G5-1 正好相反，一起看。"},
+  qz:"因為供應商沒有準時交貨，我們取消了合約。",e:"the supplier failed... 有主詞有動詞 → 連接詞 Because。跟 G5-1 正好相反，一起看。"},
  {id:"G5-6",t:"介連",q:"______ a shortage of staff, the store extended its opening hours last month.",o:["Although","Despite","Because","While"],a:1,
-  e:"a shortage of staff 是名詞片語（of 片語不是動詞）→ Despite。"},
+  qz:"儘管人手不足，這家店上個月仍延長了營業時間。",e:"a shortage of staff 是名詞片語（of 片語不是動詞）→ Despite。"},
  {id:"G5-7",t:"詞性",q:"The accounting team reviewed the ______ carefully before approving them.",o:["expensive","expenses","expensively","expend"],a:1,
-  e:"the ___ 且後面 them 指複數 → 名詞複數 expenses。"},
+  qz:"會計團隊在核准前仔細審查了這些費用。",e:"the ___ 且後面 them 指複數 → 名詞複數 expenses。"},
  {id:"G5-8",t:"詞性",q:"All purchases must be ______ documented for reimbursement.",o:["proper","properly","property","propriety"],a:1,
-  e:"修飾過去分詞 documented → 副詞 properly。"},
+  qz:"所有購買都必須妥善記錄才能核銷。",e:"修飾過去分詞 documented → 副詞 properly。"},
  {id:"G5-9",t:"搭配",q:"Ms. Wu is in ______ of the company's overseas suppliers.",o:["charge","control","command","order"],a:0,
-  e:"in charge of 固定片語＝負責。注意跟 take charge of 是同一個字。"},
+  qz:"吳小姐負責公司的海外供應商。",e:"in charge of 固定片語＝負責。注意跟 take charge of 是同一個字。"},
  {id:"G5-10",t:"文法",q:"The invoice ______ last week has not been paid yet.",o:["issue","issued","issuing","issues"],a:1,
-  e:"分詞修飾：發票「被」開立 → 過去分詞 issued（= which was issued）。"},
+  qz:"上週開立的發票還沒付款。",e:"分詞修飾：發票「被」開立 → 過去分詞 issued（= which was issued）。"},
  {id:"G6-1",t:"介連",q:"______ the positive feedback, the company decided to discontinue the product.",o:["Although","Despite","Because","While"],a:1,
-  e:"the positive feedback 是名詞片語 → Despite。"},
+  qz:"儘管反應正面，公司仍決定停產這項產品。",e:"the positive feedback 是名詞片語 → Despite。"},
  {id:"G6-2",t:"文法",q:"The marketing team will ______ the new campaign next Monday.",o:["launch","launching","launched","to launch"],a:0,
-  e:"will + 原形動詞 → launch。"},
+  qz:"行銷團隊將在下週一推出新的宣傳活動。",e:"will + 原形動詞 → launch。"},
  {id:"G6-3",t:"詞性",q:"Customers who subscribe today will receive a free ______ by mail.",o:["brochure","brochures'","brochured","brochuring"],a:0,
-  e:"a free ___ → 單數名詞 brochure。"},
+  qz:"今天訂閱的顧客將會收到郵寄的免費手冊。",e:"a free ___ → 單數名詞 brochure。"},
  {id:"G6-4",t:"介連",q:"______ our competitors raised their prices, we chose to keep ours unchanged.",o:["Despite","In spite of","While","During"],a:2,
-  e:"our competitors raised... 是完整句子 → While。其他三個都是介系詞。"},
+  qz:"當競爭對手漲價時，我們選擇維持價格不變。",e:"our competitors raised... 是完整句子 → While。其他三個都是介系詞。"},
  {id:"G6-5",t:"詞性",q:"All complaints must be handled ______ within 48 hours.",o:["profession","professional","professionally","professionalism"],a:2,
-  e:"修飾動詞 handled → 副詞 professionally。"},
+  qz:"所有客訴都必須在 48 小時內專業地處理。",e:"修飾動詞 handled → 副詞 professionally。"},
  {id:"G6-6",t:"搭配",q:"The survey results will be distributed ______ all department heads by Friday.",o:["to","for","with","at"],a:0,
-  e:"distribute A to B 固定用法。"},
+  qz:"調查結果將在星期五前發給所有部門主管。",e:"distribute A to B 固定用法。"},
  {id:"G7-1",t:"詞性",q:"The hotel offers a wide ______ of services to business travelers.",o:["vary","various","variety","variously"],a:2,
-  e:"a wide ___ of → 名詞 variety。a variety of＝各式各樣的。"},
+  qz:"這家飯店為商務旅客提供各式各樣的服務。",e:"a wide ___ of → 名詞 variety。a variety of＝各式各樣的。"},
  {id:"G7-2",t:"文法",q:"Passengers ______ to Gate 12 should board immediately.",o:["proceed","proceeded","proceeding","to proceed"],a:2,
-  e:"分詞修飾：乘客「主動」前往 → 現在分詞 proceeding（= who are proceeding）。跟 G5-10 的被動 issued 對照。"},
+  qz:"前往 12 號登機門的旅客應立即登機。",e:"分詞修飾：乘客「主動」前往 → 現在分詞 proceeding（= who are proceeding）。跟 G5-10 的被動 issued 對照。"},
  {id:"G7-3",t:"介連",q:"______ the ongoing maintenance, the north entrance will stay open.",o:["Although","Despite","Because","While"],a:1,
-  e:"the ongoing maintenance 沒有動詞（ongoing 是形容詞）→ Despite。"},
+  qz:"儘管維修工程持續進行，北側入口仍將開放。",e:"the ongoing maintenance 沒有動詞（ongoing 是形容詞）→ Despite。"},
  {id:"G7-4",t:"詞性",q:"Children under 12 must be ______ by an adult at all times.",o:["accompany","accompanied","accompanying","accompaniment"],a:1,
-  e:"must be + p.p. 被動 → accompanied。小孩「被」陪同。"},
+  qz:"12 歲以下兒童必須全程由成人陪同。",e:"must be + p.p. 被動 → accompanied。小孩「被」陪同。"},
  {id:"G7-5",t:"搭配",q:"All guests are entitled ______ a complimentary breakfast.",o:["to","for","with","of"],a:0,
-  e:"be entitled to 固定搭配＝有權享有。"},
+  qz:"所有房客都可享有免費早餐。",e:"be entitled to 固定搭配＝有權享有。"},
  {id:"G7-6",t:"文法",q:"Neither the manager ______ the assistant was available for comment.",o:["or","nor","and","but"],a:1,
-  e:"neither...nor 固定配對。動詞 was 也配合最近的單數主詞 the assistant。"},
+  qz:"經理和助理都無法回應。",e:"neither...nor 固定配對。動詞 was 也配合最近的單數主詞 the assistant。"},
  {id:"G7-7",t:"詞性",q:"The renovation was completed ______ than originally planned.",o:["quick","quickly","more quickly","most quickly"],a:2,
-  e:"後面有 than → 比較級。修飾動詞用副詞比較級 more quickly。"},
+  qz:"整修完成得比原本計畫的還快。",e:"後面有 than → 比較級。修飾動詞用副詞比較級 more quickly。"},
  {id:"G7-8",t:"介連",q:"Guests may use the pool ______ they are staying at the hotel.",o:["during","while","despite","in spite of"],a:1,
-  e:"they are staying 是句子 → while。（複習：while 永遠接句子）"},
+  qz:"房客住宿期間可以使用泳池。",e:"they are staying 是句子 → while。（複習：while 永遠接句子）"},
  {id:"G8-1",t:"詞性",q:"The accounting department requires ______ receipts for all claims.",o:["origin","original","originally","originality"],a:1,
-  e:"修飾名詞 receipts → 形容詞 original。"},
+  qz:"會計部門要求所有申請都附上收據正本。",e:"修飾名詞 receipts → 形容詞 original。"},
  {id:"G8-2",t:"文法",q:"Expenses ______ after the deadline will not be reimbursed.",o:["submit","submitted","submitting","submits"],a:1,
-  e:"分詞修飾被動：費用「被」提交 → submitted。跟 G7-2 的主動 proceeding 對照。"},
+  qz:"截止日後提交的費用將不予核銷。",e:"分詞修飾被動：費用「被」提交 → submitted。跟 G7-2 的主動 proceeding 對照。"},
  {id:"G8-3",t:"搭配",q:"Taxi fares are covered only ______ public transportation is unavailable.",o:["when","during","despite","because of"],a:0,
-  e:"後面是句子 → when。during / despite / because of 都是介系詞。"},
+  qz:"只有在沒有大眾運輸時，計程車資才可報銷。",e:"後面是句子 → when。during / despite / because of 都是介系詞。"},
  {id:"G8-4",t:"詞性",q:"The reimbursement ______ was processed within a week.",o:["request","requested","requesting","requestful"],a:0,
-  e:"The ___ was processed → 需要名詞當主詞。reimbursement request＝報帳申請，名詞當形容詞修飾名詞。"},
+  qz:"核銷申請在一週內處理完畢。",e:"The ___ was processed → 需要名詞當主詞。reimbursement request＝報帳申請，名詞當形容詞修飾名詞。"},
  {id:"G8-5",t:"文法",q:"Neither the receipt ______ the report was attached to the email.",o:["or","nor","and","also"],a:1,
-  e:"neither...nor 配對。"},
+  qz:"收據和報告都沒有附在郵件裡。",e:"neither...nor 配對。"},
  {id:"G8-6",t:"介連",q:"______ he was on leave for two weeks, Mr. Devlin submitted his report late.",o:["Because of","Despite","Because","In spite of"],a:2,
-  e:"he was on leave 是句子 → Because。"},
+  qz:"因為請假兩週，Devlin 先生晚交了報告。",e:"he was on leave 是句子 → Because。"},
  {id:"G8-7",t:"詞性",q:"The new policy applies to all employees, ______ of their department.",o:["regard","regardless","regarding","regarded"],a:1,
-  e:"regardless of＝不論。固定用法，記整組。"},
+  qz:"新政策適用於所有員工，不論部門。",e:"regardless of＝不論。固定用法，記整組。"},
  {id:"G8-8",t:"搭配",q:"Please make sure the form is filled ______ completely before submitting.",o:["out","of","into","along"],a:0,
-  e:"fill out a form＝填寫表格。"},
+  qz:"送出前請確認表格已完整填寫。",e:"fill out a form＝填寫表格。"},
  {id:"G9-1",t:"詞性",q:"Only full-time employees are ______ for the annual bonus.",o:["elect","eligible","eligibility","elegantly"],a:1,
-  e:"be ___ for → 形容詞 eligible。eligibility 是名詞。"},
+  qz:"只有全職員工有資格領年終獎金。",e:"be ___ for → 形容詞 eligible。eligibility 是名詞。"},
  {id:"G9-2",t:"文法",q:"The total cost must not ______ the approved budget.",o:["exceed","exceeds","exceeding","exceeded"],a:0,
-  e:"must not + 原形動詞 → exceed。"},
+  qz:"總成本不得超過核准的預算。",e:"must not + 原形動詞 → exceed。"},
  {id:"G9-3",t:"搭配",q:"All contractors must comply ______ the safety regulations.",o:["to","with","for","on"],a:1,
-  e:"comply with 固定搭配＝遵守。"},
+  qz:"所有承包商都必須遵守安全規定。",e:"comply with 固定搭配＝遵守。"},
  {id:"G9-4",t:"詞性",q:"The committee reached a ______ decision to extend the contract.",o:["unanimous","unanimously","unanimity","unanimousness"],a:0,
-  e:"a ___ decision → 形容詞 unanimous。"},
+  qz:"委員會一致決定延長合約。",e:"a ___ decision → 形容詞 unanimous。"},
  {id:"G9-5",t:"文法",q:"The agreement, ______ was signed in May, expires next year.",o:["that","which","what","who"],a:1,
-  e:"逗號後的非限定關係子句只能用 which，不能用 that。這是多益常考的細節。"},
+  qz:"這份五月簽署的協議明年到期。",e:"逗號後的非限定關係子句只能用 which，不能用 that。這是多益常考的細節。"},
  {id:"G9-6",t:"介連",q:"______ the terms were amended, both parties signed the agreement.",o:["Despite","After","Because of","In spite of"],a:1,
-  e:"the terms were amended 是句子 → 連接詞 After。"},
+  qz:"條款修訂後，雙方簽署了協議。",e:"the terms were amended 是句子 → 連接詞 After。"},
  {id:"G9-7",t:"詞性",q:"Please review the attached document and return it ______.",o:["prompt","promptly","promptness","prompted"],a:1,
-  e:"修飾動詞 return → 副詞 promptly。"},
+  qz:"請審閱附件文件並盡快寄回。",e:"修飾動詞 return → 副詞 promptly。"},
  {id:"G9-8",t:"搭配",q:"The manager asked the team to take ______ of the minutes during the meeting.",o:["note","notes","noting","noted"],a:1,
-  e:"take notes＝做筆記，固定用複數。"},
+  qz:"經理要求團隊在會議中記下會議紀錄。",e:"take notes＝做筆記，固定用複數。"},
  {id:"G10-1",t:"文法",q:"By the time the auditor arrived, the team ______ the report.",o:["finishes","has finished","had finished","will finish"],a:2,
-  e:"過去完成式：兩個過去動作，先發生的用 had + p.p.。By the time 是強烈提示。"},
+  qz:"稽核員到達時，團隊已經完成了報告。",e:"過去完成式：兩個過去動作，先發生的用 had + p.p.。By the time 是強烈提示。"},
  {id:"G10-2",t:"詞性",q:"The company has operated ______ since its founding in 1998.",o:["profit","profitable","profitably","profitability"],a:2,
-  e:"修飾動詞 operated → 副詞 profitably。"},
+  qz:"公司自 1998 年創立以來一直獲利經營。",e:"修飾動詞 operated → 副詞 profitably。"},
  {id:"G10-3",t:"文法",q:"If the shipment ______ tomorrow, we can meet the deadline.",o:["arrive","arrives","will arrive","arriving"],a:1,
-  e:"條件句 if 子句用現在式代替未來式，主詞 the shipment 單數 → arrives。"},
+  qz:"如果貨物明天到，我們就能趕上截止日。",e:"條件句 if 子句用現在式代替未來式，主詞 the shipment 單數 → arrives。"},
  {id:"G10-4",t:"介連",q:"The office will be relocated ______ the end of the quarter.",o:["by","until","during","while"],a:0,
-  e:"by + 時間點＝在…之前完成。until 表持續，搬遷是一次性動作。（複習 G1-1）"},
+  qz:"辦公室將在本季結束前搬遷。",e:"by + 時間點＝在…之前完成。until 表持續，搬遷是一次性動作。（複習 G1-1）"},
  {id:"G10-5",t:"搭配",q:"We are looking forward ______ working with your team.",o:["to","for","on","at"],a:0,
-  e:"look forward to + V-ing。這個 to 是介系詞不是不定詞，所以後面接動名詞。"},
+  qz:"我們期待與貴團隊合作。",e:"look forward to + V-ing。這個 to 是介系詞不是不定詞，所以後面接動名詞。"},
  {id:"G10-6",t:"詞性",q:"The proposal was rejected due to ______ information.",o:["insufficient","insufficiently","insufficiency","suffice"],a:0,
-  e:"修飾名詞 information → 形容詞 insufficient。"},
+  qz:"提案因資訊不足而被駁回。",e:"修飾名詞 information → 形容詞 insufficient。"},
  {id:"G10-7",t:"文法",q:"Each of the applicants ______ required to submit two references.",o:["are","is","were","being"],a:1,
-  e:"Each of + 複數名詞，動詞仍用單數 is。多益常用 of 片語製造混淆。"},
+  qz:"每位應徵者都必須提交兩位推薦人。",e:"Each of + 複數名詞，動詞仍用單數 is。多益常用 of 片語製造混淆。"},
  {id:"G10-8",t:"介連",q:"______ receiving your confirmation, we will reserve the venue.",o:["Although","Upon","While","Because"],a:1,
-  e:"Upon + V-ing＝一…就…。後面是動名詞不是句子，所以要用介系詞 Upon。"},
+  qz:"一收到您的確認，我們就會預訂場地。",e:"Upon + V-ing＝一…就…。後面是動名詞不是句子，所以要用介系詞 Upon。"},
  {id:"G11-1",t:"文法",q:"By the time the shipment arrived, the store ______ the sale.",o:["ends","has ended","had ended","will end"],a:2,
-  e:"過去完成式：兩個過去動作，先發生的用 had + p.p.。By the time 就是提示。（同 G10-1）"},
+  qz:"貨物到的時候，店家已經結束特賣了。",e:"過去完成式：兩個過去動作，先發生的用 had + p.p.。By the time 就是提示。（同 G10-1）"},
  {id:"G11-2",t:"文法",q:"If the client ______ the contract, we will begin work immediately.",o:["sign","signs","will sign","signing"],a:1,
-  e:"條件句：if 子句用現在式代替未來式，主詞單數 → signs。（同 G10-3）"},
+  qz:"如果客戶簽約，我們會立刻開工。",e:"條件句：if 子句用現在式代替未來式，主詞單數 → signs。（同 G10-3）"},
  {id:"G11-3",t:"文法",q:"Each of the departments ______ its own budget.",o:["have","has","having","are having"],a:1,
-  e:"Each of + 複數，動詞用單數 has。別被 departments 騙。（同 G10-7）"},
+  qz:"每個部門都有自己的預算。",e:"Each of + 複數，動詞用單數 has。別被 departments 騙。（同 G10-7）"},
  {id:"G11-4",t:"文法",q:"The manager had already left ______ the auditor called.",o:["when","during","despite","upon"],a:0,
-  e:"後面是句子 the auditor called → 連接詞 when。同時複習過去完成式的搭配。"},
+  qz:"稽核員打來時，經理已經離開了。",e:"後面是句子 the auditor called → 連接詞 when。同時複習過去完成式的搭配。"},
  {id:"G11-5",t:"文法",q:"Unless the weather ______, the outdoor event will proceed.",o:["worsen","worsens","will worsen","worsening"],a:1,
-  e:"unless 子句同樣用現在式代替未來式，主詞 the weather 單數 → worsens。"},
+  qz:"除非天氣變糟，否則戶外活動將照常進行。",e:"unless 子句同樣用現在式代替未來式，主詞 the weather 單數 → worsens。"},
  {id:"G11-6",t:"文法",q:"Neither of the proposals ______ acceptable to the board.",o:["are","were","was","have been"],a:2,
-  e:"Neither of + 複數，動詞用單數 was。跟 Each of 同一條規則。"},
+  qz:"兩份提案董事會都不接受。",e:"Neither of + 複數，動詞用單數 was。跟 Each of 同一條規則。"},
  {id:"G11-7",t:"詞性",q:"Sales have increased ______ since the new campaign began.",o:["consider","considerable","considerably","consideration"],a:2,
-  e:"修飾動詞 increased → 副詞 considerably。這組字在新的單字組別 10 裡。"},
+  qz:"新宣傳活動開始後，銷售大幅增加。",e:"修飾動詞 increased → 副詞 considerably。這組字在新的單字組別 10 裡。"},
  {id:"G11-8",t:"詞性",q:"The company made a ______ investment in new equipment.",o:["substantial","substantially","substance","substantiate"],a:0,
-  e:"a ___ investment → 形容詞 substantial。"},
+  qz:"公司在新設備上做了一筆可觀的投資。",e:"a ___ investment → 形容詞 substantial。"},
  {id:"G12-1",t:"介連",q:"______ the heavy traffic, the delivery van arrived on schedule.",o:["Although","Despite","Because","While"],a:1,
-  e:"the heavy traffic 是名詞片語 → Despite。"},
+  qz:"儘管交通繁忙，送貨車仍準時抵達。",e:"the heavy traffic 是名詞片語 → Despite。"},
  {id:"G12-2",t:"搭配",q:"The report must be submitted ______ the end of the day on Friday.",o:["until","by","since","during"],a:1,
-  e:"期限用 by。until 表持續動作。"},
+  qz:"報告必須在星期五下班前繳交。",e:"期限用 by。until 表持續動作。"},
  {id:"G12-3",t:"文法",q:"Each of the branch offices ______ its own inventory system.",o:["maintain","maintains","maintaining","have maintained"],a:1,
-  e:"Each of + 複數，動詞用單數 maintains。"},
+  qz:"每間分公司都維護自己的庫存系統。",e:"Each of + 複數，動詞用單數 maintains。"},
  {id:"G12-4",t:"文法",q:"The documents ______ yesterday have not been reviewed.",o:["receive","received","receiving","receives"],a:1,
-  e:"分詞修飾被動：文件「被」收到 → received。"},
+  qz:"昨天收到的文件還沒審閱。",e:"分詞修飾被動：文件「被」收到 → received。"},
  {id:"G12-5",t:"詞性",q:"Costs have risen ______ over the past two quarters.",o:["significant","significantly","significance","signify"],a:1,
-  e:"修飾動詞 risen → 副詞 significantly。"},
+  qz:"過去兩季成本顯著上升。",e:"修飾動詞 risen → 副詞 significantly。"},
  {id:"G12-6",t:"介連",q:"______ the contract was signed, work began immediately.",o:["Despite","Because of","After","In spite of"],a:2,
-  e:"the contract was signed 是句子 → 連接詞 After。"},
+  qz:"合約簽署後，工作立即展開。",e:"the contract was signed 是句子 → 連接詞 After。"},
  {id:"G12-7",t:"搭配",q:"All applicants must comply ______ the submission guidelines.",o:["to","with","for","on"],a:1,
-  e:"comply with 固定搭配。"},
+  qz:"所有應徵者都必須遵守提交規定。",e:"comply with 固定搭配。"},
  {id:"G12-8",t:"文法",q:"By the time the technician arrived, the system ______ down for three hours.",o:["is","has been","had been","will be"],a:2,
-  e:"By the time + 過去 → 主要子句用過去完成式 had been。"},
+  qz:"技師到達時，系統已經停擺三小時了。",e:"By the time + 過去 → 主要子句用過去完成式 had been。"},
  {id:"G12-9",t:"詞性",q:"The proposal was rejected because of ______ supporting data.",o:["insufficient","insufficiently","insufficiency","suffice"],a:0,
-  e:"修飾名詞 data → 形容詞 insufficient。"},
+  qz:"提案因為佐證資料不足而被駁回。",e:"修飾名詞 data → 形容詞 insufficient。"},
  {id:"G12-10",t:"介連",q:"Visitors are not permitted in the laboratory ______ the experiment is in progress.",o:["during","while","despite","in spite of"],a:1,
-  e:"the experiment is in progress 是句子 → while。"},
+  qz:"實驗進行期間，訪客不得進入實驗室。",e:"the experiment is in progress 是句子 → while。"},
  {id:"G12-11",t:"文法",q:"Neither the supervisor ______ the assistant was informed of the change.",o:["or","nor","and","but"],a:1,
-  e:"neither...nor 固定配對。"},
+  qz:"主管和助理都沒有被告知這項變更。",e:"neither...nor 固定配對。"},
  {id:"G12-12",t:"文法",q:"If the client ______ the revised terms, we can proceed.",o:["accept","accepts","will accept","accepting"],a:1,
-  e:"if 子句用現在式代替未來式，主詞單數 → accepts。"},
+  qz:"如果客戶接受修訂後的條款，我們就可以進行。",e:"if 子句用現在式代替未來式，主詞單數 → accepts。"},
  {id:"G12-13",t:"文法",q:"The seminar, ______ was held in Osaka, attracted 400 participants.",o:["that","which","what","who"],a:1,
-  e:"逗號後的非限定關係子句只能用 which，不能用 that。"},
+  qz:"在大阪舉辦的這場研討會吸引了 400 名參加者。",e:"逗號後的非限定關係子句只能用 which，不能用 that。"},
  {id:"G12-14",t:"搭配",q:"We look forward to ______ with your team next quarter.",o:["work","working","worked","works"],a:1,
-  e:"look forward to + V-ing。這個 to 是介系詞。"},
+  qz:"我們期待下一季與貴團隊合作。",e:"look forward to + V-ing。這個 to 是介系詞。"},
  {id:"G12-15",t:"介連",q:"Employees ______ badges must report to security.",o:["without","unless","although","while"],a:0,
-  e:"後面是名詞 badges → 介系詞 without。其他三個都是連接詞。"},
+  qz:"沒有識別證的員工必須向警衛報到。",e:"後面是名詞 badges → 介系詞 without。其他三個都是連接詞。"},
  {id:"G12-16",t:"介連",q:"______ receiving your deposit, we will confirm the booking.",o:["Although","Upon","While","Because"],a:1,
-  e:"Upon + V-ing＝一…就…。"},
+  qz:"一收到您的訂金，我們就會確認預訂。",e:"Upon + V-ing＝一…就…。"},
  {id:"G12-17",t:"詞性",q:"The manager asked the team to work more ______ under the new deadline.",o:["efficient","efficiently","efficiency","efficiencies"],a:1,
-  e:"修飾動詞 work → 副詞 efficiently。"},
+  qz:"經理要求團隊在新期限下工作更有效率。",e:"修飾動詞 work → 副詞 efficiently。"},
  {id:"G12-18",t:"介連",q:"______ its high cost, the software has been widely adopted.",o:["Because","Since","In spite of","Whereas"],a:2,
-  e:"its high cost 是名詞片語 → In spite of。"},
+  qz:"儘管成本很高，這套軟體已被廣泛採用。",e:"its high cost 是名詞片語 → In spite of。"},
  {id:"G12-19",t:"詞性",q:"Only employees who have worked here for two ______ years are eligible.",o:["consecutive","consecutively","consecution","consecrate"],a:0,
-  e:"修飾名詞 years → 形容詞 consecutive。"},
+  qz:"只有連續在這裡工作兩年的員工才有資格。",e:"修飾名詞 years → 形容詞 consecutive。"},
  {id:"G12-20",t:"文法",q:"The total expense must not ______ the approved budget.",o:["exceed","exceeds","exceeding","exceeded"],a:0,
-  e:"must not + 原形動詞 → exceed。"},
+  qz:"總支出不得超過核准的預算。",e:"must not + 原形動詞 → exceed。"},
  {id:"G12-21",t:"搭配",q:"Please fill ______ the form and return it to reception.",o:["in to","out","up on","away"],a:1,
-  e:"fill out a form＝填寫表格。"},
+  qz:"請填寫表格並交回櫃台。",e:"fill out a form＝填寫表格。"},
  {id:"G12-22",t:"文法",q:"______ of the two proposals was approved by the board.",o:["Both","Neither","All","Several"],a:1,
-  e:"動詞 was 是單數，且只有兩個提案 → Neither。"},
+  qz:"兩份提案董事會都沒有核准。",e:"動詞 was 是單數，且只有兩個提案 → Neither。"},
  {id:"G12-23",t:"搭配",q:"The new policy will take ______ on October 1.",o:["affect","effect","effective","effectively"],a:1,
-  e:"take effect＝生效。"},
+  qz:"新政策將在 10 月 1 日生效。",e:"take effect＝生效。"},
  {id:"G12-24",t:"文法",q:"Unless the supplier ______ the deadline, we will cancel the order.",o:["meet","meets","will meet","meeting"],a:1,
-  e:"unless 子句用現在式代替未來式，主詞單數 → meets。"},
+  qz:"除非供應商趕上截止日，否則我們會取消訂單。",e:"unless 子句用現在式代替未來式，主詞單數 → meets。"},
  {id:"G13-1",t:"詞性",q:"Any ______ items should be returned to the supplier.",o:["defect","defective","defectively","defectiveness"],a:1,
-  e:"修飾名詞 items → 形容詞 defective。"},
+  qz:"任何瑕疵品都應退回供應商。",e:"修飾名詞 items → 形容詞 defective。"},
  {id:"G13-2",t:"介連",q:"______ to the inspection, all machines must be shut down.",o:["Prior","Before","Although","During"],a:0,
-  e:"prior to 是固定介系詞片語＝在…之前。Before 單獨用時不接 to。"},
+  qz:"檢查之前，所有機器都必須關機。",e:"prior to 是固定介系詞片語＝在…之前。Before 單獨用時不接 to。"},
  {id:"G13-3",t:"文法",q:"The equipment ______ last month has already malfunctioned twice.",o:["install","installed","installing","installs"],a:1,
-  e:"分詞修飾被動：設備「被」安裝 → installed。"},
+  qz:"上個月安裝的設備已經故障兩次了。",e:"分詞修飾被動：設備「被」安裝 → installed。"},
  {id:"G13-4",t:"文法",q:"Neither of the replacement units ______ arrived yet.",o:["have","has","were","are"],a:1,
-  e:"Neither of + 複數 → 動詞單數 has。"},
+  qz:"兩台替換機都還沒到。",e:"Neither of + 複數 → 動詞單數 has。"},
  {id:"G13-5",t:"詞性",q:"The new casing is considerably more ______ than the previous model.",o:["durable","durably","durability","endure"],a:0,
-  e:"more ___ than 比較級，修飾主詞 casing → 形容詞 durable。"},
+  qz:"新外殼比舊型號耐用得多。",e:"more ___ than 比較級，修飾主詞 casing → 形容詞 durable。"},
  {id:"G13-6",t:"介連",q:"______ the warehouse was fully stocked, several orders were delayed.",o:["Despite","Even though","In spite of","Prior to"],a:1,
-  e:"the warehouse was fully stocked 是句子 → 連接詞 Even though。"},
+  qz:"儘管倉庫庫存充足，仍有幾筆訂單延誤。",e:"the warehouse was fully stocked 是句子 → 連接詞 Even though。"},
  {id:"G13-7",t:"搭配",q:"The technician will be responsible ______ installing the new system.",o:["for","to","of","with"],a:0,
-  e:"be responsible for 固定搭配＝負責。（注意跟 be in charge of 的介系詞不同）"},
+  qz:"技師將負責安裝新系統。",e:"be responsible for 固定搭配＝負責。（注意跟 be in charge of 的介系詞不同）"},
  {id:"G13-8",t:"文法",q:"By the time the inspector arrived, the team ______ the defective units.",o:["removes","has removed","had removed","will remove"],a:2,
-  e:"By the time + 過去 → 過去完成式 had removed。"},
+  qz:"檢查員到達時，團隊已經移除了瑕疵品。",e:"By the time + 過去 → 過去完成式 had removed。"},
  {id:"G14-1",t:"詞性",q:"The new office is much more ______ than our current one.",o:["space","spacious","spaciously","spaciousness"],a:1,
-  e:"more ___ than 比較級，描述主詞 office → 形容詞 spacious。"},
+  qz:"新辦公室比我們現在的寬敞許多。",e:"more ___ than 比較級，描述主詞 office → 形容詞 spacious。"},
  {id:"G14-2",t:"介連",q:"______ the lease expires in December, we must decide by October.",o:["Because","Because of","Due to","Despite"],a:0,
-  e:"the lease expires 是句子 → 連接詞 Because。Because of / Due to 只接名詞。"},
+  qz:"因為租約十二月到期，我們必須在十月前做決定。",e:"the lease expires 是句子 → 連接詞 Because。Because of / Due to 只接名詞。"},
  {id:"G14-3",t:"搭配",q:"Tenants are required to give written notice ______ advance.",o:["on","at","in","by"],a:2,
-  e:"in advance＝事先，固定片語。"},
+  qz:"房客必須事先以書面通知。",e:"in advance＝事先，固定片語。"},
  {id:"G14-4",t:"文法",q:"The building ______ next to the station was renovated last year.",o:["locate","located","locating","locates"],a:1,
-  e:"分詞修飾被動：大樓「被座落」在… → located。be located 是固定說法。"},
+  qz:"車站旁邊那棟大樓去年整修過。",e:"分詞修飾被動：大樓「被座落」在… → located。be located 是固定說法。"},
  {id:"G14-5",t:"文法",q:"Neither the landlord nor the tenants ______ satisfied with the repairs.",o:["is","was","were","has been"],a:2,
-  e:"neither A nor B 動詞跟最靠近的 B 一致：the tenants 複數 → were。跟 Neither of（一律單數）不同，這個容易混。"},
+  qz:"房東和房客都對修繕不滿意。",e:"neither A nor B 動詞跟最靠近的 B 一致：the tenants 複數 → were。跟 Neither of（一律單數）不同，這個容易混。"},
  {id:"G14-6",t:"詞性",q:"Parking is available in the ______ building.",o:["adjacent","adjacently","adjacency","adjoin"],a:0,
-  e:"the ___ building → 形容詞 adjacent。"},
+  qz:"隔壁大樓有停車位。",e:"the ___ building → 形容詞 adjacent。"},
  {id:"G14-7",t:"介連",q:"______ the renovation, employees will work from the second floor.",o:["While","During","When","Although"],a:1,
-  e:"the renovation 是名詞 → During。While 要接句子。"},
+  qz:"整修期間，員工將在二樓辦公。",e:"the renovation 是名詞 → During。While 要接句子。"},
  {id:"G14-8",t:"文法",q:"If the landlord ______ the deposit by Friday, we will contact a lawyer.",o:["doesn't return","won't return","didn't return","not return"],a:0,
-  e:"if 子句用現在式代替未來式，否定句 → doesn't return。"},
+  qz:"如果房東星期五前不退押金，我們就會找律師。",e:"if 子句用現在式代替未來式，否定句 → doesn't return。"},
  {id:"G14-9",t:"搭配",q:"The rent includes all utilities ______ electricity.",o:["except","expect","excepting of","exception"],a:0,
-  e:"except＝除了…之外。expect（預期）是拼字陷阱。"},
+  qz:"租金包含除了電費以外的所有水電費用。",e:"except＝除了…之外。expect（預期）是拼字陷阱。"},
  {id:"G14-10",t:"詞性",q:"Most employees reported that their commute had become ______ shorter.",o:["notice","noticeable","noticeably","noticing"],a:2,
-  e:"修飾形容詞 shorter → 副詞 noticeably。"},
+  qz:"大部分員工表示通勤時間明顯縮短了。",e:"修飾形容詞 shorter → 副詞 noticeably。"},
  {id:"G15-1",t:"詞性",q:"The new procedure is far more ______ than the old one.",o:["efficient","efficiently","efficiency","efficiencies"],a:0,
-  e:"more ___ than 比較級，描述主詞 procedure → 形容詞 efficient。"},
+  qz:"新程序比舊的有效率得多。",e:"more ___ than 比較級，描述主詞 procedure → 形容詞 efficient。"},
  {id:"G15-2",t:"搭配",q:"I am writing ______ the invoice we received last week.",o:["regarding","regard","regarded","regards"],a:0,
-  e:"regarding＝關於，介系詞，商務書信開頭常用。"},
+  qz:"我寫信是關於我們上週收到的發票。",e:"regarding＝關於，介系詞，商務書信開頭常用。"},
  {id:"G15-3",t:"文法",q:"The committee ______ of five senior managers.",o:["consist","consists","consisting","consisted of"],a:1,
-  e:"consist of＝由…組成。主詞 committee 單數 → consists。"},
+  qz:"委員會由五位資深經理組成。",e:"consist of＝由…組成。主詞 committee 單數 → consists。"},
  {id:"G15-4",t:"詞性",q:"The report revealed a ______ drop in customer complaints.",o:["significant","significantly","significance","signify"],a:0,
-  e:"a ___ drop → 修飾名詞用形容詞 significant。"},
+  qz:"報告顯示客訴大幅減少。",e:"a ___ drop → 修飾名詞用形容詞 significant。"},
  {id:"G15-5",t:"介連",q:"______ the complex approval process, the project was completed on time.",o:["Although","Despite","Because","While"],a:1,
-  e:"the complex approval process 是名詞片語 → Despite。"},
+  qz:"儘管核准流程複雜，專案仍準時完成。",e:"the complex approval process 是名詞片語 → Despite。"},
  {id:"G15-6",t:"文法",q:"Customers ______ to spend more during the holiday season.",o:["tends","tend","tending","are tended"],a:1,
-  e:"主詞 Customers 複數 → tend。tend to + 原形動詞。"},
+  qz:"顧客在假期往往花得比較多。",e:"主詞 Customers 複數 → tend。tend to + 原形動詞。"},
  {id:"G15-7",t:"詞性",q:"All staff should be ______ of the new security policy.",o:["aware","awarely","awareness","award"],a:0,
-  e:"be aware of＝知道、察覺。be 動詞後接形容詞。"},
+  qz:"所有員工都應該知道新的資安政策。",e:"be aware of＝知道、察覺。be 動詞後接形容詞。"},
  {id:"G15-8",t:"文法",q:"The tasks ______ to the interns were completed ahead of schedule.",o:["assign","assigned","assigning","assigns"],a:1,
-  e:"分詞修飾被動：任務「被」指派 → assigned。"},
+  qz:"分配給實習生的任務都提前完成了。",e:"分詞修飾被動：任務「被」指派 → assigned。"},
  {id:"G15-9",t:"搭配",q:"Timing is ______ importance in this negotiation.",o:["of crucial","in crucial","at crucial","for crucial"],a:0,
-  e:"of + 抽象名詞＝形容詞，of crucial importance＝極為重要。"},
+  qz:"在這次談判中，時機至關重要。",e:"of + 抽象名詞＝形容詞，of crucial importance＝極為重要。"},
  {id:"G15-10",t:"介連",q:"______ the audit was completed, the funds were released.",o:["Despite","Once","Because of","During"],a:1,
-  e:"the audit was completed 是完整句子 → 連接詞 Once（一旦…就）。"},
+  qz:"稽核一完成，資金就撥下來了。",e:"the audit was completed 是完整句子 → 連接詞 Once（一旦…就）。"},
  {id:"G16-1",t:"詞性",q:"All visitors must wear ______ safety equipment.",o:["appropriate","appropriately","appropriateness","appropriate to"],a:0,
-  e:"修飾名詞 equipment → 形容詞 appropriate。"},
+  qz:"所有訪客都必須穿戴合適的安全裝備。",e:"修飾名詞 equipment → 形容詞 appropriate。"},
  {id:"G16-2",t:"文法",q:"The documents ______ to the client yesterday contained an error.",o:["send","sent","sending","sends"],a:1,
-  e:"分詞修飾被動：文件「被」寄出 → sent。"},
+  qz:"昨天寄給客戶的文件有錯誤。",e:"分詞修飾被動：文件「被」寄出 → sent。"},
  {id:"G16-3",t:"介連",q:"______ the report was confidential, only three people received it.",o:["Despite","Because","Because of","During"],a:1,
-  e:"the report was confidential 是句子 → 連接詞 Because。"},
+  qz:"因為報告是機密，只有三個人收到。",e:"the report was confidential 是句子 → 連接詞 Because。"},
  {id:"G16-4",t:"搭配",q:"Experience in logistics is ______ for this position.",o:["essential","essentially","essence","essentials"],a:0,
-  e:"be ___ for → 形容詞 essential。"},
+  qz:"這個職位一定要有物流經驗。",e:"be ___ for → 形容詞 essential。"},
  {id:"G16-5",t:"文法",q:"Neither of the external consultants ______ available next week.",o:["are","were","is","have"],a:2,
-  e:"Neither of + 複數 → 動詞單數 is。"},
+  qz:"兩位外部顧問下週都沒空。",e:"Neither of + 複數 → 動詞單數 is。"},
  {id:"G16-6",t:"詞性",q:"The auditor examined the accounts ______ before signing off.",o:["thorough","thoroughly","thoroughness","thoroughgoing"],a:1,
-  e:"修飾動詞 examined → 副詞 thoroughly。"},
+  qz:"稽核員在簽核前徹底檢查了帳目。",e:"修飾動詞 examined → 副詞 thoroughly。"},
  {id:"G16-7",t:"文法",q:"If the supplier ______ the design, we will need to retest it.",o:["modify","modifies","will modify","modifying"],a:1,
-  e:"if 子句用現在式代替未來式，主詞單數 → modifies。"},
+  qz:"如果供應商修改設計，我們就得重新測試。",e:"if 子句用現在式代替未來式，主詞單數 → modifies。"},
  {id:"G16-8",t:"介連",q:"______ the thorough inspection, several defects were missed.",o:["Although","Despite","Because","Since"],a:1,
-  e:"the thorough inspection 是名詞片語 → Despite。"},
+  qz:"儘管檢查得很徹底，仍有幾個瑕疵沒被發現。",e:"the thorough inspection 是名詞片語 → Despite。"},
  {id:"G16-9",t:"搭配",q:"The manager emphasized the need ______ accurate records.",o:["for","of","to","with"],a:0,
-  e:"the need for + 名詞＝對…的需求。"},
+  qz:"經理強調需要準確的紀錄。",e:"the need for + 名詞＝對…的需求。"},
  {id:"G16-10",t:"詞性",q:"Management was ______ to approve the additional budget.",o:["reluctant","reluctantly","reluctance","reluct"],a:0,
-  e:"be + ___ + to V → 形容詞 reluctant。be reluctant to＝不願意。"},
+  qz:"管理階層不太願意核准額外預算。",e:"be + ___ + to V → 形容詞 reluctant。be reluctant to＝不願意。"},
  {id:"G17-1",t:"搭配",q:"Please do not hesitate ______ us if you have questions.",o:["contact","to contact","contacting","for contacting"],a:1,
-  e:"hesitate to + 原形動詞。商務書信結尾常用句。"},
+  qz:"如有問題請隨時與我們聯絡。",e:"hesitate to + 原形動詞。商務書信結尾常用句。"},
  {id:"G17-2",t:"詞性",q:"The upgrade will ______ the system's overall performance.",o:["enhance","enhanced","enhancement","enhancing"],a:0,
-  e:"will + 原形動詞 → enhance。"},
+  qz:"這次升級將提升系統的整體效能。",e:"will + 原形動詞 → enhance。"},
  {id:"G17-3",t:"文法",q:"The equipment ______ inspection will not be available today.",o:["undergo","undergoes","undergoing","undergone"],a:2,
-  e:"分詞修飾主動：設備正在接受檢查 → undergoing（= which is undergoing）。"},
+  qz:"正在接受檢查的設備今天無法使用。",e:"分詞修飾主動：設備正在接受檢查 → undergoing（= which is undergoing）。"},
  {id:"G17-4",t:"介連",q:"______ the decision is still pending, we cannot proceed.",o:["Despite","Since","Because of","During"],a:1,
-  e:"the decision is still pending 是完整句子 → 連接詞 Since（因為）。"},
+  qz:"因為決定還沒出來，我們無法進行。",e:"the decision is still pending 是完整句子 → 連接詞 Since（因為）。"},
  {id:"G17-5",t:"詞性",q:"Access to the server room is ______ to authorized personnel.",o:["restrict","restricted","restriction","restrictive"],a:1,
-  e:"be + p.p. 被動 → restricted。be restricted to＝僅限…。"},
+  qz:"伺服器機房僅限經授權人員進入。",e:"be + p.p. 被動 → restricted。be restricted to＝僅限…。"},
  {id:"G17-6",t:"搭配",q:"The new layout is beneficial ______ both staff and visitors.",o:["for","to","with","at"],a:1,
-  e:"be beneficial to＝對…有益。"},
+  qz:"新配置對員工和訪客都有好處。",e:"be beneficial to＝對…有益。"},
  {id:"G17-7",t:"文法",q:"Had the supplier notified us earlier, we ______ the order.",o:["cancel","will cancel","would have canceled","canceled"],a:2,
-  e:"與過去事實相反的假設，倒裝 Had + 主詞 + p.p. → 主要子句用 would have + p.p.。"},
+  qz:"如果供應商早點通知我們，我們就會取消訂單了。",e:"與過去事實相反的假設，倒裝 Had + 主詞 + p.p. → 主要子句用 would have + p.p.。"},
  {id:"G17-8",t:"介連",q:"______ further notice, the north gate will remain closed.",o:["Until","Unless","Although","While"],a:0,
-  e:"until further notice＝直到另行通知，固定用法，後面接名詞。"},
+  qz:"在另行通知之前，北門將持續關閉。",e:"until further notice＝直到另行通知，固定用法，後面接名詞。"},
  {id:"G17-9",t:"詞性",q:"Her sales record last quarter was truly ______.",o:["exception","exceptional","exceptionally","excepting"],a:1,
-  e:"be 動詞後描述主詞 → 形容詞 exceptional。truly 是副詞修飾它。"},
+  qz:"她上一季的業績真的非常傑出。",e:"be 動詞後描述主詞 → 形容詞 exceptional。truly 是副詞修飾它。"},
  {id:"G17-10",t:"文法",q:"The report, ______ was submitted on Monday, contained two errors.",o:["that","which","who","what"],a:1,
-  e:"逗號後的非限定關係子句只能用 which。"},
+  qz:"這份星期一交的報告有兩個錯誤。",e:"逗號後的非限定關係子句只能用 which。"},
  {id:"G18-1",t:"搭配",q:"All repairs must be carried out in ______ with the safety code.",o:["accordance","accord","according","accordingly"],a:0,
-  e:"in accordance with＝依照，固定片語。"},
+  qz:"所有維修都必須依照安全規範進行。",e:"in accordance with＝依照，固定片語。"},
  {id:"G18-2",t:"文法",q:"______ is a copy of the signed agreement.",o:["Enclose","Enclosed","Enclosing","Enclosure"],a:1,
-  e:"Enclosed is...＝隨函附上，倒裝的被動用法，商務書信固定開頭。"},
+  qz:"隨函附上已簽署協議的副本一份。",e:"Enclosed is...＝隨函附上，倒裝的被動用法，商務書信固定開頭。"},
  {id:"G18-3",t:"詞性",q:"The company serves a ______ range of clients.",o:["diverse","diversely","diversity","diversify"],a:0,
-  e:"a ___ range → 形容詞 diverse。"},
+  qz:"這家公司服務各式各樣的客戶。",e:"a ___ range → 形容詞 diverse。"},
  {id:"G18-4",t:"介連",q:"______ the fee was waived, the customer still complained.",o:["Despite","Even though","In spite of","Because of"],a:1,
-  e:"the fee was waived 是句子 → 連接詞 Even though。"},
+  qz:"儘管費用已經免除，顧客還是抱怨。",e:"the fee was waived 是句子 → 連接詞 Even though。"},
  {id:"G18-5",t:"文法",q:"Service ______ at 6 a.m. tomorrow after the maintenance.",o:["resume","resumes","will resume","resuming"],a:2,
-  e:"主要子句講未來 → will resume。（注意：tomorrow 在主要子句，不是 if/when 子句）"},
+  qz:"維修後，服務將在明天早上 6 點恢復。",e:"主要子句講未來 → will resume。（注意：tomorrow 在主要子句，不是 if/when 子句）"},
  {id:"G18-6",t:"詞性",q:"The error was ______ overlooked during the final check.",o:["accident","accidental","accidentally","accidents"],a:2,
-  e:"修飾過去分詞 overlooked → 副詞 accidentally。"},
+  qz:"這個錯誤在最後檢查時不小心被忽略了。",e:"修飾過去分詞 overlooked → 副詞 accidentally。"},
  {id:"G18-7",t:"搭配",q:"Tenants have an obligation ______ report any damage.",o:["to","for","of","with"],a:0,
-  e:"an obligation to + 原形動詞＝有義務做…。"},
+  qz:"房客有義務通報任何損壞。",e:"an obligation to + 原形動詞＝有義務做…。"},
  {id:"G18-8",t:"文法",q:"The area ______ for staff parking is now full.",o:["designate","designated","designating","designates"],a:1,
-  e:"分詞修飾被動：區域「被」指定 → designated。"},
+  qz:"指定給員工停車的區域已經滿了。",e:"分詞修飾被動：區域「被」指定 → designated。"},
  {id:"G18-9",t:"介連",q:"______ compiling the data, please double-check the figures.",o:["Although","Prior to","Before to","While to"],a:1,
-  e:"prior to + V-ing／名詞。Before 單獨用不接 to。"},
+  qz:"彙整資料之前，請再核對一次數字。",e:"prior to + V-ing／名詞。Before 單獨用不接 to。"},
  {id:"G18-10",t:"詞性",q:"Each of the supervisors ______ a team of eight.",o:["supervise","supervises","supervising","have supervised"],a:1,
-  e:"Each of + 複數 → 動詞單數 supervises。"},
+  qz:"每位主管都管理一個八人團隊。",e:"Each of + 複數 → 動詞單數 supervises。"},
  {id:"G19-1",t:"詞性",q:"The company is not ______ for items left in the lobby.",o:["liable","liably","liability","liabilities"],a:0,
-  e:"be ___ for → 形容詞 liable。be liable for＝對…負有責任。"},
+  qz:"公司對留在大廳的物品不負責任。",e:"be ___ for → 形容詞 liable。be liable for＝對…負有責任。"},
  {id:"G19-2",t:"文法",q:"Only supervisors are ______ to approve overtime.",o:["authorize","authorized","authorizing","authorization"],a:1,
-  e:"be + p.p. 被動 → authorized。be authorized to＝被授權做…。"},
+  qz:"只有主管被授權核准加班。",e:"be + p.p. 被動 → authorized。be authorized to＝被授權做…。"},
  {id:"G19-3",t:"介連",q:"______ the policy was implemented, complaints dropped sharply.",o:["Despite","Since","Because of","Prior to"],a:1,
-  e:"the policy was implemented 是句子 → 連接詞 Since。"},
+  qz:"自從政策實施以來，客訴大幅下降。",e:"the policy was implemented 是句子 → 連接詞 Since。"},
  {id:"G19-4",t:"詞性",q:"The two machines can operate ______ without interference.",o:["simultaneous","simultaneously","simultaneity","simultaneousness"],a:1,
-  e:"修飾動詞 operate → 副詞 simultaneously。"},
+  qz:"這兩台機器可以同時運作而不互相干擾。",e:"修飾動詞 operate → 副詞 simultaneously。"},
  {id:"G19-5",t:"搭配",q:"Please ______ the user manual before resetting the unit.",o:["consult","consult to","consult at","consult for"],a:0,
-  e:"consult 查閱資料時是及物動詞，直接接受詞，不加介系詞。（consult with somebody 才是跟某人商量）"},
+  qz:"重設機器前請參閱使用手冊。",e:"consult 查閱資料時是及物動詞，直接接受詞，不加介系詞。（consult with somebody 才是跟某人商量）"},
  {id:"G19-6",t:"文法",q:"The outstanding balance ______ by the end of the month.",o:["must pay","must be paid","must paying","must have pay"],a:1,
-  e:"餘額是「被」付清 → must be paid。"},
+  qz:"未付餘額必須在月底前付清。",e:"餘額是「被」付清 → must be paid。"},
  {id:"G19-7",t:"介連",q:"Smoking is prohibited ______ the entire building.",o:["throughout","although","while","whereas"],a:0,
-  e:"後面是名詞 the entire building → 介系詞 throughout（遍及）。"},
+  qz:"整棟大樓都禁止吸菸。",e:"後面是名詞 the entire building → 介系詞 throughout（遍及）。"},
  {id:"G19-8",t:"文法",q:"Either party may terminate the agreement ______ 30 days' written notice.",o:["with","while","although","unless"],a:0,
-  e:"後面是名詞片語 → 介系詞 with（憑…、附帶…）。"},
+  qz:"任一方只要提前 30 天書面通知就可以終止協議。",e:"後面是名詞片語 → 介系詞 with（憑…、附帶…）。"},
  {id:"G19-9",t:"詞性",q:"Details of the ______ merger will be announced next week.",o:["forthcoming","forthcomingly","forthcome","forthcomings"],a:0,
-  e:"the ___ merger → 形容詞 forthcoming（即將到來的）。"},
+  qz:"即將進行的合併細節將在下週公布。",e:"the ___ merger → 形容詞 forthcoming（即將到來的）。"},
  {id:"G19-10",t:"文法",q:"By the time the policy ______ effect, most staff had already relocated.",o:["takes","took","had taken","will take"],a:1,
-  e:"By the time + 過去（took），主要子句用過去完成式 had relocated。這題反過來考 by the time 子句本身用過去式。"},
+  qz:"政策生效時，大部分員工已經搬遷了。",e:"By the time + 過去（took），主要子句用過去完成式 had relocated。這題反過來考 by the time 子句本身用過去式。"},
  {id:"G20-1",t:"詞性",q:"The committee took a different ______ to the staffing problem.",o:["approach","approaching","approachable","approached"],a:0,
-  e:"a different ___ to → 名詞 approach（方法）。注意搭配是 approach TO something。"},
+  qz:"委員會用不同的方式處理人力問題。",e:"a different ___ to → 名詞 approach（方法）。注意搭配是 approach TO something。"},
  {id:"G20-2",t:"詞性",q:"Exports rose while ______ sales remained flat.",o:["domestic","domestically","domesticate","domesticity"],a:0,
-  e:"修飾名詞 sales → 形容詞 domestic（國內的）。"},
+  qz:"出口成長，國內銷售則持平。",e:"修飾名詞 sales → 形容詞 domestic（國內的）。"},
  {id:"G20-3",t:"文法",q:"The revised ______ must be followed by all warehouse staff.",o:["proceed","procedure","proceeding","procedural"],a:1,
-  e:"The revised ___ must be... → 需要名詞當主詞，procedure（程序）。procedural 是形容詞。"},
+  qz:"所有倉庫員工都必須遵守修訂後的程序。",e:"The revised ___ must be... → 需要名詞當主詞，procedure（程序）。procedural 是形容詞。"},
  {id:"G20-4",t:"搭配",q:"We cannot ______ delivery before Friday.",o:["guarantee","guarantee of","guarantee for","guarantee to"],a:0,
-  e:"guarantee 是及物動詞，直接接受詞，不加介系詞。"},
+  qz:"我們無法保證星期五前送達。",e:"guarantee 是及物動詞，直接接受詞，不加介系詞。"},
  {id:"G20-5",t:"詞性",q:"The audit ______ several errors in the previous report.",o:["reveal","revealed","revealing","revelation"],a:1,
-  e:"句子需要主要動詞，過去式 revealed。"},
+  qz:"稽核揭露了先前報告中的幾個錯誤。",e:"句子需要主要動詞，過去式 revealed。"},
  {id:"G20-6",t:"詞性",q:"All staff should be ______ of the revised safety procedure.",o:["aware","awarely","awareness","awarded"],a:0,
-  e:"be aware of＝知道、察覺。be 動詞後接形容詞。"},
+  qz:"所有員工都應該知道修訂後的安全程序。",e:"be aware of＝知道、察覺。be 動詞後接形容詞。"},
  {id:"G20-7",t:"搭配",q:"I am writing ______ the quotation you sent last week.",o:["regarding","regard","regards","regarded"],a:0,
-  e:"regarding＝關於，介系詞。商務書信開頭常用。"},
+  qz:"我寫信是關於您上週寄來的報價單。",e:"regarding＝關於，介系詞。商務書信開頭常用。"},
  {id:"G20-8",t:"文法",q:"The information ______ in the report must be verified.",o:["contain","contained","containing","contains"],a:1,
-  e:"分詞修飾被動：資訊「被」包含在報告裡 → contained。"},
+  qz:"報告中的資訊必須經過查證。",e:"分詞修飾被動：資訊「被」包含在報告裡 → contained。"},
  {id:"G20-9",t:"詞性",q:"Accurate records are ______ for the annual audit.",o:["essence","essential","essentially","essentials"],a:1,
-  e:"be ___ for → 形容詞 essential。"},
+  qz:"準確的紀錄對年度稽核非常重要。",e:"be ___ for → 形容詞 essential。"},
  {id:"G20-10",t:"介連",q:"______ numerous complaints, the company kept the original design.",o:["Although","Despite","Because","Since"],a:1,
-  e:"numerous complaints 是名詞片語（numerous 是形容詞）→ Despite。"},
+  qz:"儘管客訴很多，公司仍維持原本的設計。",e:"numerous complaints 是名詞片語（numerous 是形容詞）→ Despite。"},
  {id:"G21-1",t:"詞性",q:"The venue can ______ up to 300 guests.",o:["accommodate","accommodation","accommodating","accommodated"],a:0,
-  e:"can + 原形動詞 → accommodate。"},
+  qz:"這個場地最多可容納 300 位賓客。",e:"can + 原形動詞 → accommodate。"},
  {id:"G21-2",t:"介連",q:"______ the preliminary results were positive, the trial will continue.",o:["Despite","Because of","Since","Prior to"],a:2,
-  e:"the preliminary results were positive 是完整句子 → 連接詞 Since。"},
+  qz:"因為初步結果正面，試驗將繼續進行。",e:"the preliminary results were positive 是完整句子 → 連接詞 Since。"},
  {id:"G21-3",t:"搭配",q:"Late payment will ______ an additional fee.",o:["incur","occur","recur","concur"],a:0,
-  e:"incur a fee＝招致費用。occur 是「發生」，不及物。四個字長很像，看受詞判斷。"},
+  qz:"逾期付款將產生額外費用。",e:"incur a fee＝招致費用。occur 是「發生」，不及物。四個字長很像，看受詞判斷。"},
  {id:"G21-4",t:"文法",q:"Members ______ before June are exempt from the new fee.",o:["register","registered","registering","registers"],a:1,
-  e:"分詞修飾：會員「被」登記 → registered（= who were registered）。"},
+  qz:"六月前登記的會員免付新費用。",e:"分詞修飾：會員「被」登記 → registered（= who were registered）。"},
  {id:"G21-5",t:"詞性",q:"The manager who ______ the project has resigned.",o:["oversee","oversaw","overseeing","overseen"],a:1,
-  e:"關係子句需要動詞，過去式 oversaw。"},
+  qz:"負責監督這個專案的經理已經辭職了。",e:"關係子句需要動詞，過去式 oversaw。"},
  {id:"G21-6",t:"文法",q:"Neither of the proposals ______ feasible within the current budget.",o:["are","were","is","have been"],a:2,
-  e:"Neither of + 複數 → 動詞單數 is。"},
+  qz:"在目前的預算下，兩份提案都不可行。",e:"Neither of + 複數 → 動詞單數 is。"},
  {id:"G21-7",t:"介連",q:"______ the disruption to service, all customers received a credit.",o:["Although","Due to","Because","While"],a:1,
-  e:"the disruption 是名詞片語 → 介系詞 Due to。"},
+  qz:"由於服務中斷，所有顧客都獲得了補償額度。",e:"the disruption 是名詞片語 → 介系詞 Due to。"},
  {id:"G21-8",t:"詞性",q:"The scope of the project has expanded ______ since January.",o:["consider","considerable","considerably","consideration"],a:2,
-  e:"修飾動詞 expanded → 副詞 considerably。"},
+  qz:"自一月以來，專案範圍大幅擴大。",e:"修飾動詞 expanded → 副詞 considerably。"},
  {id:"G21-9",t:"搭配",q:"All participants are required to sign a waiver ______ advance.",o:["on","in","at","by"],a:1,
-  e:"in advance＝事先。"},
+  qz:"所有參加者都必須事先簽署免責聲明。",e:"in advance＝事先。"},
  {id:"G21-10",t:"文法",q:"If the schedule ______ feasible, we will confirm the venue today.",o:["prove","proves","will prove","proving"],a:1,
-  e:"if 子句用現在式代替未來式，主詞單數 → proves。"},
+  qz:"如果時程證明可行，我們今天就會確認場地。",e:"if 子句用現在式代替未來式，主詞單數 → proves。"},
  {id:"G21-11",t:"詞性",q:"______ meetings will be held in the east conference room.",o:["Subsequent","Subsequently","Subsequence","Subsequential"],a:0,
-  e:"修飾名詞 meetings → 形容詞 Subsequent（後續的）。"},
+  qz:"之後的會議將在東側會議室舉行。",e:"修飾名詞 meetings → 形容詞 Subsequent（後續的）。"},
  {id:"G21-12",t:"介連",q:"______ signing the waiver, participants may enter the workshop.",o:["Although","Upon","While","Because"],a:1,
-  e:"Upon + V-ing＝一…就…。後面是動名詞不是句子。"},
+  qz:"簽署免責聲明後，參加者就可以進入研習會。",e:"Upon + V-ing＝一…就…。後面是動名詞不是句子。"},
  {id:"G22-1",t:"文法",q:"By the time the auditor left, the team ______ all the receipts.",o:["compiles","has compiled","had compiled","will compile"],a:2,
-  e:"By the time + 過去 → 主要子句用過去完成式 had compiled。"},
+  qz:"稽核員離開時，團隊已經彙整好所有收據。",e:"By the time + 過去 → 主要子句用過去完成式 had compiled。"},
  {id:"G22-2",t:"詞性",q:"The board gave its ______ approval to the merger.",o:["formal","formally","formality","formalize"],a:0,
-  e:"its ___ approval → 形容詞 formal。"},
+  qz:"董事會正式核准了這項合併。",e:"its ___ approval → 形容詞 formal。"},
  {id:"G22-3",t:"介連",q:"Deliveries will continue ______ the renovation of the loading dock.",o:["while","during","although","because"],a:1,
-  e:"the renovation 是名詞片語 → during。while 要接句子。"},
+  qz:"裝卸區整修期間，送貨將照常進行。",e:"the renovation 是名詞片語 → during。while 要接句子。"},
  {id:"G22-4",t:"搭配",q:"Full-time staff are eligible ______ the training allowance.",o:["to","for","with","of"],a:1,
-  e:"be eligible for＝有資格獲得。（對照 be entitled to）"},
+  qz:"全職員工有資格申請訓練補助。",e:"be eligible for＝有資格獲得。（對照 be entitled to）"},
  {id:"G22-5",t:"文法",q:"Each of the branch managers ______ a monthly report.",o:["submit","submits","submitting","have submitted"],a:1,
-  e:"Each of + 複數 → 動詞單數 submits。"},
+  qz:"每位分店經理都會提交月報。",e:"Each of + 複數 → 動詞單數 submits。"},
  {id:"G22-6",t:"詞性",q:"The findings were presented ______ at the quarterly meeting.",o:["brief","briefly","briefness","briefing"],a:1,
-  e:"修飾動詞 presented → 副詞 briefly。"},
+  qz:"研究結果在季會上被簡短報告。",e:"修飾動詞 presented → 副詞 briefly。"},
  {id:"G22-7",t:"介連",q:"______ the system was upgraded, response times improved sharply.",o:["Despite","After","Because of","During"],a:1,
-  e:"the system was upgraded 是句子 → 連接詞 After。"},
+  qz:"系統升級後，回應時間大幅改善。",e:"the system was upgraded 是句子 → 連接詞 After。"},
  {id:"G22-8",t:"文法",q:"The documents, ______ were filed last week, cannot be located.",o:["that","which","what","who"],a:1,
-  e:"逗號後的非限定子句只能用 which。"},
+  qz:"上週歸檔的文件找不到了。",e:"逗號後的非限定子句只能用 which。"},
  {id:"G22-9",t:"搭配",q:"The committee is responsible ______ reviewing all applications.",o:["for","to","of","with"],a:0,
-  e:"be responsible for。（對照 be in charge of，介系詞不同）"},
+  qz:"委員會負責審查所有申請。",e:"be responsible for。（對照 be in charge of，介系詞不同）"},
  {id:"G22-10",t:"詞性",q:"The data must be entered ______ to avoid billing errors.",o:["accurate","accurately","accuracy","accurateness"],a:1,
-  e:"修飾動詞 entered → 副詞 accurately。"},
+  qz:"資料必須正確輸入，以避免帳單錯誤。",e:"修飾動詞 entered → 副詞 accurately。"},
  {id:"G22-11",t:"介連",q:"Access is restricted ______ further notice.",o:["until","unless","although","while"],a:0,
-  e:"until further notice＝直到另行通知，固定用法。"},
+  qz:"在另行通知之前，進出受到限制。",e:"until further notice＝直到另行通知，固定用法。"},
  {id:"G22-12",t:"文法",q:"Unless the client ______ the revised terms, the contract will lapse.",o:["approve","approves","will approve","approving"],a:1,
-  e:"unless 子句用現在式代替未來式，主詞單數 → approves。"},
+  qz:"除非客戶核准修訂後的條款，否則合約將失效。",e:"unless 子句用現在式代替未來式，主詞單數 → approves。"},
  {id:"G23-1",t:"詞性",q:"Please ______ all travel expenses on the reimbursement form.",o:["item","itemize","itemized","itemization"],a:1,
-  e:"Please + 原形動詞 → itemize。"},
+  qz:"請在核銷表上逐項列出所有差旅費用。",e:"Please + 原形動詞 → itemize。"},
  {id:"G23-2",t:"介連",q:"______ two invoices remain outstanding, the account cannot be closed.",o:["Despite","Because of","Since","Prior to"],a:2,
-  e:"two invoices remain outstanding 是完整句子 → 連接詞 Since。"},
+  qz:"因為還有兩張發票未付，帳戶無法結清。",e:"two invoices remain outstanding 是完整句子 → 連接詞 Since。"},
  {id:"G23-3",t:"搭配",q:"The registration fee may be paid ______ three installments.",o:["in","on","by","at"],a:0,
-  e:"pay in installments＝分期付款，固定搭配。"},
+  qz:"報名費可以分三期付款。",e:"pay in installments＝分期付款，固定搭配。"},
  {id:"G23-4",t:"文法",q:"The surcharge ______ to weekend bookings has been reduced.",o:["apply","applied","applying","applies"],a:1,
-  e:"分詞修飾被動：附加費「被」套用於週末訂房 → applied。"},
+  qz:"週末訂房的附加費已經調降。",e:"分詞修飾被動：附加費「被」套用於週末訂房 → applied。"},
  {id:"G23-5",t:"詞性",q:"The hotel offers a wide range of ______ for business travelers.",o:["amenity","amenities","amenable","amenably"],a:1,
-  e:"a wide range of + 複數名詞 → amenities。"},
+  qz:"這家飯店為商務旅客提供各式各樣的設施。",e:"a wide range of + 複數名詞 → amenities。"},
  {id:"G23-6",t:"文法",q:"Neither of the remittances ______ received before the deadline.",o:["are","were","was","have been"],a:2,
-  e:"Neither of + 複數 → 動詞單數 was。"},
+  qz:"兩筆匯款都沒有在截止日前收到。",e:"Neither of + 複數 → 動詞單數 was。"},
  {id:"G23-7",t:"介連",q:"______ the revised itinerary, the team will arrive a day earlier.",o:["Although","According to","Because","While"],a:1,
-  e:"the revised itinerary 是名詞片語 → 介系詞 According to（根據）。"},
+  qz:"根據修訂後的行程，團隊將提早一天抵達。",e:"the revised itinerary 是名詞片語 → 介系詞 According to（根據）。"},
  {id:"G23-8",t:"搭配",q:"The balance due must be settled ______ the end of the month.",o:["by","until","during","since"],a:0,
-  e:"by + 時間點＝之前完成。settle 是一次性動作，不能用 until。"},
+  qz:"應付餘額必須在月底前結清。",e:"by + 時間點＝之前完成。settle 是一次性動作，不能用 until。"},
  {id:"G23-9",t:"詞性",q:"The concierge handled the request ______ and professionally.",o:["prompt","promptly","promptness","prompted"],a:1,
-  e:"修飾動詞 handled → 副詞 promptly。and 後面是 professionally，詞性要一致。"},
+  qz:"禮賓人員迅速又專業地處理了這項要求。",e:"修飾動詞 handled → 副詞 promptly。and 後面是 professionally，詞性要一致。"},
  {id:"G23-10",t:"文法",q:"If the client ______ the balance by Friday, we will waive the surcharge.",o:["settle","settles","will settle","settling"],a:1,
-  e:"if 子句用現在式代替未來式，主詞單數 → settles。"},
+  qz:"如果客戶星期五前結清餘額，我們就免收附加費。",e:"if 子句用現在式代替未來式，主詞單數 → settles。"},
  {id:"G24-1",t:"詞性",q:"All ______ must provide two professional references.",o:["apply","applicants","application","applicable"],a:1,
-  e:"All + 複數名詞，且指「人」→ applicants。application 是「申請書」。"},
+  qz:"所有應徵者都必須提供兩位專業推薦人。",e:"All + 複數名詞，且指「人」→ applicants。application 是「申請書」。"},
  {id:"G24-2",t:"介連",q:"______ her limited experience, Ms. Oyelaran was shortlisted.",o:["Although","Despite","Because","Since"],a:1,
-  e:"her limited experience 是名詞片語 → Despite。"},
+  qz:"儘管經驗有限，Oyelaran 小姐仍進入決選名單。",e:"her limited experience 是名詞片語 → Despite。"},
  {id:"G24-3",t:"搭配",q:"Compensation will be commensurate ______ experience.",o:["with","to","for","of"],a:0,
-  e:"be commensurate with＝與…相稱。徵才廣告固定用語。"},
+  qz:"薪酬將與經驗相符。",e:"be commensurate with＝與…相稱。徵才廣告固定用語。"},
  {id:"G24-4",t:"文法",q:"Candidates ______ for the second round will be contacted Friday.",o:["select","selected","selecting","selects"],a:1,
-  e:"分詞修飾被動：候選人「被」選出 → selected。"},
+  qz:"獲選進入第二輪的候選人將在星期五被聯絡。",e:"分詞修飾被動：候選人「被」選出 → selected。"},
  {id:"G24-5",t:"詞性",q:"A high level of English ______ is essential for this role.",o:["proficient","proficiently","proficiency","proficiencies"],a:2,
-  e:"a high level of + 不可數名詞 → proficiency。"},
+  qz:"這個職位必須具備高水準的英文能力。",e:"a high level of + 不可數名詞 → proficiency。"},
  {id:"G24-6",t:"文法",q:"Each of the three supervisors ______ a different department.",o:["oversee","oversees","overseeing","have overseen"],a:1,
-  e:"Each of + 複數 → 動詞單數 oversees。"},
+  qz:"三位主管各自監督不同的部門。",e:"Each of + 複數 → 動詞單數 oversees。"},
  {id:"G24-7",t:"介連",q:"______ the new training program was introduced, turnover has fallen sharply.",o:["Despite","Because of","Since","During"],a:2,
-  e:"the new training program was introduced 是句子 → 連接詞 Since（自從／因為，兩個意思都接句子）。"},
+  qz:"自從新的訓練計畫推出後，離職率大幅下降。",e:"the new training program was introduced 是句子 → 連接詞 Since（自從／因為，兩個意思都接句子）。"},
  {id:"G24-8",t:"搭配",q:"Staff become eligible ______ additional leave after five years.",o:["for","to","with","on"],a:0,
-  e:"be eligible for。（對照 be entitled to）"},
+  qz:"員工滿五年後就有資格多休假。",e:"be eligible for。（對照 be entitled to）"},
  {id:"G24-9",t:"詞性",q:"The position has remained ______ for over three months.",o:["vacancy","vacant","vacantly","vacate"],a:1,
-  e:"remain 是連綴動詞，後接形容詞 vacant（空缺的）。vacancy 是名詞。"},
+  qz:"這個職位已經空缺超過三個月。",e:"remain 是連綴動詞，後接形容詞 vacant（空缺的）。vacancy 是名詞。"},
  {id:"G24-10",t:"文法",q:"Unless the applicant ______ the required credentials, the offer will be withdrawn.",o:["provide","provides","will provide","providing"],a:1,
-  e:"unless 子句用現在式代替未來式，主詞單數 → provides。"},
+  qz:"除非應徵者提供必要的資格證明，否則錄取將被撤回。",e:"unless 子句用現在式代替未來式，主詞單數 → provides。"},
  {id:"G25-1",t:"搭配",q:"All contractors must adhere ______ the safety guidelines.",o:["to","with","on","for"],a:0,
-  e:"adhere to＝遵守。（對照 comply with，介系詞不同）"},
+  qz:"所有承包商都必須遵守安全守則。",e:"adhere to＝遵守。（對照 comply with，介系詞不同）"},
  {id:"G25-2",t:"介連",q:"______ the preliminary findings, the trial will be extended.",o:["Although","Based on","Because","While"],a:1,
-  e:"the preliminary findings 是名詞片語 → 介系詞片語 Based on。"},
+  qz:"根據初步發現，試驗將延長。",e:"the preliminary findings 是名詞片語 → 介系詞片語 Based on。"},
  {id:"G25-3",t:"文法",q:"Funds ______ to the research team have not yet been released.",o:["allocate","allocated","allocating","allocates"],a:1,
-  e:"分詞修飾被動：經費「被」分配 → allocated。"},
+  qz:"分配給研究團隊的資金還沒撥下來。",e:"分詞修飾被動：經費「被」分配 → allocated。"},
  {id:"G25-4",t:"詞性",q:"The offer is available ______ to corporate account holders.",o:["exclusive","exclusively","exclusivity","exclude"],a:1,
-  e:"修飾形容詞 available → 副詞 exclusively。"},
+  qz:"這項優惠僅限企業帳戶持有人。",e:"修飾形容詞 available → 副詞 exclusively。"},
  {id:"G25-5",t:"介連",q:"Costs rose sharply. ______, the company reported a profit.",o:["Nevertheless","Although","Despite","Whereas"],a:0,
-  e:"前面已是完整句子加句點 → 需要副詞 Nevertheless。連接詞和介系詞都不能單獨接在句號後面當轉折。"},
+  qz:"成本大幅上升。儘管如此，公司仍公布獲利。",e:"前面已是完整句子加句點 → 需要副詞 Nevertheless。連接詞和介系詞都不能單獨接在句號後面當轉折。"},
  {id:"G25-6",t:"文法",q:"Neither of the deficiencies ______ been corrected yet.",o:["have","has","were","are"],a:1,
-  e:"Neither of + 複數 → 動詞單數 has。"},
+  qz:"兩項缺失都還沒改正。",e:"Neither of + 複數 → 動詞單數 has。"},
  {id:"G25-7",t:"詞性",q:"A ______ review of all suppliers will begin in March.",o:["comprehend","comprehensive","comprehensively","comprehension"],a:1,
-  e:"A ___ review → 形容詞 comprehensive。"},
+  qz:"全面審查所有供應商的工作將在三月開始。",e:"A ___ review → 形容詞 comprehensive。"},
  {id:"G25-8",t:"介連",q:"______ the system was restored, orders resumed processing.",o:["Despite","Once","Because of","Prior to"],a:1,
-  e:"the system was restored 是完整句子 → 連接詞 Once。"},
+  qz:"系統一恢復，訂單就恢復處理了。",e:"the system was restored 是完整句子 → 連接詞 Once。"},
  {id:"G25-9",t:"搭配",q:"Several customers have inquired ______ the delayed shipment.",o:["about","to","for","on"],a:0,
-  e:"inquire about＝詢問關於…。"},
+  qz:"好幾位顧客詢問了延遲的貨物。",e:"inquire about＝詢問關於…。"},
  {id:"G25-10",t:"文法",q:"If the supplier ______ to deliver on time, we will seek an alternative.",o:["fail","fails","will fail","failing"],a:1,
-  e:"if 子句用現在式代替未來式，主詞單數 → fails。"},
+  qz:"如果供應商沒有準時交貨，我們會另找供應商。",e:"if 子句用現在式代替未來式，主詞單數 → fails。"},
  {id:"G26-1",t:"文法",q:"By the time the technician ______, the system had been down for three hours.",o:["arrives","arrived","had arrived","has arrived"],a:1,
-  e:"★跟著 by the time 的子句用「過去簡單式」→ arrived。另一個子句才是 had been。"},
+  qz:"技師到達時，系統已經停擺三小時了。",e:"★跟著 by the time 的子句用「過去簡單式」→ arrived。另一個子句才是 had been。"},
  {id:"G26-2",t:"文法",q:"By the time the policy took effect, most staff ______ already relocated.",o:["have","has","had","will have"],a:2,
-  e:"★by the time 子句已經是過去式 took，另一個子句用 had + p.p. → had relocated。"},
+  qz:"政策生效時，大部分員工已經搬遷了。",e:"★by the time 子句已經是過去式 took，另一個子句用 had + p.p. → had relocated。"},
  {id:"G26-3",t:"文法",q:"By the time we ______ the warehouse, the shipment had already left.",o:["reach","reached","had reached","reaching"],a:1,
-  e:"by the time 那一句 → 過去簡單式 reached。"},
+  qz:"我們到倉庫時，貨物已經出發了。",e:"by the time 那一句 → 過去簡單式 reached。"},
  {id:"G26-4",t:"文法",q:"The auditor ______ before the manager returned from lunch.",o:["leaves","had left","has left","leaving"],a:1,
-  e:"before 子句是過去式 returned，先發生的動作用 had left。"},
+  qz:"經理吃完午餐回來前，稽核員已經離開了。",e:"before 子句是過去式 returned，先發生的動作用 had left。"},
  {id:"G26-5",t:"文法",q:"Only senior staff ______ to approve overtime requests.",o:["authorize","are authorized","authorizing","authorization"],a:1,
-  e:"員工是「被」授權 → be authorized to。主詞複數用 are。"},
+  qz:"只有資深員工被授權核准加班申請。",e:"員工是「被」授權 → be authorized to。主詞複數用 are。"},
  {id:"G26-6",t:"文法",q:"The outstanding balance ______ before the account can be closed.",o:["must settle","must be settled","must settling","must have settle"],a:1,
-  e:"餘額是「被」結清 → must be settled。"},
+  qz:"帳戶結清前必須先付清未付餘額。",e:"餘額是「被」結清 → must be settled。"},
  {id:"G26-7",t:"介連",q:"Smoking is prohibited ______ the entire facility.",o:["throughout","although","while","whereas"],a:0,
-  e:"後面是名詞 the entire facility → 介系詞 throughout（遍及整個…）。"},
+  qz:"整個廠區都禁止吸菸。",e:"後面是名詞 the entire facility → 介系詞 throughout（遍及整個…）。"},
  {id:"G26-8",t:"詞性",q:"Details of the ______ restructuring will be announced on Monday.",o:["forthcoming","forthcomingly","forthcome","forthcomings"],a:0,
-  e:"the ___ restructuring → 形容詞 forthcoming（即將到來的）。"},
+  qz:"即將進行的組織重整細節將在星期一公布。",e:"the ___ restructuring → 形容詞 forthcoming（即將到來的）。"},
  {id:"G26-9",t:"介連",q:"______ the contract was signed, deliveries began immediately.",o:["Despite","Once","Because of","Prior to"],a:1,
-  e:"the contract was signed 是完整句子 → 連接詞 Once。"},
+  qz:"合約一簽好，送貨就立刻開始了。",e:"the contract was signed 是完整句子 → 連接詞 Once。"},
  {id:"G26-10",t:"文法",q:"Either party may cancel ______ 30 days' written notice.",o:["with","while","although","unless"],a:0,
-  e:"後面是名詞片語 30 days' written notice → 介系詞 with（憑…）。"},
+  qz:"任一方只要提前 30 天書面通知就可以取消。",e:"後面是名詞片語 30 days' written notice → 介系詞 with（憑…）。"},
  {id:"G27-1",t:"詞性",q:"The new system allows staff to track shipments ______ in real time.",o:["accurate","accurately","accuracy","accurateness"],a:1,
-  e:"修飾動詞 track → 副詞 accurately。"},
+  qz:"新系統讓員工能即時準確追蹤貨物。",e:"修飾動詞 track → 副詞 accurately。"},
  {id:"G27-2",t:"搭配",q:"The warehouse is located ______ close proximity to the airport.",o:["in","at","on","by"],a:0,
-  e:"in close proximity to＝非常靠近，固定用 in。"},
+  qz:"倉庫位在機場附近。",e:"in close proximity to＝非常靠近，固定用 in。"},
  {id:"G27-3",t:"文法",q:"Perishable items ______ in a refrigerated area at all times.",o:["must store","must be stored","must storing","must have stored"],a:1,
-  e:"物品是「被」存放 → must be stored。"},
+  qz:"易腐品必須隨時存放在冷藏區。",e:"物品是「被」存放 → must be stored。"},
  {id:"G27-4",t:"介連",q:"______ the shipment was delayed, the client received a partial refund.",o:["Because","Due to","Despite","In spite of"],a:0,
-  e:"後面是完整句子 → 連接詞 Because。Due to / Despite / In spite of 後面都只能接名詞。"},
+  qz:"因為貨物延誤，客戶獲得部分退款。",e:"後面是完整句子 → 連接詞 Because。Due to / Despite / In spite of 後面都只能接名詞。"},
  {id:"G27-5",t:"詞性",q:"Please keep the receipt as ______ of purchase.",o:["prove","proof","proven","provable"],a:1,
-  e:"as ___ of → 名詞 proof（證明）。proof of purchase＝購買證明。"},
+  qz:"請保留收據作為購買證明。",e:"as ___ of → 名詞 proof（證明）。proof of purchase＝購買證明。"},
  {id:"G27-6",t:"文法",q:"If the stock level ______ below 20 units, the system will reorder automatically.",o:["falls","will fall","fell","falling"],a:0,
-  e:"if 子句用現在式代替未來式，主詞單數 → falls。"},
+  qz:"如果庫存低於 20 件，系統會自動補訂。",e:"if 子句用現在式代替未來式，主詞單數 → falls。"},
  {id:"G27-7",t:"搭配",q:"We need to ______ our inventory before the holiday rush.",o:["replenish","replace","repeat","reply"],a:0,
-  e:"replenish inventory＝補充庫存。新單字組別 34 的字。"},
+  qz:"我們需要在假期旺季前補足庫存。",e:"replenish inventory＝補充庫存。新單字組別 34 的字。"},
  {id:"G27-8",t:"文法",q:"The vendor ______ prices were the lowest was awarded the contract.",o:["who","whose","which","whom"],a:1,
-  e:"空格後面直接接名詞 prices，表示「那家供應商的價格」→ 所有格 whose。"},
+  qz:"價格最低的那家廠商拿到了合約。",e:"空格後面直接接名詞 prices，表示「那家供應商的價格」→ 所有格 whose。"},
  {id:"G27-9",t:"介連",q:"Items will be shipped ______ payment has been received.",o:["once","during","despite","because of"],a:0,
-  e:"後面是完整句子 → 連接詞 once（一旦）。其他三個都是介系詞。"},
+  qz:"收到付款後就會出貨。",e:"後面是完整句子 → 連接詞 once（一旦）。其他三個都是介系詞。"},
  {id:"G27-10",t:"文法",q:"By the time the replacement parts ______, the production line had been idle for two days.",o:["arrive","arrived","had arrived","have arrived"],a:1,
-  e:"★by the time 複習：跟著 by the time 的子句用過去簡單式 → arrived。had been 在另一句。"},
+  qz:"替換零件到的時候，生產線已經閒置兩天了。",e:"★by the time 複習：跟著 by the time 的子句用過去簡單式 → arrived。had been 在另一句。"},
  {id:"G28-1",t:"詞性",q:"The new advertising campaign was ______ successful among young customers.",o:["remark","remarkable","remarkably","remarked"],a:2,
-  e:"修飾形容詞 successful → 副詞 remarkably。"},
+  qz:"新的廣告活動在年輕顧客間非常成功。",e:"修飾形容詞 successful → 副詞 remarkably。"},
  {id:"G28-2",t:"文法",q:"Customers who ______ their subscriptions before May 1 will receive a free gift.",o:["renews","renewing","renew","renewed"],a:2,
-  e:"who 代替 Customers（複數），而且 will receive 是未來 → 用現在式代替，複數 → renew。"},
+  qz:"在 5 月 1 日前續訂的顧客將獲得免費贈品。",e:"who 代替 Customers（複數），而且 will receive 是未來 → 用現在式代替，複數 → renew。"},
  {id:"G28-3",t:"介連",q:"______ its small market share, the brand has a very loyal customer base.",o:["Although","Despite","Because","Unless"],a:1,
-  e:"後面是名詞片語 its small market share（沒有動詞）→ 介系詞 Despite。Although / Because / Unless 是連接詞，要接句子。"},
+  qz:"儘管市佔率不高，這個品牌擁有非常忠實的顧客群。",e:"後面是名詞片語 its small market share（沒有動詞）→ 介系詞 Despite。Although / Because / Unless 是連接詞，要接句子。"},
  {id:"G28-4",t:"搭配",q:"This promotional offer is valid ______ March 31.",o:["by","since","until","during"],a:2,
-  e:"valid until＋日期＝有效到某天（狀態持續）。by 是「在…之前完成某動作」，例如 submit by March 31。"},
+  qz:"這項促銷優惠到 3 月 31 日有效。",e:"valid until＋日期＝有效到某天（狀態持續）。by 是「在…之前完成某動作」，例如 submit by March 31。"},
  {id:"G28-5",t:"詞性",q:"The marketing team conducted a ______ analysis of the two competing brands.",o:["compare","comparative","comparison","comparatively"],a:1,
-  e:"冠詞 a ＋ ___ ＋ 名詞 analysis → 形容詞 comparative（比較的）。"},
+  qz:"行銷團隊對兩個競爭品牌做了比較分析。",e:"冠詞 a ＋ ___ ＋ 名詞 analysis → 形容詞 comparative（比較的）。"},
  {id:"G28-6",t:"文法",q:"The voucher must be ______ within 30 days of the date of issue.",o:["redeem","redeeming","redemption","redeemed"],a:3,
-  e:"禮券是「被」兌換 → must be ＋ p.p. → redeemed。新單字組別 35 的字。"},
+  qz:"禮券必須在發行日起 30 天內兌換。",e:"禮券是「被」兌換 → must be ＋ p.p. → redeemed。新單字組別 35 的字。"},
  {id:"G28-7",t:"介連",q:"Online sales rose by 20 percent ______ the summer promotion.",o:["while","during","when","as soon as"],a:1,
-  e:"後面只有名詞 the summer promotion → 介系詞 during。while / when / as soon as 是連接詞，要接句子。"},
+  qz:"夏季促銷期間，網路銷售成長了 20%。",e:"後面只有名詞 the summer promotion → 介系詞 during。while / when / as soon as 是連接詞，要接句子。"},
  {id:"G28-8",t:"搭配",q:"Word of mouth plays a key role ______ attracting new customers.",o:["on","at","in","for"],a:2,
-  e:"play a role in ＋ N / V-ing＝在…中扮演角色，固定用 in。"},
+  qz:"口碑在吸引新顧客上扮演關鍵角色。",e:"play a role in ＋ N / V-ing＝在…中扮演角色，固定用 in。"},
  {id:"G28-9",t:"文法",q:"Not only ______ the new app affordable, but it is also easy to use.",o:["it is","does","being","is"],a:3,
-  e:"Not only 放句首要倒裝：be 動詞移到主詞前 → Not only is the app affordable。"},
+  qz:"這個新 app 不只便宜，而且也很好用。",e:"Not only 放句首要倒裝：be 動詞移到主詞前 → Not only is the app affordable。"},
  {id:"G28-10",t:"文法",q:"Customers ______ vouchers have expired may contact the service desk for help.",o:["who","whose","which","whom"],a:1,
-  e:"★whose 複習（G27-8）：空格後面直接接名詞 vouchers，表示「顧客的禮券」→ 所有格 whose。"},
+  qz:"禮券已過期的顧客可以聯絡服務台尋求協助。",e:"★whose 複習（G27-8）：空格後面直接接名詞 vouchers，表示「顧客的禮券」→ 所有格 whose。"},
  {id:"G29-1",t:"介連",q:"______ the heavy rain, the outdoor concert went ahead as planned.",o:["Although","Despite","Because","Unless"],a:1,
-  e:"the heavy rain 是名詞片語，沒有動詞 → 介系詞 Despite。Although 後面要接完整句子。"},
+  qz:"儘管下大雨，戶外演唱會仍照計畫進行。",e:"the heavy rain 是名詞片語，沒有動詞 → 介系詞 Despite。Although 後面要接完整句子。"},
  {id:"G29-2",t:"介連",q:"______ it rained heavily, the outdoor concert went ahead as planned.",o:["Despite","In spite of","Although","Regardless of"],a:2,
-  e:"it rained 有主詞＋動詞 → 連接詞 Although。Despite / In spite of 後面只能接名詞。（對照 G29-1）"},
+  qz:"雖然雨下得很大，戶外演唱會仍照計畫進行。",e:"it rained 有主詞＋動詞 → 連接詞 Although。Despite / In spite of 後面只能接名詞。（對照 G29-1）"},
  {id:"G29-3",t:"介連",q:"Please keep your seatbelt fastened ______ the flight.",o:["while","during","when","as soon as"],a:1,
-  e:"the flight 是名詞 → 介系詞 during。while 後面要接句子。"},
+  qz:"飛行期間請保持安全帶繫好。",e:"the flight 是名詞 → 介系詞 during。while 後面要接句子。"},
  {id:"G29-4",t:"介連",q:"Please keep your seatbelt fastened ______ the plane is moving.",o:["during","throughout","while","prior to"],a:2,
-  e:"the plane is moving 是句子 → 連接詞 while。during / throughout 後面接名詞。（對照 G29-3）"},
+  qz:"飛機移動時請保持安全帶繫好。",e:"the plane is moving 是句子 → 連接詞 while。during / throughout 後面接名詞。（對照 G29-3）"},
  {id:"G29-5",t:"介連",q:"The shipment was delayed ______ a shortage of drivers.",o:["because","because of","since","although"],a:1,
-  e:"a shortage of drivers 是名詞 → because of。because 後面要接句子。"},
+  qz:"貨物因為司機短缺而延誤。",e:"a shortage of drivers 是名詞 → because of。because 後面要接句子。"},
  {id:"G29-6",t:"介連",q:"The shipment was delayed ______ there was a shortage of drivers.",o:["because of","due to","owing to","because"],a:3,
-  e:"there was… 是句子 → 連接詞 because。because of / due to / owing to 都是介系詞。（對照 G29-5）"},
+  qz:"貨物延誤是因為司機短缺。",e:"there was… 是句子 → 連接詞 because。because of / due to / owing to 都是介系詞。（對照 G29-5）"},
  {id:"G29-7",t:"介連",q:"______ arriving at the hotel, guests will receive a welcome drink.",o:["Upon","Although","Unless","Whereas"],a:0,
-  e:"arriving 是 V-ing（動名詞）→ 介系詞 Upon（一…就…）。"},
+  qz:"一到飯店，房客就會拿到迎賓飲料。",e:"arriving 是 V-ing（動名詞）→ 介系詞 Upon（一…就…）。"},
  {id:"G29-8",t:"介連",q:"______ you arrive at the hotel, a staff member will show you to your room.",o:["Upon","Once","Prior to","Despite"],a:1,
-  e:"you arrive 是句子 → 連接詞 Once（一旦）。Upon 後面要接名詞或 V-ing。（對照 G29-7）"},
+  qz:"您一抵達飯店，工作人員就會帶您到房間。",e:"you arrive 是句子 → 連接詞 Once（一旦）。Upon 後面要接名詞或 V-ing。（對照 G29-7）"},
  {id:"G29-9",t:"介連",q:"Employees must complete the training ______ accessing the new system.",o:["prior to","unless","although","whereas"],a:0,
-  e:"accessing 是 V-ing → 介系詞 prior to（在…之前）。"},
+  qz:"員工必須先完成訓練才能使用新系統。",e:"accessing 是 V-ing → 介系詞 prior to（在…之前）。"},
  {id:"G29-10",t:"介連",q:"Employees cannot access the new system ______ they complete the training.",o:["unless","despite","regardless of","instead of"],a:0,
-  e:"they complete 是句子 → 連接詞 unless（除非）。其他三個都是介系詞。"},
+  qz:"除非完成訓練，否則員工無法使用新系統。",e:"they complete 是句子 → 連接詞 unless（除非）。其他三個都是介系詞。"},
  {id:"G29-11",t:"介連",q:"______ its small size, the new office feels spacious.",o:["Although","Despite","While","Whereas"],a:1,
-  e:"its small size 是名詞 → Despite。"},
+  qz:"儘管面積小，新辦公室感覺很寬敞。",e:"its small size 是名詞 → Despite。"},
  {id:"G29-12",t:"介連",q:"______ the new office is small, it feels spacious.",o:["Despite","In spite of","Although","Regardless of"],a:2,
-  e:"the new office is small 是句子 → Although。（對照 G29-11）"},
+  qz:"雖然新辦公室很小，但感覺很寬敞。",e:"the new office is small 是句子 → Although。（對照 G29-11）"},
  {id:"G29-13",t:"介連",q:"The store will remain open ______ the renovation.",o:["while","throughout","although","unless"],a:1,
-  e:"the renovation 是名詞 → 介系詞 throughout（整個…期間）。"},
+  qz:"整修期間商店將持續營業。",e:"the renovation 是名詞 → 介系詞 throughout（整個…期間）。"},
  {id:"G29-14",t:"介連",q:"Sales increased in Asia, ______ they declined slightly in Europe.",o:["despite","whereas","regardless of","because of"],a:1,
-  e:"they declined 是句子 → 連接詞 whereas（然而、相對地），前後對比。"},
+  qz:"亞洲的銷售增加了，而歐洲則略為下滑。",e:"they declined 是句子 → 連接詞 whereas（然而、相對地），前後對比。"},
  {id:"G29-15",t:"介連",q:"All applications will be reviewed ______ the applicant's age.",o:["regardless of","although","even if","whether"],a:0,
-  e:"the applicant's age 是名詞 → 介系詞 regardless of（不論）。"},
+  qz:"所有申請都會被審查，不論應徵者年齡。",e:"the applicant's age 是名詞 → 介系詞 regardless of（不論）。"},
  {id:"G29-16",t:"介連",q:"The meeting was postponed ______ the manager was out of town.",o:["due to","owing to","because","during"],a:2,
-  e:"the manager was out of town 是句子 → because。"},
+  qz:"會議延期是因為經理出差了。",e:"the manager was out of town 是句子 → because。"},
  {id:"G29-17",t:"介連",q:"The meeting was postponed ______ the manager's absence.",o:["because","although","owing to","whereas"],a:2,
-  e:"the manager's absence 是名詞 → 介系詞 owing to（由於）。（對照 G29-16）"},
+  qz:"會議因經理不在而延期。",e:"the manager's absence 是名詞 → 介系詞 owing to（由於）。（對照 G29-16）"},
  {id:"G29-18",t:"介連",q:"______ the budget is approved, construction will begin in March.",o:["Once","Following","Despite","During"],a:0,
-  e:"the budget is approved 是句子 → 連接詞 Once。Following 是介系詞，後面接名詞。"},
+  qz:"預算一核准，工程就會在三月開始。",e:"the budget is approved 是句子 → 連接詞 Once。Following 是介系詞，後面接名詞。"},
  {id:"G29-19",t:"介連",q:"______ approval of the budget, construction will begin in March.",o:["Once","Following","Unless","Although"],a:1,
-  e:"approval of the budget 是名詞 → 介系詞 Following（在…之後）。（對照 G29-18）"},
+  qz:"預算核准後，工程將在三月開始。",e:"approval of the budget 是名詞 → 介系詞 Following（在…之後）。（對照 G29-18）"},
  {id:"G29-20",t:"介連",q:"Ms. Park worked from home ______ her office was being repainted.",o:["during","while","throughout","because of"],a:1,
-  e:"her office was being repainted 是句子 → 連接詞 while。"},
+  qz:"朴小姐在辦公室重新粉刷期間在家工作。",e:"her office was being repainted 是句子 → 連接詞 while。"},
  {id:"G30-1",t:"詞性",q:"The proposal is still ______ and may change before Friday.",o:["tentative","tentatively","tentativeness","more tentatively"],a:0,
-  e:"be 動詞後面缺補語 → 形容詞 tentative（暫定的）。"},
+  qz:"這份提案仍是暫定的，星期五前可能會改。",e:"be 動詞後面缺補語 → 形容詞 tentative（暫定的）。"},
  {id:"G30-2",t:"詞性",q:"The auditors examined every receipt ______.",o:["meticulous","meticulously","meticulousness","meticulosity"],a:1,
-  e:"修飾動詞 examined → 副詞 meticulously（一絲不苟地）。"},
+  qz:"稽核員一絲不苟地檢查每一張收據。",e:"修飾動詞 examined → 副詞 meticulously（一絲不苟地）。"},
  {id:"G30-3",t:"詞性",q:"The instructions were so ______ that several employees misunderstood them.",o:["ambiguous","ambiguously","ambiguity","ambiguities"],a:0,
-  e:"so + 形容詞 + that → ambiguous（模稜兩可的）。"},
+  qz:"說明非常模糊，好幾位員工都誤解了。",e:"so + 形容詞 + that → ambiguous（模稜兩可的）。"},
  {id:"G30-4",t:"詞性",q:"There is some ______ in the wording of the contract.",o:["ambiguous","ambiguously","ambiguity","ambiguate"],a:2,
-  e:"some 後面接名詞 → ambiguity（模糊之處）。（對照上一題）"},
+  qz:"合約的措辭有些模稜兩可。",e:"some 後面接名詞 → ambiguity（模糊之處）。（對照上一題）"},
  {id:"G30-5",t:"詞性",q:"Sales have ______ diminished since a new competitor entered the market.",o:["steady","steadily","steadiness","steadied"],a:1,
-  e:"have ___ p.p. 中間的空格修飾動詞 → 副詞 steadily。"},
+  qz:"自從新競爭者進入市場，銷售就穩定減少。",e:"have ___ p.p. 中間的空格修飾動詞 → 副詞 steadily。"},
  {id:"G30-6",t:"詞性",q:"The firm has a strict ______, so every decision needs a director's signature.",o:["hierarchy","hierarchical","hierarchically","hierarchize"],a:0,
-  e:"a strict ___ → 冠詞＋形容詞後面缺名詞 → hierarchy（階層制度）。"},
+  qz:"這家公司層級分明，所以每個決定都需要主任簽名。",e:"a strict ___ → 冠詞＋形容詞後面缺名詞 → hierarchy（階層制度）。"},
  {id:"G30-7",t:"詞性",q:"Attendance at the safety briefing is ______ for all new staff.",o:["compulsory","compulsorily","compulsion","compel"],a:0,
-  e:"be 動詞後面缺補語 → 形容詞 compulsory（強制的）。"},
+  qz:"所有新進員工都必須參加安全說明會。",e:"be 動詞後面缺補語 → 形容詞 compulsory（強制的）。"},
  {id:"G30-8",t:"介連",q:"______ the merger was announced, the share price rose by 12%.",o:["After","Following","Despite","During"],a:0,
-  e:"the merger was announced 是句子 → 連接詞 After。Following、Despite、During 都是介系詞，後面只能接名詞。"},
+  qz:"合併消息宣布後，股價上漲了 12%。",e:"the merger was announced 是句子 → 連接詞 After。Following、Despite、During 都是介系詞，後面只能接名詞。"},
  {id:"G30-9",t:"介連",q:"______ the announcement of the merger, the share price rose by 12%.",o:["Once","Following","Although","When"],a:1,
-  e:"the announcement of the merger 是名詞 → 介系詞 Following。（對照上一題）"},
+  qz:"在宣布合併之後，股價上漲了 12%。",e:"the announcement of the merger 是名詞 → 介系詞 Following。（對照上一題）"},
  {id:"G30-10",t:"介連",q:"The audit must be completed ______ the end of the quarter.",o:["by","until","since","while"],a:0,
-  e:"截止期限（在…之前完成）用 by；until 是「一直持續到」。"},
+  qz:"稽核必須在本季結束前完成。",e:"截止期限（在…之前完成）用 by；until 是「一直持續到」。"},
  {id:"G30-11",t:"介連",q:"Staff may not leave the building ______ the fire drill is over.",o:["until","by","during","despite"],a:0,
-  e:"the fire drill is over 是句子，而且意思是「一直不能離開，直到演習結束」→ until（可當連接詞）。"},
+  qz:"消防演習結束前，員工不得離開大樓。",e:"the fire drill is over 是句子，而且意思是「一直不能離開，直到演習結束」→ until（可當連接詞）。"},
  {id:"G30-12",t:"介連",q:"______ the circumstances, the manager decided to postpone the launch.",o:["Given","Although","Unless","Whereas"],a:0,
-  e:"the circumstances 是名詞 → Given（考慮到）當介系詞用。其他三個都是連接詞。"},
+  qz:"考量到情況，經理決定延後上市。",e:"the circumstances 是名詞 → Given（考慮到）當介系詞用。其他三個都是連接詞。"},
  {id:"G30-13",t:"介連",q:"Free Wi-Fi is available ______ the hotel, including the pool area.",o:["throughout","although","whereas","while"],a:0,
-  e:"the hotel 是名詞 → 介系詞 throughout（遍及整個…）。（同 G19-7 的考點）"},
+  qz:"整間飯店都有免費 Wi-Fi，包括泳池區。",e:"the hotel 是名詞 → 介系詞 throughout（遍及整個…）。（同 G19-7 的考點）"},
  {id:"G30-14",t:"介連",q:"______ the budget has been reduced, the project will go ahead.",o:["Despite","Even though","In spite of","Regardless of"],a:1,
-  e:"the budget has been reduced 是句子 → 連接詞 Even though。其他三個都是介系詞。"},
+  qz:"即使預算被刪減，專案仍會進行。",e:"the budget has been reduced 是句子 → 連接詞 Even though。其他三個都是介系詞。"},
  {id:"G30-15",t:"介連",q:"______ its high price, the software has proved to be a lucrative investment.",o:["Although","Despite","Even if","Though"],a:1,
-  e:"its high price 是名詞 → 介系詞 Despite。其他三個都是連接詞。"},
+  qz:"儘管價格很高，這套軟體已證明是一項獲利豐厚的投資。",e:"its high price 是名詞 → 介系詞 Despite。其他三個都是連接詞。"},
  {id:"G30-16",t:"文法",q:"By the time the auditor ______, the documents had already been shredded.",o:["arrives","arrived","had arrived","will arrive"],a:1,
-  e:"主要子句是過去完成式 had been shredded → By the time 子句用過去式 arrived。（同 G19-10 的考點）"},
+  qz:"稽核員到達時，文件已經被碎掉了。",e:"主要子句是過去完成式 had been shredded → By the time 子句用過去式 arrived。（同 G19-10 的考點）"},
  {id:"G30-17",t:"文法",q:"By the time the auditor arrives tomorrow, we ______ all the receipts.",o:["finish","finished","will have finished","had finished"],a:2,
-  e:"tomorrow＋By the time → 未來某時之前已完成 → 未來完成式 will have finished。（對照上一題）"},
+  qz:"明天稽核員到達時，我們將已經處理完所有收據。",e:"tomorrow＋By the time → 未來某時之前已完成 → 未來完成式 will have finished。（對照上一題）"},
  {id:"G30-18",t:"文法",q:"The vouchers ______ at any of our branches until December 31.",o:["can redeem","can be redeemed","can redeeming","can have redeem"],a:1,
-  e:"優惠券是「被兌換」→ 被動 can be redeemed。（同 G19-6 must be paid 的考點）"},
+  qz:"禮券在 12 月 31 日前可於我們任何一家分店兌換。",e:"優惠券是「被兌換」→ 被動 can be redeemed。（同 G19-6 must be paid 的考點）"},
  {id:"G30-19",t:"文法",q:"Only employees ______ by their department heads may attend the workshop.",o:["nominate","nominated","nominating","nominates"],a:1,
-  e:"員工是「被提名」→ 過去分詞 nominated 修飾 employees。（同 G19-2 authorized 的考點）"},
+  qz:"只有被部門主管提名的員工可以參加研習會。",e:"員工是「被提名」→ 過去分詞 nominated 修飾 employees。（同 G19-2 authorized 的考點）"},
  {id:"G30-20",t:"文法",q:"The budget ______ to each department will be listed in the quarterly report.",o:["allocates","allocating","allocated","allocation"],a:2,
-  e:"預算是「被分配」→ 過去分詞 allocated 修飾 budget；句子的動詞是後面的 will be listed。"}
+  qz:"分配給各部門的預算將列在季報中。",e:"預算是「被分配」→ 過去分詞 allocated 修飾 budget；句子的動詞是後面的 will be listed。"}
 ];
 
 const RQ=[
@@ -1852,6 +1890,38 @@ const RQ=[
    {id:"R23-3",q:"By what date must Mr. Wu use his voucher?",o:["March 31","April 2","April 3","April 19"],a:1,e:"計算題：3/3 拿到禮券，有效 30 天 → 3 月還剩 28 天（3/4～3/31），再加 4 月 2 天 → 4/2。"},
    {id:"R23-4",q:"What does Mr. Wu most likely misunderstand?",o:["The price of a membership renewal","The number of stamps needed for a free drink","When the new program started","Whether voucher purchases earn stamps"],a:3,e:"推論題（最難）：他以為用禮券買兩杯就能從 6 點湊到 8 點，但文章一最後一點說用禮券付款不給點 → 明天還是 6 點，下週拿不到免費飲料。"},
    {id:"R23-5",q:"In the first passage, the word \"redeem\" is closest in meaning to",o:["exchange","remove","repeat","reserve"],a:0,e:"詞彙題：redeem stamps for a free drink＝用點數「換」免費飲料 → exchange。"}
+  ]},
+ {id:"R24",title:"Part 6｜電梯維修公告（段落填空）",
+  p:"To: All Employees\nFrom: Facilities Department\nSubject: Elevator Maintenance\n\nPlease be advised that the elevators in the east wing will be ___(1)___ for maintenance from Monday, May 12, through Wednesday, May 14. ___(2)___ this period, employees are asked to use the stairs or the elevators in the west wing. ___(3)___ We apologize for any inconvenience and appreciate your ___(4)___.",
+  qs:[
+   {id:"R24-1",q:"(1) 空格應填入？",o:["unavail","unavailably","unavailable","unavailability"],a:2,e:"be 動詞後面接形容詞當補語 → unavailable（無法使用的）。unavailability 是名詞。"},
+   {id:"R24-2",q:"(2) 空格應填入？",o:["During","While","Until","Since"],a:0,e:"空格後是名詞 this period → 介系詞 During。While 是連接詞要接句子。"},
+   {id:"R24-3",q:"(3) Which sentence best fits blank (3)?",o:["The cafeteria menu will change next month.","Please submit your timesheets by Friday.","The new elevators were installed last year.","Employees with mobility needs may contact Facilities for assistance."],a:3,e:"前一句叫大家走樓梯 → 接著補充「行動不便的人可以找總務協助」最順。其他三句跟維修無關。"},
+   {id:"R24-4",q:"(4) 空格應填入？",o:["patient","patiently","patience","patients"],a:2,e:"appreciate your ___ → 所有格後接名詞，固定說法 appreciate your patience（感謝您的耐心）。patients 是「病人」。"}
+  ]},
+ {id:"R25",title:"Part 6｜餐廳新菜單（段落填空）",
+  p:"GREENWAY BISTRO — NEW LUNCH MENU\n\nGreenway Bistro is pleased to announce that it will ___(1)___ a new lunch menu starting June 1. The menu features fresh, locally grown ingredients, and all dishes can be ___(2)___ to meet your dietary needs. ___(3)___ To celebrate the launch, customers who ___(4)___ a table before June 15 will receive a 10% discount on their meal.",
+  qs:[
+   {id:"R25-1",q:"(1) 空格應填入？",o:["introducing","introduce","introduced","introduction"],a:1,e:"助動詞 will 後面接原形動詞 → introduce。"},
+   {id:"R25-2",q:"(2) 空格應填入？",o:["customer","customizing","customize","customized"],a:3,e:"can be + 過去分詞（被動）→ customized（被客製化）。"},
+   {id:"R25-3",q:"(3) Which sentence best fits blank (3)?",o:["The restaurant was founded in another city.","Parking is not available on weekends.","Vegetarian and gluten-free options are clearly marked.","Our kitchen will be closed for renovation."],a:2,e:"前一句講可以配合飲食需求 → 接「素食和無麩質選項都有清楚標示」。B 跟推出新菜單矛盾。"},
+   {id:"R25-4",q:"(4) 空格應填入？",o:["reserve","reservation","to reserve","reserving"],a:0,e:"customers who ___ a table：關係子句需要動詞，主詞 customers 是複數 → reserve。"}
+  ]},
+ {id:"R26",title:"Part 6｜訂單延誤通知信（段落填空）",
+  p:"Dear Ms. Alvarez,\n\nThank you for your recent order of 200 office chairs. Unfortunately, because of a problem at our supplier's factory, we will not be able to ship your order ___(1)___ the date we originally promised. We now expect the chairs to arrive on March 20. ___(2)___, we will cover the full cost of shipping.\n\n___(3)___ you prefer to cancel the order, please let us know by March 5, and we will issue a full refund. ___(4)___\n\nSincerely,\nDaniel Cho\nCustomer Service",
+  qs:[
+   {id:"R26-1",q:"(1) 空格應填入？",o:["during","by","since","until"],a:1,e:"在某個期限「之前」完成一次性動作（出貨）→ by。until 用在持續的動作。"},
+   {id:"R26-2",q:"(2) 空格應填入？",o:["Instead of this delay","Before this delay","To make up for this delay","Despite this delay"],a:2,e:"「我們負擔全部運費」是為了彌補延誤 → To make up for this delay。"},
+   {id:"R26-3",q:"(3) 空格應填入？",o:["Because","If","Unless","Although"],a:1,e:"語意：「如果」您想取消訂單，請通知我們 → If。Unless 語意相反。"},
+   {id:"R26-4",q:"(4) Which sentence best fits blank (4)?",o:["Your chairs were delivered yesterday.","Please pay the remaining balance in cash.","Our factory is now hiring new workers.","We value your business and apologize for the inconvenience."],a:3,e:"道歉信的結尾 → 感謝惠顧並再次致歉。B 跟延誤矛盾。"}
+  ]},
+ {id:"R27",title:"Part 6｜新報帳系統備忘錄（段落填空）",
+  p:"MEMO\nTo: All Staff\nFrom: Finance Department\n\nStarting next month, all expense reports must be submitted ___(1)___ through the new online system. Paper forms will no longer be accepted. The system ___(2)___ employees to upload photos of their receipts directly from their phones. ___(3)___ Training sessions will be held next week for staff who are not yet ___(4)___ with the system.",
+  qs:[
+   {id:"R27-1",q:"(1) 空格應填入？",o:["electronic","electronically","electronics","electron"],a:1,e:"修飾動詞 be submitted → 副詞 electronically（以電子方式）。"},
+   {id:"R27-2",q:"(2) 空格應填入？",o:["lets","allows","makes","has"],a:1,e:"後面是 employees to upload → allow + 人 + to V。let／make／have 後面接原形動詞，不加 to。"},
+   {id:"R27-3",q:"(3) Which sentence best fits blank (3)?",o:["As a result, reimbursements should be processed more quickly.","Employees can no longer claim travel expenses.","Receipts must be printed on colored paper.","The finance office will move to the fifth floor."],a:0,e:"前面講新系統的好處 → 接「因此核銷會更快」。B 跟拍照上傳矛盾。"},
+   {id:"R27-4",q:"(4) 空格應填入？",o:["familiarly","familiarity","familiarize","familiar"],a:3,e:"be familiar with（熟悉）固定搭配 → 形容詞 familiar。"}
   ]}
 ];
 
@@ -2147,8 +2217,9 @@ document.querySelectorAll(".tab").forEach(t=>{
   t.onclick=()=>{
     document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
     t.classList.add("on");
-    ["daily","cards","notes","grammar","reading","cloze","test","stats"].forEach(s=>$("sec-"+s).classList.toggle("hidden",s!==t.dataset.t));
+    ["daily","cards","notes","grammar","reading","listen","cloze","test","stats"].forEach(s=>$("sec-"+s).classList.toggle("hidden",s!==t.dataset.t));
     if(t.dataset.t==="cloze")czEnter();
+    if(t.dataset.t==="listen")lEnter();
     if(t.dataset.t==="stats")renderStats();
     if(t.dataset.t==="test")renderTestHome();
     if(t.dataset.t==="notes")renderNotes();
@@ -2187,6 +2258,7 @@ function renderCards(){
   $("frontSub").textContent=ez?w.pos:"";
   $("backMain").textContent=ez?w.zh:w.en; $("backMain").className=ez?"zh":"word";
   $("backEx").textContent=w.ex||LT_EX[w.en]||"";
+  if(w.exz){const z=document.createElement("div");z.className="ex-zh";z.textContent=w.exz;$("backEx").appendChild(z);}
 }
 GROUPS.push({id:97,label:"🔴 紅字複習"},{id:98,label:"今日任務單字"},{id:99,label:"測驗不會的字"});
 GROUPS.forEach(g=>{
@@ -2322,6 +2394,7 @@ function renderG(){
     $("gType").textContent="";$("gProg").textContent="0 / 0";
     $("gText").textContent="這個組合沒有題目（例如某批次裡沒有這個題型）。換一個篩選試試。";
     $("gOpts").innerHTML="";$("gExplain").style.display="none";
+    gStartTimer(null);
     return;
   }
   $("gType").textContent=`題型：${q.t==="介連"?"介系詞/連接詞":q.t}　(${q.id})`;
@@ -2341,13 +2414,14 @@ function renderG(){
       b.classList.add(ok?"correct":"wrong");
       if(!ok)box.children[q.a].classList.add("correct");
       if(ok)sakuraCheer(b);
-      $("gExplain").textContent=q.e;
+      $("gExplain").textContent=q.e;gAddZh(q);
       $("gExplain").style.display="block";
       [...box.children].forEach(c=>c.disabled=true);
     };
     box.appendChild(b);
   });
   delete box.dataset.done;
+  gStartTimer(q);
 }
 $("gPrev").onclick=()=>{if(gIdx>0){gIdx--;renderG();}};
 $("gNext").onclick=()=>{if(gIdx<gList.length-1){gIdx++;renderG();}};
@@ -2356,13 +2430,14 @@ $("gNext").onclick=()=>{if(gIdx<gList.length-1){gIdx++;renderG();}};
 let rIdx=0;
 RQ.forEach((p,i)=>{
   const b=document.createElement("button");
-  b.className="chip"+(i===0?" on":"");b.textContent=`第 ${i+1} 篇`;
+  b.className="chip"+(i===0?" on":"");b.textContent=(isP6(p)?"Part 6・":"")+`第 ${i+1} 篇`;
   b.onclick=()=>{rIdx=i;[...$("rPick").children].forEach(c=>c.classList.remove("on"));b.classList.add("on");renderR();};
   $("rPick").appendChild(b);
 });
 function renderR(){
   const p=RQ[rIdx];
   $("rPassage").textContent=p.p;
+  setTimeout(()=>rStartTimer(p),0);
   const box=$("rQs");box.innerHTML="";
   const L=["A","B","C","D"];
   p.qs.forEach((q,qi)=>{
@@ -2432,6 +2507,7 @@ function renderGroupStats(){
 }
 function renderStats(){
   renderGroupStats();
+  renderScore();
   const nRed=redKeys().length;
   $("redN").textContent=nRed;
   $("redDrill").style.display=nRed?"block":"none";
@@ -3168,7 +3244,7 @@ function noteToday(kind,ok){
 }
 function switchTab(name){
   document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.dataset.t===name));
-  ["daily","cards","notes","grammar","reading","cloze","test","stats"].forEach(s=>$("sec-"+s).classList.toggle("hidden",s!==name));
+  ["daily","cards","notes","grammar","reading","listen","cloze","test","stats"].forEach(s=>$("sec-"+s).classList.toggle("hidden",s!==name));
   window.scrollTo(0,0);
 }
 function syncCardChips(){[...$("groupChips").children].forEach(c=>c.classList.toggle("on",c.textContent.indexOf("今日任務單字")>=0));
@@ -3434,6 +3510,214 @@ function sakuraCheer(from,quiet){
   setInterval(applyNight,60000);
   document.addEventListener("visibilitychange",()=>{if(!document.hidden)applyNight();});
 })();
+/* ============ 聽力 ============ */
+// Part 2 應答：o[0] 是正解，出題時會洗牌
+const LQ2=[
+ {q:"Where is the quarterly report?",o:["It's on your desk.","Every three months.","Yes, I reported it."],z:"季度報告在哪裡？",e:"Where 問地點 → 在你桌上。B 用 quarterly 聯想「每三個月」；C 重複 report，而且 Wh 問句不能用 Yes/No 回答。"},
+ {q:"When does the training session start?",o:["At nine thirty tomorrow.","In the main conference room.","About the new software."],z:"訓練課程什麼時候開始？",e:"When 問時間 → 明天九點半。B 答地點、C 答主題。"},
+ {q:"Who's in charge of the budget this year?",o:["Ms. Tanaka from accounting.","Yes, it's very cheap.","By the end of the year."],z:"今年誰負責預算？",e:"Who 問人 → 會計部的 Tanaka 小姐。B 用 budget 聯想 cheap，C 重複 year。"},
+ {q:"Why was the meeting postponed?",o:["The manager is sick today.","In meeting room B.","Let's meet at three."],z:"會議為什麼延期？",e:"Why 問原因 → 經理今天生病。答案不一定有 because。B、C 重複 meeting/meet 是陷阱。"},
+ {q:"How do I get to the airport from here?",o:["You can take the express train.","It's about two hours.","I've been there before."],z:"從這裡怎麼去機場？",e:"How 問方法 → 搭快車。B 回答的是 How long（多久）。"},
+ {q:"Would you like some coffee?",o:["No thanks, I've just had some.","It's in the kitchen.","He likes tea."],z:"你要喝點咖啡嗎？",e:"邀請／提供 → 不用了，我剛喝過。B 答地點、C 主詞錯（He）。"},
+ {q:"Didn't you send the invoice yesterday?",o:["I'll check my outbox.","Yes, the voice is clear.","Send it to the client."],z:"你昨天不是寄出發票了嗎？",e:"間接回答很常是正解：「我查一下寄件匣」。B 用 invoice/voice 發音相近當陷阱。"},
+ {q:"Should we order the supplies now or next week?",o:["Next week should be fine.","Yes, they were ordered.","Some office paper."],z:"我們該現在訂用品還是下週？",e:"選擇疑問句（A or B）→ 選一個：下週就可以。選擇疑問句通常不能用 Yes/No 回答。"},
+ {q:"The printer on the second floor isn't working.",o:["I'll call the technician.","Print two copies.","On the second floor."],z:"二樓的印表機壞了。",e:"直述句 → 回應解決辦法：我來打給技師。B、C 都是重複字陷阱。"},
+ {q:"How long will the renovation take?",o:["About three weeks.","It's a long hallway.","The lobby."],z:"整修要花多久？",e:"How long 問時間長度 → 大約三週。B 重複 long。"},
+ {q:"Can you help me move these boxes?",o:["Sure, where do they go?","They moved last year.","Twelve boxes."],z:"你可以幫我搬這些箱子嗎？",e:"請求 → 答應並追問：好啊，要放哪裡？B 重複 move、C 重複 boxes。"},
+ {q:"Who's going to lead the workshop?",o:["It hasn't been decided yet.","In the workshop room.","On Friday."],z:"誰要帶這場研習會？",e:"「還沒決定」「我不確定」這類回答幾乎都是正解。B 答地點、C 答時間。"},
+ {q:"What time does the store close tonight?",o:["At eight o'clock.","Yes, it's close to here.","Tonight's special."],z:"店今晚幾點關門？",e:"What time 問時間 → 八點。B 把 close（關門）換成 close（近的）當陷阱。"},
+ {q:"Is this seat taken?",o:["No, go ahead.","I'll take it to the office.","The seats are blue."],z:"這個位子有人坐嗎？",e:"Yes/No 問句 → 沒有，請坐。B 重複 take，C 重複 seat。"},
+ {q:"Where can I find the application form?",o:["It's on our website.","Form a line here.","I applied last week."],z:"我在哪裡可以找到申請表？",e:"Where → 在我們的網站上。B 用 form（排成）的另一個意思，C 用 apply 聯想。"},
+ {q:"Why don't we take a short break?",o:["That's a good idea.","Because it broke.","About ten minutes ago."],z:"我們何不休息一下？",e:"Why don't we…? 是「提議」不是問原因 → 好主意。B 用 Because 和 broke/break 雙重陷阱。"},
+ {q:"Have you met the new marketing director?",o:["Not yet, but I will tomorrow.","At the marketing meeting.","Directly to the market."],z:"你見過新的行銷主任了嗎？",e:"Yes/No 問句 → 還沒，明天會見。B 重複 marketing，C 用 director/directly。"},
+ {q:"How much does the deluxe room cost per night?",o:["It's two hundred dollars.","For three nights.","Yes, it's very large."],z:"豪華房一晚多少錢？",e:"How much 問價格 → 兩百美元。B 重複 night。"},
+ {q:"Which hotel did you book for the conference?",o:["The one near the convention center.","I read the book.","Next Tuesday."],z:"你為研討會訂了哪間飯店？",e:"Which → 指出是哪一個：會議中心附近那間。B 把 book（預訂）換成 book（書）。"},
+ {q:"Could you review this contract before Friday?",o:["I'll have it done by Thursday.","She's a contractor.","It was a good review."],z:"你可以在星期五前審閱這份合約嗎？",e:"請求 → 星期四前就會弄好。B 用 contract/contractor，C 重複 review。"},
+ {q:"Are the sales figures ready yet?",o:["Jason is still working on them.","Ready for sale.","Yes, I figured it out."],z:"銷售數字好了嗎？",e:"間接回答：Jason 還在做。B 用 sale，C 用 figure out 的發音陷阱。"},
+ {q:"When will the new employees start?",o:["On the first of next month.","At the front desk.","Start the engine."],z:"新員工什麼時候開始上班？",e:"When → 下個月一號。C 重複 start。"},
+ {q:"The conference room is booked all afternoon.",o:["Then let's use my office.","She booked a flight.","It's a large room."],z:"會議室整個下午都被預訂了。",e:"直述句 → 提出替代方案：那用我的辦公室。B 重複 booked。"},
+ {q:"Do you know where Mr. Kim's office is?",o:["It's at the end of the hall.","I know him well.","He's in charge of sales."],z:"你知道金先生的辦公室在哪嗎？",e:"Do you know where…? 重點是 where → 在走廊盡頭。B 只回答 know。"},
+ {q:"Why is the parking lot closed?",o:["It's being repaved.","Close the door, please.","About fifty cars."],z:"停車場為什麼關閉？",e:"Why → 正在重新鋪路面。B 重複 close，C 用 parking 聯想車子。"},
+ {q:"Who should I give these documents to?",o:["Leave them with the receptionist.","Yes, I gave them.","Ten pages."],z:"這些文件我該交給誰？",e:"Who → 交給櫃台人員。B 用 Yes 回答 Wh 問句，C 用 documents 聯想頁數。"},
+ {q:"Would you prefer a window or an aisle seat?",o:["Window, please.","Yes, I would.","It's a nice view."],z:"你想要靠窗還是靠走道的位子？",e:"選擇疑問句 → 選一個：靠窗。B 用 Yes 回答選擇題，C 用 window 聯想風景。"},
+ {q:"How often do you visit the factory?",o:["About once a month.","For two hours.","It's in Taichung."],z:"你多久去一次工廠？",e:"How often 問頻率 → 大約一個月一次。B 答多久、C 答地點。"},
+ {q:"Wasn't the shipment supposed to arrive today?",o:["It's been delayed until Monday.","A large ship.","Arrive at the airport."],z:"貨不是應該今天到嗎？",e:"否定問句 → 解釋狀況：延到星期一了。B 用 ship，C 重複 arrive。"},
+ {q:"Let's discuss the budget at lunch.",o:["Sounds good to me.","I had a sandwich.","The budget was approved last year."],z:"我們午餐時討論預算吧。",e:"提議 → 好啊。B 用 lunch 聯想三明治，C 重複 budget。"}
+];
+let lMode="p2",lRateV=0.95,lShow=false,lList=[],lIdx=0,lItem=null,lSess={r:0,w:0},lDone=false;
+try{const r=parseFloat(lsGet("toeic-lrate"));if(r)lRateV=r;}catch(e){}
+function lVoices(){
+  try{const v=speechSynthesis.getVoices().filter(x=>/^en/i.test(x.lang));const us=v.filter(x=>/en[-_]US/i.test(x.lang));return us.length>1?us:v;}catch(e){return [];}
+}
+// 題目一個聲音、選項換另一個聲音，比較像真的考試
+function lSpeak(parts){
+  try{speechSynthesis.cancel();}catch(e){$("lNote").textContent="這個瀏覽器不支援朗讀，請換 Chrome、Edge 或 Safari。";return;}
+  const vs=lVoices();
+  parts.forEach(p=>{const u=new SpeechSynthesisUtterance(p.t);u.lang="en-US";u.rate=lRateV;if(vs.length)u.voice=vs[p.v%vs.length];speechSynthesis.speak(u);});
+}
+function lRecord(id,ok){
+  if(!quiz[id])quiz[id]={r:0,w:0,h:""};
+  const s=quiz[id];ok?s.r++:s.w++;s.h=((s.h||"")+(ok?"1":"0")).slice(-4);saveQuiz();
+  ok?lSess.r++:lSess.w++;
+}
+function lBuild(){
+  lList=lMode==="p2"?LQ2.map((q,i)=>({k:"L2-"+(i+1),q})):WORDS.map((w,i)=>({k:"LS-"+i,w})).filter(x=>x.w.ex&&x.w.exz);
+  shuffleArr(lList);lIdx=0;
+}
+function lEnter(){if(!lList.length)lBuild();lRender(false);}
+function lParts(){
+  if(!lItem)return [];
+  if(lItem.q)return [{t:lItem.q.q,v:0}].concat(lItem.opts.map((o,i)=>({t:"ABC"[i]+". "+o,v:1})));
+  return [{t:lItem.w.ex,v:0}];
+}
+function lRender(play){
+  lDone=false;
+  $("lExplain").style.display="none";$("lExplain").innerHTML="";
+  $("lScore").textContent=lSess.r+lSess.w?`這次：對 ${lSess.r}／錯 ${lSess.w}`:"";
+  $("count").textContent=lMode==="p2"?`Part 2 ${lList.length} 題`:`聽句 ${lList.length} 題`;
+  const it=lList[lIdx];
+  if(!it){$("lText").textContent="沒有題目。";$("lOpts").innerHTML="";return;}
+  $("lProg").textContent=`${lIdx+1} / ${lList.length}`;
+  const box=$("lOpts");box.innerHTML="";
+  if(it.q){
+    const opts=shuffleArr(it.q.o.slice());
+    lItem={k:it.k,q:it.q,opts,a:opts.indexOf(it.q.o[0])};
+    $("lType").textContent="Part 2 應答・聽題目和 A／B／C 三個回應，選最適合的";
+    $("lText").textContent=lShow?it.q.q:"（文字隱藏，按「顯示文字」可以看）";
+    opts.forEach((o,i)=>{
+      const b=document.createElement("button");b.className="opt";b.dataset.l="ABC"[i];
+      b.textContent=lShow?o:"";b.onclick=()=>lAnswer(i);box.appendChild(b);
+    });
+  }else{
+    const w=it.w,pool=shuffleArr(WORDS.filter(x=>x.exz&&x!==w)).slice(0,3);
+    const opts=shuffleArr([w,...pool]);
+    lItem={k:it.k,w,opts,a:opts.indexOf(w)};
+    $("lType").textContent="聽句選意・聽一句英文，選正確的中文意思";
+    $("lText").textContent=lShow?w.ex:"（文字隱藏，按「顯示文字」可以看）";
+    opts.forEach((o,i)=>{
+      const b=document.createElement("button");b.className="opt";b.dataset.l="ABCD"[i];
+      b.textContent=o.exz;b.onclick=()=>lAnswer(i);box.appendChild(b);
+    });
+  }
+  if(play)lSpeak(lParts());
+}
+function lAnswer(i){
+  if(lDone||!lItem)return;
+  lDone=true;
+  const ok=i===lItem.a,box=$("lOpts");
+  lRecord(lItem.k,ok);
+  [...box.children].forEach((b,k)=>{b.disabled=true;if(lItem.q)b.textContent=lItem.opts[k];});
+  box.children[i].classList.add(ok?"correct":"wrong");if(!ok)box.children[lItem.a].classList.add("correct");if(ok)sakuraCheer(box.children[i]);
+  const ex=$("lExplain");
+  if(lItem.q){
+    $("lText").textContent=lItem.q.q;
+    ex.innerHTML=`<div>${czHtml(lItem.q.q)}</div><div class="ex-zh">${czHtml(lItem.q.z)}</div><div style="margin-top:6px">${czHtml(lItem.q.e)}</div>`;
+  }else{
+    const w=lItem.w;$("lText").textContent=w.ex;
+    ex.innerHTML=`<div>${czHtml(w.ex)}</div><div class="ex-zh">${czHtml(w.exz)}</div><div style="margin-top:6px"><b>${czHtml(w.en)}</b> ${czHtml(w.pos||"")}　${czHtml(w.zh)}</div>`;
+  }
+  ex.style.display="block";
+  $("lScore").textContent=`這次：對 ${lSess.r}／錯 ${lSess.w}`;
+}
+$("lPlay").onclick=()=>lSpeak(lParts());
+$("lReplay").onclick=()=>lSpeak(lParts());
+$("lNext").onclick=()=>{if(lIdx<lList.length-1)lIdx++;else{shuffleArr(lList);lIdx=0;}lRender(true);};
+[...$("lMode").children].forEach(b=>b.onclick=()=>{
+  lMode=b.dataset.m;[...$("lMode").children].forEach(c=>c.classList.toggle("on",c===b));lBuild();lRender(false);
+});
+[...$("lRate").querySelectorAll("[data-r]")].forEach(b=>{
+  b.classList.toggle("on",+b.dataset.r===lRateV);
+  b.onclick=()=>{lRateV=+b.dataset.r;lsSet("toeic-lrate",String(lRateV));[...$("lRate").querySelectorAll("[data-r]")].forEach(c=>c.classList.toggle("on",c===b));};
+});
+$("lShowText").onclick=()=>{
+  lShow=!lShow;$("lShowText").classList.toggle("on",lShow);
+  if(!lItem)return;
+  if(lDone)return;
+  $("lText").textContent=lShow?(lItem.q?lItem.q.q:lItem.w.ex):"（文字隱藏，按「顯示文字」可以看）";
+  if(lItem.q)[...$("lOpts").children].forEach((b,k)=>b.textContent=lShow?lItem.opts[k]:"");
+};
+
+/* ============ 限時模式 ============ */
+var timed=false;
+try{timed=lsGet("toeic-timed")==="1";}catch(e){}
+var gTimerId=null,rTimerId=null;
+function fmtSec(s){return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
+function setTimed(v){
+  timed=v;lsSet("toeic-timed",v?"1":"0");
+  ["gTimed","rTimed"].forEach(id=>$(id).classList.toggle("on",v));
+  renderG();renderR();
+}
+$("gTimed").onclick=()=>setTimed(!timed);
+$("rTimed").onclick=()=>setTimed(!timed);
+$("gTimed").classList.toggle("on",timed);$("rTimed").classList.toggle("on",timed);
+// 文法：每題 20 秒，時間到算錯並顯示答案
+function gStartTimer(q){
+  clearInterval(gTimerId);
+  const bar=$("gTimer");bar.classList.toggle("hidden",!timed||!q);
+  if(!timed||!q)return;
+  const LIM=20,box=$("gOpts"),t0=Date.now();
+  const fill=bar.firstElementChild,lab=bar.lastElementChild;
+  const tick=()=>{
+    if(box.dataset.done){clearInterval(gTimerId);return;}
+    const left=Math.max(0,LIM-(Date.now()-t0)/1000);
+    fill.style.width=(left/LIM*100)+"%";fill.classList.toggle("low",left<6);lab.textContent=Math.ceil(left)+" 秒";
+    if(left<=0){
+      clearInterval(gTimerId);box.dataset.done="1";
+      record(q.id,false);
+      box.children[q.a].classList.add("correct");[...box.children].forEach(c=>c.disabled=true);
+      $("gExplain").textContent="⏰ 時間到。"+q.e;gAddZh(q);$("gExplain").style.display="block";
+    }
+  };
+  tick();gTimerId=setInterval(tick,200);
+}
+function gAddZh(q){if(!q.qz)return;const d=document.createElement("div");d.className="ex-zh";d.textContent=q.qz;$("gExplain").appendChild(d);}
+// 閱讀：碼表＋建議時間（Part 7 每題 1 分鐘、Part 6 每題 30 秒），全部答完就停
+function rStartTimer(p){
+  clearInterval(rTimerId);
+  const el=$("rTimer");el.classList.toggle("hidden",!timed);
+  if(!timed)return;
+  const target=p.qs.length*(isP6(p)?30:60),t0=Date.now();
+  const tick=()=>{
+    const used=Math.round((Date.now()-t0)/1000);
+    const done=[...$("rQs").querySelectorAll(".qcard > div:nth-child(3)")].filter(d=>d.dataset.done).length;
+    el.textContent=`⏱ 已用 ${fmtSec(used)}／建議 ${fmtSec(target)}`+(done===p.qs.length?"　✔ 完成":"");
+    el.classList.toggle("over",used>target);
+    if(done===p.qs.length)clearInterval(rTimerId);
+  };
+  tick();rTimerId=setInterval(tick,500);
+}
+function isP6(p){return /^Part 6/.test(p.title);}
+
+/* ============ 預估分數 ============ */
+function accOf(ids){
+  let r=0,n=0;
+  ids.forEach(id=>{const s=quiz[id];if(!s||!s.h)return;r+=[...s.h].filter(c=>c==="1").length;n+=s.h.length;});
+  return {r,n,acc:n?r/n:null};
+}
+function renderScore(){
+  const P5=accOf(GQ.map(q=>q.id));
+  const P6=accOf(RQ.filter(isP6).flatMap(p=>p.qs.map(q=>q.id)));
+  const P7=accOf(RQ.filter(p=>!isP6(p)).flatMap(p=>p.qs.map(q=>q.id)));
+  const L=accOf(Object.keys(quiz).filter(k=>/^L[2S]-/.test(k)));
+  const r5=x=>Math.round(x/5)*5,clamp=x=>Math.max(5,Math.min(495,x));
+  const line=(name,lo,hi,note)=>`<div class="statline"><span>${name}</span><span><b>${lo}～${hi}</b></span></div><div class="bar"><div style="width:${hi/495*100}%"></div></div><div class="legend" style="margin:4px 0 10px">${note}</div>`;
+  let html="";
+  const parts=[[P5,30],[P6,16],[P7,54]].filter(([p])=>p.acc!==null);
+  const nR=P5.n+P6.n+P7.n;
+  if(nR>=20&&parts.length){
+    const w=parts.reduce((s,[,k])=>s+k,0),acc=parts.reduce((s,[p,k])=>s+p.acc*k,0)/w;
+    const mid=clamp(r5(acc*100*5-15));
+    html+=line("閱讀",clamp(mid-35),clamp(mid+35),`依 Part 5 ${pctTxt(P5)}、Part 6 ${pctTxt(P6)}、Part 7 ${pctTxt(P7)}（各題最近 4 次）`);
+  }else html+=`<div class="statline"><span>閱讀</span><span style="color:var(--mute)">再做 ${20-nR} 題文法或閱讀才估得出來</span></div>`;
+  if(L.n>=15){
+    const mid=clamp(r5(L.acc*100*5+10));
+    html+=line("聽力",clamp(mid-40),clamp(mid+40),`依聽力練習 ${pctTxt(L)}`);
+  }else html+=`<div class="statline"><span>聽力</span><span style="color:var(--mute)">再做 ${15-L.n} 題聽力才估得出來</span></div>`;
+  html+=`<div class="legend">這裡的題目比真的多益短、也沒有整場考試的時間壓力，所以只是粗估，實際分數通常會再低一點。開「限時模式」練習會比較準。</div>`;
+  $("statScore").innerHTML=html;
+}
+function pctTxt(p){return p.acc===null?"未作答":`${Math.round(p.acc*100)}%（${p.n} 次）`;}
+
 </script>
 </body>
 </html>
