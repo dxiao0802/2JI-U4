@@ -487,7 +487,7 @@ applyNight();
     <div class="qnav"><button id="lReplay">再聽一次</button><button id="lNext">下一題（自動播放）</button></div>
   </div>
   <div class="cz-score" id="lScore"></div>
-  <div class="note" id="lNote">用瀏覽器內建語音朗讀。沒聲音的話先檢查音量，或改用 Chrome、Edge、Safari。</div>
+  <div class="note" id="lNote">語音是預先錄好的 Microsoft 自然語音（題目男聲、選項女聲）。沒聲音的話先檢查音量。</div>
 </section>
 
 <!-- 填空 -->
@@ -2219,7 +2219,7 @@ document.querySelectorAll(".tab").forEach(t=>{
     t.classList.add("on");
     ["daily","cards","notes","grammar","reading","listen","cloze","test","stats"].forEach(s=>$("sec-"+s).classList.toggle("hidden",s!==t.dataset.t));
     if(t.dataset.t==="cloze")czEnter();
-    if(t.dataset.t==="listen")lEnter();
+    if(t.dataset.t==="listen")lEnter();else lStop();
     if(t.dataset.t==="stats")renderStats();
     if(t.dataset.t==="test")renderTestHome();
     if(t.dataset.t==="notes")renderNotes();
@@ -3549,11 +3549,26 @@ try{const r=parseFloat(lsGet("toeic-lrate"));if(r)lRateV=r;}catch(e){}
 function lVoices(){
   try{const v=speechSynthesis.getVoices().filter(x=>/^en/i.test(x.lang));const us=v.filter(x=>/en[-_]US/i.test(x.lang));return us.length>1?us:v;}catch(e){return [];}
 }
-// 題目一個聲音、選項換另一個聲音，比較像真的考試
+// 先用 Microsoft 自然語音錄好的音檔（audio/），找不到才退回瀏覽器朗讀
+// 題目一個聲音（Andrew）、選項換另一個聲音（Ava），比較像真的考試
+function lKey(v,t){let h=0x811c9dc5;for(const c of new TextEncoder().encode(v+"|"+t)){h^=c;h=Math.imul(h,0x01000193)>>>0;}return h.toString(16).padStart(8,"0");}
+let lAud=null,lSeq=0;
+function lStop(){lSeq++;if(lAud){try{lAud.pause();}catch(e){}lAud=null;}try{speechSynthesis.cancel();}catch(e){}}
+function lTTS(p,done){
+  try{const vs=lVoices();const u=new SpeechSynthesisUtterance(p.t);u.lang="en-US";u.rate=lRateV;if(vs.length)u.voice=vs[p.v%vs.length];u.onend=done;u.onerror=done;speechSynthesis.speak(u);}
+  catch(e){$("lNote").textContent="這個瀏覽器不支援朗讀，請換 Chrome、Edge 或 Safari。";}
+}
 function lSpeak(parts){
-  try{speechSynthesis.cancel();}catch(e){$("lNote").textContent="這個瀏覽器不支援朗讀，請換 Chrome、Edge 或 Safari。";return;}
-  const vs=lVoices();
-  parts.forEach(p=>{const u=new SpeechSynthesisUtterance(p.t);u.lang="en-US";u.rate=lRateV;if(vs.length)u.voice=vs[p.v%vs.length];speechSynthesis.speak(u);});
+  lStop();const seq=lSeq;let i=0;
+  const next=()=>{
+    if(seq!==lSeq||i>=parts.length)return;
+    const p=parts[i++],gap=()=>setTimeout(next,p.t.length<4?120:550);
+    const au=new Audio("audio/"+lKey(p.v,p.t)+".mp3");lAud=au;
+    let fell=false;const fall=()=>{if(fell||seq!==lSeq)return;fell=true;lTTS(p,gap);};
+    au.playbackRate=lRateV/0.95;au.onended=gap;au.onerror=fall;
+    au.play().catch(fall);
+  };
+  next();
 }
 function lRecord(id,ok){
   if(!quiz[id])quiz[id]={r:0,w:0,h:""};
@@ -3567,7 +3582,7 @@ function lBuild(){
 function lEnter(){if(!lList.length)lBuild();lRender(false);}
 function lParts(){
   if(!lItem)return [];
-  if(lItem.q)return [{t:lItem.q.q,v:0}].concat(lItem.opts.map((o,i)=>({t:"ABC"[i]+". "+o,v:1})));
+  if(lItem.q)return [{t:lItem.q.q,v:0}].concat(...lItem.opts.map((o,i)=>[{t:"ABC"[i]+".",v:1},{t:o,v:1}]));
   return [{t:lItem.w.ex,v:0}];
 }
 function lRender(play){
