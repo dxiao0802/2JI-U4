@@ -409,6 +409,9 @@ applyNight();
     <button class="chip" id="modeZE">中 → 英</button>
     <button class="chip" id="reviewOnly">只看需複習</button>
   </div>
+  <div class="volRow" style="display:flex;align-items:center;gap:10px;margin:-2px 0 12px;font-size:.95em">
+    <span>🔊 音量</span><input type="range" class="volRange" min="0" max="300" step="10" style="flex:1;max-width:260px;accent-color:var(--chip-on)"><b class="volVal" style="min-width:3.2em"></b>
+  </div>
   <div class="cardwrap" id="cardwrap">
     <div class="card" id="card">
       <div class="face front"><div class="hole"></div><div class="tag" id="tagF"></div><div class="review-flag">需複習 ★</div>
@@ -478,8 +481,8 @@ applyNight();
     <button class="chip" data-r="0.8">慢速</button><button class="chip" data-r="0.95">正常</button><button class="chip" data-r="1.1">快速</button>
     <button class="chip" id="lShowText">顯示文字</button>
   </div>
-  <div id="lVolRow" style="display:flex;align-items:center;gap:10px;margin:-2px 0 12px;font-size:.95em">
-    <span>🔊 音量</span><input type="range" id="lVol" min="0" max="200" step="10" style="flex:1;max-width:260px;accent-color:var(--chip-on)"><b id="lVolV" style="min-width:3.2em"></b>
+  <div class="volRow" style="display:flex;align-items:center;gap:10px;margin:-2px 0 12px;font-size:.95em">
+    <span>🔊 音量</span><input type="range" class="volRange" min="0" max="300" step="10" style="flex:1;max-width:260px;accent-color:var(--chip-on)"><b class="volVal" style="min-width:3.2em"></b>
   </div>
   <div class="qcard">
     <div class="qmeta"><span id="lType"></span><span id="lProg"></span></div>
@@ -2321,7 +2324,7 @@ function swEnd(e,cancel){
 cw.addEventListener("pointerup",e=>swEnd(e,false));
 cw.addEventListener("pointercancel",e=>swEnd(e,true));
 $("speakBtn").onclick=e=>{e.stopPropagation();const w=deck[idx];if(!w)return;
-  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(w.en);u.lang="en-US";u.rate=.92;try{u.volume=lTtsVol();}catch(e){}speechSynthesis.speak(u);}catch(err){}};
+  sayEn(w.en);};
 $("knowBtn").onclick=()=>flyOut(1,knowFn);
 $("againBtn").onclick=()=>flyOut(-1,againFn);
 async function knowFn(){const w=deck[idx];if(w){recWord(w.i,true);noteDailyWord(w.i);sakuraCheer($("knowBtn"),true);}if(w&&marks[w.i]){delete marks[w.i];await saveMarks();}if(deck.length){idx=(idx+1)%deck.length;renderCards();}}
@@ -2915,7 +2918,7 @@ function tRender(){
 }
 function tSay(){
   const it=tItems[tPos];if(!it)return;
-  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(it.en);u.lang="en-US";u.rate=.92;try{u.volume=lTtsVol();}catch(e){}speechSynthesis.speak(u);}catch(e){}
+  sayEn(it.en);
 }
 async function tAnswer(yes){
   if(tPos>=tItems.length)return;
@@ -3619,14 +3622,14 @@ const LQ2=[
 ];
 let lMode="p2",lRateV=0.95,lShow=false,lList=[],lIdx=0,lItem=null,lSess={r:0,w:0},lDone=false;
 try{const r=parseFloat(lsGet("toeic-lrate"));if(r)lRateV=r;}catch(e){}
-// 網站自己的音量（只影響這個網頁）：0–200%，超過 100% 用 Web Audio 放大音檔
-let lVol=1,lCtx=null,lGain=null;
-try{const v=parseFloat(lsGet("toeic-lvol"));if(!isNaN(v))lVol=Math.max(0,Math.min(2,v));}catch(e){}
+// 網站自己的音量（只影響這個網頁）：0–300%，預設 200%。超過 100% 用 Web Audio 放大音檔，再接壓縮器避免爆音
+let lVol=2,lCtx=null,lGain=null,lComp=null;
+try{const v=parseFloat(lsGet("toeic-vol"));if(!isNaN(v))lVol=Math.max(0,Math.min(3,v));}catch(e){}
 function lTtsVol(){return Math.min(1,lVol);}
 function lApplyVol(au){
   au.volume=Math.min(1,lVol);lGain=null;
   if(lVol<=1||!/^https?:/.test(location.protocol))return;
-  try{lCtx=lCtx||new (window.AudioContext||window.webkitAudioContext)();const g=lCtx.createGain();g.gain.value=lVol;lCtx.createMediaElementSource(au).connect(g).connect(lCtx.destination);lGain=g;au.volume=1;if(lCtx.state==="suspended")lCtx.resume();}catch(e){}
+  try{lCtx=lCtx||new (window.AudioContext||window.webkitAudioContext)();if(!lComp){lComp=lCtx.createDynamicsCompressor();lComp.threshold.value=-8;lComp.knee.value=6;lComp.ratio.value=12;lComp.attack.value=0.003;lComp.release.value=0.15;lComp.connect(lCtx.destination);}const g=lCtx.createGain();g.gain.value=lVol;lCtx.createMediaElementSource(au).connect(g).connect(lComp);lGain=g;au.volume=1;if(lCtx.state==="suspended")lCtx.resume();}catch(e){}
 }
 function lVoices(){
   try{const v=speechSynthesis.getVoices().filter(x=>/^en/i.test(x.lang));const us=v.filter(x=>/en[-_]US/i.test(x.lang));return us.length>1?us:v;}catch(e){return [];}
@@ -3651,6 +3654,12 @@ function lSpeak(parts){
     au.play().catch(fall);
   };
   next();
+}
+// 單字發音也用錄好的音檔（Andrew），才能跟著音量放大；找不到才退回瀏覽器朗讀
+function sayEn(t){
+  lStop();const seq=lSeq;const au=new Audio("audio/"+lKey(0,t)+".mp3");lAud=au;let fell=false;
+  const fall=()=>{if(fell||seq!==lSeq)return;fell=true;try{const u=new SpeechSynthesisUtterance(t);u.lang="en-US";u.rate=.92;u.volume=lTtsVol();speechSynthesis.speak(u);}catch(e){}};
+  lApplyVol(au);au.onerror=fall;au.play().catch(fall);
 }
 function lRecord(id,ok){
   if(!quiz[id])quiz[id]={r:0,w:0,h:""};
@@ -3724,9 +3733,10 @@ $("lNext").onclick=()=>{if(lIdx<lList.length-1)lIdx++;else lBuild();lRender(true
 [...$("lMode").children].forEach(b=>b.onclick=()=>{
   lMode=b.dataset.m;[...$("lMode").children].forEach(c=>c.classList.toggle("on",c===b));lBuild();lRender(false);
 });
-(()=>{const r=$("lVol"),t=$("lVolV");if(!r)return;r.value=Math.round(lVol*100);t.textContent=r.value+"%";
-  r.oninput=()=>{lVol=r.value/100;t.textContent=r.value+"%";lsSet("toeic-lvol",String(lVol));
-    if(lAud){if(lGain)lGain.gain.value=lVol;else lAud.volume=Math.min(1,lVol);}};})();
+(()=>{const rs=[...document.querySelectorAll(".volRange")];
+  const show=()=>rs.forEach(r=>{r.value=Math.round(lVol*100);r.nextElementSibling.textContent=r.value+"%";});show();
+  rs.forEach(r=>r.oninput=()=>{lVol=r.value/100;show();lsSet("toeic-vol",String(lVol));
+    if(lAud){if(lGain)lGain.gain.value=lVol;else lAud.volume=Math.min(1,lVol);}});})();
 [...$("lRate").querySelectorAll("[data-r]")].forEach(b=>{
   b.classList.toggle("on",+b.dataset.r===lRateV);
   b.onclick=()=>{lRateV=+b.dataset.r;lsSet("toeic-lrate",String(lRateV));[...$("lRate").querySelectorAll("[data-r]")].forEach(c=>c.classList.toggle("on",c===b));};
