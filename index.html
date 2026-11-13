@@ -2345,7 +2345,8 @@ let gFilterType="全部",gFilterBatch="全部",gIdx=0,gList=[];
 const GTYPES=["全部","詞性","介連","搭配","文法"];
 const GBATCH=[
  {k:"全部",label:"全部批次"},
- {k:"今日",label:"★ 今日 8 題"},
+ {k:"今日",label:"★ 今日 10 題"},
+ {k:"錯題",label:"✕ 還在錯的題"},
  {k:"G1",label:"第1批 0822"},
  {k:"G2",label:"第2批 0822-2"},
  {k:"G3",label:"第3批 0829"},
@@ -2391,7 +2392,7 @@ GTYPES.forEach(t=>{
 });
 function buildG(){
   gList=GQ.filter(q=>(gFilterType==="全部"||q.t===gFilterType)&&(
-    gFilterBatch==="全部"?true:gFilterBatch==="今日"?(daily&&daily.gq.indexOf(q.id)>=0):q.id.startsWith(gFilterBatch+"-")));
+    gFilterBatch==="全部"?true:gFilterBatch==="今日"?(daily&&daily.gq.indexOf(q.id)>=0):gFilterBatch==="錯題"?gRecentBad(q.id):q.id.startsWith(gFilterBatch+"-")));
   if(gIdx>=gList.length)gIdx=0;
 }
 function renderG(){
@@ -2565,7 +2566,9 @@ $("copyBtn").onclick=async()=>{
     const g=GQ.filter(q=>quiz[q.id]);
     const r=RQ.flatMap(p=>p.qs).filter(q=>quiz[q.id]);
     const sum=a=>a.reduce((s,q)=>{const x=quiz[q.id];return[s[0]+x.r,s[1]+x.w]},[0,0]);
-    if(g.length){const[cr,cw]=sum(g);lines.push(`文法：對${cr} 錯${cw}`);}
+    if(g.length){const[cr,cw]=sum(g);lines.push(`文法：對${cr} 錯${cw}`);
+      const bt={};g.forEach(q=>{const o=bt[q.t]||(bt[q.t]={r:0,w:0});o.r+=quiz[q.id].r;o.w+=quiz[q.id].w;});
+      lines.push("文法分類正確率："+Object.entries(bt).map(([t,o])=>`${t} ${Math.round(o.r/(o.r+o.w)*100)}%(${o.r}/${o.r+o.w})`).join(", "));}
     if(r.length){const[cr,cw]=sum(r);lines.push(`閱讀：對${cr} 錯${cw}`);}
     const wrongs=[...GQ,...RQ.flatMap(p=>p.qs)].filter(q=>quiz[q.id]&&quiz[q.id].w>0);
     const fx=wrongs.filter(q=>(quiz[q.id].h||"").slice(-2)==="11");
@@ -3170,7 +3173,14 @@ function drawNotes(){
 }
 
 /* ============ 今日任務 ============ */
-const D_VOCAB=25, D_GRAM=8;
+const D_VOCAB=25, D_GRAM=10;
+// 近期還在錯的才算弱項；連續兩次答對就畢業，不再每天糾纏
+function gRecentBad(id){const s=quiz[id];if(!s)return false;const hh=s.h||"";
+  if(hh.length>=2&&hh.slice(-2)==="11")return false;
+  return hh.indexOf("0")>=0||(!hh&&s.w>0);}
+// 各類文法題的錯誤率（答過 5 題以上才算），用來決定每天多出哪一類
+function gTypeErr(){const t={};GQ.forEach(q=>{const x=quiz[q.id];if(!x)return;const o=t[q.t]||(t[q.t]={r:0,w:0});o.r+=x.r;o.w+=x.w;});
+  const out={};Object.entries(t).forEach(([k,o])=>{const n=o.r+o.w;out[k]=n>=5?o.w/n:0;});return out;}
 function todayKey(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
 function hashStr(s){let x=2166136261;for(let i=0;i<s.length;i++){x^=s.charCodeAt(i);x=Math.imul(x,16777619);}return x>>>0;}
 function rngFrom(seed){let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
@@ -3186,15 +3196,16 @@ function buildDaily(){
   const vocab=red.slice(0,Math.ceil(D_VOCAB*0.6));
   for(const src of [review,rest,red]){for(const i of src){if(vocab.length>=D_VOCAB)break;if(vocab.indexOf(i)<0)vocab.push(i);}}
 
-  // 近期還在錯的才算弱項；連續兩次答對就畢業，不再每天糾纏
-  const recentBad=id=>{const s=quiz[id];if(!s)return false;const hh=s.h||"";
-    if(hh.length>=2&&hh.slice(-2)==="11")return false;
-    return hh.indexOf("0")>=0||(!hh&&s.w>0);};
+  const recentBad=gRecentBad,tErr=gTypeErr();
   const wrong=shuffleSeed(GQ.filter(q=>recentBad(q.id)).map(q=>q.id),rnd);
-  const fresh=shuffleSeed(GQ.filter(q=>!quiz[q.id]).map(q=>q.id),rnd);
+  // 新題目先放 3 題錯誤率最高那一類（例如介連），其餘各類隨機，避免整天只練同一種
+  const weakT=Object.keys(tErr).sort((a,b)=>tErr[b]-tErr[a])[0];
+  const freshAll=shuffleSeed(GQ.filter(q=>!quiz[q.id]),rnd);
+  const freshWeak=(weakT&&tErr[weakT]>0)?freshAll.filter(q=>q.t===weakT).slice(0,3):[];
+  const fresh=freshWeak.concat(freshAll.filter(q=>freshWeak.indexOf(q)<0)).map(q=>q.id);
   const seen=shuffleSeed(GQ.filter(q=>quiz[q.id]&&!recentBad(q.id)).map(q=>q.id),rnd);
   const gq=[];
-  for(const src of [wrong.slice(0,3),fresh,seen,wrong]){for(const id of src){if(gq.length>=D_GRAM)break;if(gq.indexOf(id)<0)gq.push(id);}}
+  for(const src of [wrong.slice(0,5),fresh,seen,wrong]){for(const id of src){if(gq.length>=D_GRAM)break;if(gq.indexOf(id)<0)gq.push(id);}}
 
   const untouched=RQ.filter(pg=>pg.qs.every(q=>!quiz[q.id]));
   const pool=untouched.length?untouched:RQ;
@@ -3223,7 +3234,7 @@ function dailyParts(){
   const rTotal=pg?pg.qs.length:0;
   return [
     {k:"v",name:"單字卡",done:daily.vDone.length,total:daily.vocab.length,meta:"紅字優先，答對會讓紅字退掉",go:()=>{group=98;reviewOnly=false;idx=0;syncCardChips();buildDeck();renderCards();switchTab("cards");}},
-    {k:"g",name:"文法",done:daily.gDone.length,total:daily.gq.length,meta:"3 題弱項＋5 題新的",go:()=>{gFilterBatch="今日";gFilterType="全部";gIdx=0;syncGChips();buildG();renderG();switchTab("grammar");}},
+    {k:"g",name:"文法",done:daily.gDone.length,total:daily.gq.length,meta:"5 題錯過的＋5 題新的（最弱的類型優先）",go:()=>{gFilterBatch="今日";gFilterType="全部";gIdx=0;syncGChips();buildG();renderG();switchTab("grammar");}},
     {k:"r",name:"閱讀 "+(pg?pg.title:""),done:daily.rDone.length,total:rTotal,meta:"一篇，全部答完才算",go:()=>{const i=RQ.findIndex(p=>p.id===daily.rid);if(i>=0){rIdx=i;[...$("rPick").children].forEach((c,j)=>c.classList.toggle("on",j===i));renderR();}switchTab("reading");}}
   ];
 }
