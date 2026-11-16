@@ -2100,6 +2100,12 @@ async function gh(path,opt={}){
   const r=await fetch("https://api.github.com"+path,{...opt,cache:"no-store",headers:h});
   if(r.status===401)throw new Error("token 無效或已過期");
   if(r.status===404)throw new Error("找不到同步資料（token 要有 gist 權限）");
+  if(r.status===403||r.status===429){
+    let m="";try{m=((await r.json()).message||"").toLowerCase();}catch(e){}
+    if(m.indexOf("rate limit")>=0||r.headers.get("x-ratelimit-remaining")==="0"||r.status===429)
+      throw new Error("同步太頻繁被 GitHub 暫時擋住，過幾分鐘會自己恢復，進度都還存在這台裝置");
+    throw new Error("token 沒有 gist 寫入權限（GitHub 403）");
+  }
   if(!r.ok)throw new Error("GitHub 錯誤 "+r.status);
   return r.status===204?null:r.json();
 }
@@ -2128,7 +2134,7 @@ async function syncPull(){
 function syncSchedule(){
   if(!syncOn())return;
   clearTimeout(syncTimer);
-  syncTimer=setTimeout(syncFlush,2500);
+  syncTimer=setTimeout(syncFlush,20000);
 }
 async function syncFlush(keepalive){
   clearTimeout(syncTimer);syncTimer=null;
