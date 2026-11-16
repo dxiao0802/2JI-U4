@@ -160,6 +160,8 @@ applyNight();
   .statline{font-size:14px;display:flex;justify-content:space-between;gap:10px;margin-top:6px}
   .wronglist{font-size:14px;line-height:1.8;color:var(--ink2)}
   .copybtn{width:100%;border:none;border-radius:5px;padding:14px 0;font-size:15px;font-weight:700;background:var(--solid-print);color:#fff;cursor:pointer;margin-top:4px}
+  .copyrow{display:flex;gap:8px}.copyrow .copybtn{flex:1;min-width:0}
+  .copybtn.alt{background:transparent;color:var(--solid-print);box-shadow:inset 0 0 0 2px var(--solid-print)}
   .note{font-size:12.5px;color:var(--mute);text-align:center;margin-top:10px;line-height:1.7}
   .keyhint{font-size:12.5px;color:var(--mute);text-align:center;margin-top:12px;line-height:1.9}
   .keyhint kbd,.kb-key{display:inline-block;min-width:26px;padding:2px 8px;border-radius:4px;background:var(--sheet);
@@ -557,8 +559,11 @@ applyNight();
   <div class="statbox"><h3>預估多益分數（粗估）</h3><div id="statScore"></div></div>
   <div class="statbox"><h3>文法 — 各題型正確率</h3><div id="statTypes"></div></div>
   <div class="statbox"><h3>答錯過的題目</h3><div class="wronglist" id="wrongList">還沒有紀錄。</div></div>
-  <button class="copybtn" id="copyBtn">複製結果給 Claude</button>
-  <div class="note">我沒辦法直接看到你在這裡的作答，<br>做完按上面的按鈕，把結果貼回聊天室給我。</div>
+  <div class="copyrow">
+    <button class="copybtn" id="copyBtn">今日回報</button>
+    <button class="copybtn alt" id="copyWeekBtn">週總結（完整）</button>
+  </div>
+  <div class="note">我沒辦法直接看到你在這裡的作答，<br>每天按「今日回報」；一週一次（例如週日）按「週總結」，把結果貼回聊天室給我。</div>
   <div class="kb-actions" style="margin-top:10px">
     <button id="exportBtn">匯出紀錄（複製）</button>
     <button id="importBtn">匯入紀錄（貼上）</button>
@@ -2546,8 +2551,8 @@ $("redDrill").onclick=()=>{
   [...$("groupChips").children].forEach(c=>c.classList.toggle("on",c.textContent.indexOf("紅字複習")>=0));
   $("reviewOnly").classList.remove("on");buildDeck();renderCards();switchTab("cards");
 };
-$("copyBtn").onclick=async()=>{
-  const lines=["【多益練習室成績回報】"];
+async function copyReport(full,btn,label){
+  const lines=[full?"【多益練習室｜週總結】":"【多益練習室｜今日回報】"];
   if(daily&&daily.date===todayKey()&&daily.log){
     const L=daily.log;
     if(L.vR+L.vW+L.gR+L.gW+L.rR+L.rW)
@@ -2555,6 +2560,12 @@ $("copyBtn").onclick=async()=>{
     if((L.czR||0)+(L.czW||0))lines.push(`單字填空：對${L.czR||0} 錯${L.czW||0}`);
     if((L.pcR||0)+(L.pcW||0))lines.push(`介連第1步（判斷後面接名詞還是句子）：對${L.pcR||0} 錯${L.pcW||0}`);
   }
+  if(!full){
+    if(lines.length===1)lines.push("今天還沒有作答紀錄。");
+    lines.push("紅字單字剩 "+redKeys().length+" 個");
+    const mk=WORDS.filter((w,i)=>marks[i]).concat(testWords.filter(w=>marks["t:"+w.en]));
+    if(mk.length)lines.push("需複習單字："+mk.map(w=>w.en).join(", "));
+  }else{
   lines.push("—— 以下為累計 ——");
   const gr=groupRows();
   if(gr.length)lines.push("單字各組最近5次錯誤率："+gr.map(r=>`${gLabel(r.g).replace(/（.*/,"")} ${r.pct}%(${r.bad}/${r.n})`).join(", "));
@@ -2578,15 +2589,18 @@ $("copyBtn").onclick=async()=>{
     const marked=WORDS.filter((w,i)=>marks[i]).concat(testWords.filter(w=>marks["t:"+w.en]));
     if(marked.length)lines.push("需複習單字："+marked.map(w=>w.en).join(", "));
   }
+  }
   const txt=lines.join("\n");
-  try{await navigator.clipboard.writeText(txt);$("copyBtn").textContent="已複製！貼到聊天室給我";}
+  try{await navigator.clipboard.writeText(txt);btn.textContent="已複製！貼到聊天室給我";}
   catch(e){
     const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);
     ta.select();document.execCommand("copy");ta.remove();
-    $("copyBtn").textContent="已複製！貼到聊天室給我";
+    btn.textContent="已複製！貼到聊天室給我";
   }
-  setTimeout(()=>$("copyBtn").textContent="複製結果給 Claude",2500);
-};
+  setTimeout(()=>btn.textContent=label,2500);
+}
+$("copyBtn").onclick=()=>copyReport(false,$("copyBtn"),"今日回報");
+$("copyWeekBtn").onclick=()=>copyReport(true,$("copyWeekBtn"),"週總結（完整）");
 $("resetBtn").onclick=async()=>{
   if(!confirm("確定要清除所有作答紀錄？（單字複習標記會保留）"))return;
   quiz={};wstat={};await saveQuiz();await saveWstat();renderStats();
