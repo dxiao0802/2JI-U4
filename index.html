@@ -2200,13 +2200,16 @@ async function load(){
 }
 async function saveMarks(){try{await window.storage.set("toeic-marks",JSON.stringify(marks));}catch(e){}}
 async function saveQuiz(){try{await window.storage.set("toeic-quiz",JSON.stringify(quiz));}catch(e){}}
-function record(qid,ok){
+function record(qid,ok,pick){
   if(!quiz[qid])quiz[qid]={r:0,w:0,h:""};
   const s=quiz[qid];
   ok?s.r++:s.w++;
   s.h=((s.h||"")+(ok?"1":"0")).slice(-4);
   saveQuiz();
-  noteToday(GQ.some(q=>q.id===qid)?"g":"r",ok);
+  const isG=GQ.some(q=>q.id===qid);
+  // 今日文法逐題紀錄 [題號, 選的選項(-1=超時)]，給今日回報用
+  if(isG&&daily&&daily.date===todayKey()){if(!daily.log)daily.log={vR:0,vW:0,gR:0,gW:0,rR:0,rW:0};(daily.log.gA||(daily.log.gA=[])).push([qid,pick==null?-1:pick]);}
+  noteToday(isG?"g":"r",ok);
   noteDaily(qid);
 }
 const $=id=>document.getElementById(id);
@@ -2428,7 +2431,7 @@ function renderG(){
       if(box.dataset.done)return;
       box.dataset.done="1";
       const ok=i===q.a;
-      record(q.id,ok);
+      record(q.id,ok,i);
       b.classList.add(ok?"correct":"wrong");
       if(!ok)box.children[q.a].classList.add("correct");
       if(ok)sakuraCheer(b);
@@ -2470,7 +2473,7 @@ function renderR(){
         if(ob.dataset.done)return;
         ob.dataset.done="1";
         const ok=i===q.a;
-        record(q.id,ok);
+        record(q.id,ok,i);
         b.classList.add(ok?"correct":"wrong");
         if(!ok)ob.children[q.a].classList.add("correct");
         if(ok)sakuraCheer(b);
@@ -2565,6 +2568,16 @@ async function copyReport(full,btn,label){
       lines.push(`今天：單字 ${L.vR+L.vW} 張(需複習 ${L.vW})、文法 對${L.gR} 錯${L.gW}、閱讀 對${L.rR} 錯${L.rW}　｜完成 ${daily.rounds||0} 輪`);
     if((L.czR||0)+(L.czW||0))lines.push(`單字填空：對${L.czR||0} 錯${L.czW||0}`);
     if((L.pcR||0)+(L.pcW||0))lines.push(`介連第1步（判斷後面接名詞還是句子）：對${L.pcR||0} 錯${L.pcW||0}`);
+    const gA=L.gA||[];
+    if(gA.length){
+      const bt={},wr={};
+      gA.forEach(([id,p])=>{const q=GQ.find(x=>x.id===id);if(!q)return;
+        const o=bt[q.t]||(bt[q.t]={r:0,n:0});o.n++;
+        if(p===q.a)o.r++;else(wr[id]||(wr[id]={q,p:[]})).p.push(p);});
+      lines.push("文法今日分類："+Object.entries(bt).map(([t,o])=>`${t} ${o.r}/${o.n}`).join(", "));
+      const ws=Object.values(wr);
+      if(ws.length)lines.push("文法錯題（題號 類型 你選→正解）：\n"+ws.map(({q,p})=>`${q.id} ${q.t} ${p.map(x=>x<0?"超時":q.o[x]).join("/")}→${q.o[q.a]}`).join("\n"));
+    }
   }
   if(!full){
     if(lines.length===1)lines.push("今天還沒有作答紀錄。");
@@ -2867,7 +2880,7 @@ async function czAnswer(i){
   const box=$("czOpts"),ex=$("czExplain");
   if(czItem.q){
     const q=czItem.q,ok=i===q.a;
-    record(q.id,ok);ok?czSess.r++:czSess.w++;
+    record(q.id,ok,i);ok?czSess.r++:czSess.w++;
     [...box.children].forEach((b,k)=>{
       b.disabled=true;
       const r=czRole(q.o[k]);
