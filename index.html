@@ -526,7 +526,7 @@ applyNight();
   <div id="tStart">
     <div class="qcard t-intro">
       <h3 style="margin-bottom:8px">單字量測驗</h3>
-      從高中 Level 1～6 和多益商務字各抽 15 個，加上 8 個<b>不存在的假字</b>，共 113 題，大約 5～7 分鐘。<br><br>
+      Level 3、Level 4、多益商務字各抽 40 個，Level 1、2、5、6 各抽 25 個，加上 12 個<b>不存在的假字</b>，共 232 題，大約 8～10 分鐘。<br><br>
       看到字，<b>一秒內想得出中文意思</b>才按「會」。想不出來、只覺得眼熟、不確定，一律按「不會」。<br>
       對假字按「會」的次數會用來校正結果，亂按分數反而會被扣。<br><br>
       測完你不會的字會自動加進單字卡的「測驗不會的字」組別，並標成需複習。
@@ -1989,15 +1989,15 @@ const LT_LEVELS=[
  {k:"BIZ",label:"多益商務字",size:1000}
 ];
 const LT_WORDS={
- L1:[["answer","v./n.","回答"],["busy","adj.","忙碌的"],["careful","adj.","小心的"],["dinner","n.","晚餐"],["early","adj./adv.","早的"],["floor","n.","地板；樓層"],["happen","v.","發生"],["idea","n.","主意"],["kitchen","n.","廚房"],["letter","n.","信；字母"],["money","n.","錢"],["nothing","pron.","沒有東西"],["price","n.","價格"],["story","n.","故事"],["weather","n.","天氣"]],
- L2:[["accept","v.","接受"],["borrow","v.","借入"],["choice","n.","選擇"],["decide","v.","決定"],["examine","v.","檢查"],["famous","adj.","有名的"],["gather","v.","聚集"],["hurry","v.","趕快"],["include","v.","包含"],["knowledge","n.","知識"],["local","adj.","當地的"],["medicine","n.","藥"],["offer","v./n.","提供"],["public","adj.","公共的"],["repair","v.","修理"]],
- L3:[["ability","n.","能力"],["attitude","n.","態度"],["compare","v.","比較"],["delay","v./n.","延誤"],["emergency","n.","緊急狀況"],["frequent","adj.","頻繁的"],["identify","v.","辨認"],["instance","n.","例子"],["majority","n.","大多數"],["observe","v.","觀察"],["participate","v.","參加"],["promote","v.","促進；升遷"],["recommend","v.","推薦"],["reliable","adj.","可靠的"],["suitable","adj.","適合的"]],
- L4:[["adequate","adj.","足夠的"],["alternative","n./adj.","替代方案"],["assume","v.","假定"],["authority","n.","權威；當局"],["circumstance","n.","情況"],["consequence","n.","後果"],["distinguish","v.","區分"],["flexible","adj.","有彈性的"],["fundamental","adj.","基本的"],["inevitable","adj.","不可避免的"],["obtain","v.","取得"],["precise","adj.","精確的"],["relevant","adj.","相關的"],["substitute","n./v.","替代"],["vital","adj.","極重要的"]],
- L5:[["accumulate","v.","累積"],["allocate","v.","分配"],["ambiguous","adj.","模稜兩可的"],["comprehensive","adj.","全面的"],["compulsory","adj.","強制的"],["deteriorate","v.","惡化"],["diminish","v.","減少"],["feasible","adj.","可行的"],["incentive","n.","誘因"],["prominent","adj.","顯著的；著名的"],["subsequent","adj.","後續的"],["versatile","adj.","多用途的"],["coherent","adj.","連貫的"],["exclusive","adj.","獨家的"],["spontaneous","adj.","自發的"]],
- L6:[["arbitrary","adj.","任意的"],["contemplate","v.","深思"],["discrepancy","n.","差異、不一致"],["hierarchy","n.","階層"],["impartial","adj.","公正的"],["lucrative","adj.","賺錢的"],["meticulous","adj.","一絲不苟的"],["notorious","adj.","惡名昭彰的"],["prerequisite","n.","先決條件"],["scrutiny","n.","詳細檢查"],["tentative","adj.","暫定的"],["unprecedented","adj.","前所未有的"],["aggravate","v.","加重、惡化"],["anecdote","n.","軼事"],["exquisite","adj.","精緻的"]],
- BIZ:[["procurement","n.","採購"],["quarterly","adj.","每季的"],["merger","n.","合併"],["liability","n.","責任；負債"],["audit","n./v.","稽核"],["retailer","n.","零售商"],["vendor","n.","供應商、攤販"],["amenity","n.","便利設施"],["voucher","n.","優惠券、憑證"],["courier","n.","快遞"],["logistics","n.","物流"],["overtime","n.","加班"],["headquarters","n.","總部"],["stakeholder","n.","利害關係人"],["outsource","v.","外包"]]
+ L1:[["answer","v./n.","回答"],["busy","adj.","忙碌的"],["careful","adj.","小心的"],["dinner","n.","晚餐"],["early","adj./adv.","早的"],["floor","n.","地板；樓層"],["happen","v.","發生"],["idea","n.","主意"],["kitchen","n.","廚房"],["letter","n.","信；字母"],["money","n.","錢"],["nothing","pron.","沒有東西"],["price","n.","價格"],["story","n.","故事"],["weather","n.","天氣"],["bottle","n.","瓶子"],["clean","adj./v.","乾淨的；清理"],["cousin","n.","表/堂兄弟姊妹"],["cheap","adj.","便宜的"],["finish","v.","完成"],["garden","n.","花園"],["hungry","adj.","飢餓的"],["island","n.","島"],["quiet","adj.","安靜的"],["river","n.","河流"]],
+ L2:[["accept","v.","接受"],["borrow","v.","借入"],["choice","n.","選擇"],["decide","v.","決定"],["examine","v.","檢查"],["famous","adj.","有名的"],["gather","v.","聚集"],["hurry","v.","趕快"],["include","v.","包含"],["knowledge","n.","知識"],["local","adj.","當地的"],["medicine","n.","藥"],["offer","v./n.","提供"],["public","adj.","公共的"],["repair","v.","修理"],["bake","v.","烘烤"],["belong","v.","屬於"],["courage","n.","勇氣"],["discuss","v.","討論"],["excellent","adj.","極好的"],["honest","adj.","誠實的"],["imagine","v.","想像"],["invite","v.","邀請"],["lend","v.","借出"],["modern","adj.","現代的"]],
+ L3:[["ability","n.","能力"],["attitude","n.","態度"],["compare","v.","比較"],["delay","v./n.","延誤"],["emergency","n.","緊急狀況"],["frequent","adj.","頻繁的"],["identify","v.","辨認"],["instance","n.","例子"],["majority","n.","大多數"],["observe","v.","觀察"],["participate","v.","參加"],["promote","v.","促進；升遷"],["recommend","v.","推薦"],["reliable","adj.","可靠的"],["suitable","adj.","適合的"],["absence","n.","缺席"],["admire","v.","欽佩；欣賞"],["arrangement","n.","安排"],["assist","v.","協助"],["convenient","adj.","方便的"],["deny","v.","否認"],["entire","adj.","整個的"],["firm","n./adj.","公司；堅定的"],["generous","adj.","慷慨的"],["impression","n.","印象"],["inspect","v.","檢查"],["interrupt","v.","打斷"],["investigate","v.","調查"],["mature","adj.","成熟的"],["occasion","n.","場合；時機"],["portion","n.","部分；一份"],["sincere","adj.","真誠的"],["vacant","adj.","空著的"],["contract","n.","合約"],["appreciate","v.","感激；欣賞"],["equipment","n.","設備"],["sign","v./n.","簽名；標誌"],["accomplish","v.","完成、達成"],["anxious","adj.","焦慮的；渴望的"],["associate","v./n.","聯想；同事"]],
+ L4:[["adequate","adj.","足夠的"],["alternative","n./adj.","替代方案"],["assume","v.","假定"],["authority","n.","權威；當局"],["circumstance","n.","情況"],["consequence","n.","後果"],["distinguish","v.","區分"],["flexible","adj.","有彈性的"],["fundamental","adj.","基本的"],["inevitable","adj.","不可避免的"],["obtain","v.","取得"],["precise","adj.","精確的"],["relevant","adj.","相關的"],["substitute","n./v.","替代"],["vital","adj.","極重要的"],["absorb","v.","吸收"],["alert","adj./v.","警覺的；警告"],["barrier","n.","障礙"],["capacity","n.","容量；能力"],["clarify","v.","澄清"],["collapse","v./n.","倒塌；崩潰"],["consume","v.","消耗"],["cooperate","v.","合作"],["draft","n./v.","草稿；起草"],["forecast","n./v.","預測"],["genuine","adj.","真正的"],["insurance","n.","保險"],["preserve","v.","保存"],["priority","n.","優先事項"],["register","v.","登記、註冊"],["urgent","adj.","緊急的"],["intense","adj.","強烈的"],["occupation","n.","職業"],["resolve","v.","解決"],["abstract","adj.","抽象的"],["auction","n.","拍賣"],["concrete","adj./n.","具體的；混凝土"],["endure","v.","忍受；持久"],["hostile","adj.","敵意的"],["rational","adj.","理性的"]],
+ L5:[["accumulate","v.","累積"],["allocate","v.","分配"],["ambiguous","adj.","模稜兩可的"],["comprehensive","adj.","全面的"],["compulsory","adj.","強制的"],["deteriorate","v.","惡化"],["diminish","v.","減少"],["feasible","adj.","可行的"],["incentive","n.","誘因"],["prominent","adj.","顯著的；著名的"],["subsequent","adj.","後續的"],["versatile","adj.","多用途的"],["coherent","adj.","連貫的"],["exclusive","adj.","獨家的"],["spontaneous","adj.","自發的"],["acknowledge","v.","承認；確認收到"],["architect","n.","建築師"],["bulletin","n.","公告"],["commission","n.","佣金；委員會"],["confront","v.","面對"],["convert","v.","轉換"],["impose","v.","強加；徵收"],["persist","v.","持續；堅持"],["prospect","n.","前景；可能性"],["qualify","v.","有資格"]],
+ L6:[["arbitrary","adj.","任意的"],["contemplate","v.","深思"],["discrepancy","n.","差異、不一致"],["hierarchy","n.","階層"],["impartial","adj.","公正的"],["lucrative","adj.","賺錢的"],["meticulous","adj.","一絲不苟的"],["notorious","adj.","惡名昭彰的"],["prerequisite","n.","先決條件"],["scrutiny","n.","詳細檢查"],["tentative","adj.","暫定的"],["unprecedented","adj.","前所未有的"],["aggravate","v.","加重、惡化"],["anecdote","n.","軼事"],["exquisite","adj.","精緻的"],["competent","adj.","能幹的"],["component","n.","零件；組成部分"],["comprise","v.","包含、由…組成"],["coordinate","v.","協調"],["explicit","adj.","明確的"],["mechanism","n.","機制"],["reinforce","v.","加強"],["pragmatic","adj.","務實的"],["redundant","adj.","多餘的；被裁員的"],["consensus","n.","共識"]],
+ BIZ:[["procurement","n.","採購"],["quarterly","adj.","每季的"],["merger","n.","合併"],["liability","n.","責任；負債"],["audit","n./v.","稽核"],["retailer","n.","零售商"],["vendor","n.","供應商、攤販"],["amenity","n.","便利設施"],["voucher","n.","優惠券、憑證"],["courier","n.","快遞"],["logistics","n.","物流"],["overtime","n.","加班"],["headquarters","n.","總部"],["stakeholder","n.","利害關係人"],["outsource","v.","外包"],["memo","n.","備忘錄"],["résumé","n.","履歷"],["questionnaire","n.","問卷"],["renovation","n.","整修"],["utility","n.","水電瓦斯等公用事業"],["patron","n.","顧客、贊助人"],["proprietor","n.","業主、老闆"],["consignment","n.","託運的貨物"],["tariff","n.","關稅"],["letterhead","n.","印有公司抬頭的信紙"],["severance","n.","資遣（費）"],["prototype","n.","原型、樣品"],["trademark","n.","商標"],["patent","n.","專利"],["ledger","n.","帳簿"],["caterer","n.","外燴業者"],["attendee","n.","出席者"],["defect","n.","瑕疵"],["bulk","n.","大量"],["showroom","n.","展示間"],["clientele","n.","（全體）客戶"],["conglomerate","n.","企業集團"],["liquidation","n.","清算"],["stipend","n.","津貼"],["bookkeeping","n.","簿記、記帳"]]
 };
-const LT_FAKES=["brillent","plorkish","dentrify","fastidate","crovulent","mensible","tromage","sprudent"];
+const LT_FAKES=["brillent","plorkish","dentrify","fastidate","crovulent","mensible","tromage","sprudent","quandrel","vistorate","perplent","florgish"];
 // 測驗字的例句（加進單字卡時帶入；舊資料 ex 是空的，顯示時再查）
 const LT_EX={
  answer:"Please answer all the questions on the form.",
@@ -2104,7 +2104,122 @@ const LT_EX={
  overtime:"Employees are paid extra for overtime.",
  headquarters:"Our headquarters is located in Taipei.",
  stakeholder:"All stakeholders were invited to the planning meeting.",
- outsource:"Many companies outsource their customer service."
+ outsource:"Many companies outsource their customer service.",
+ bottle:"Please bring a bottle of water to the meeting.",
+ clean:"Please keep the break room clean.",
+ cousin:"My cousin works at a bank in Taichung.",
+ cheap:"The hotel near the station is cheap but clean.",
+ finish:"I will finish the report before lunch.",
+ garden:"The office has a small garden on the roof.",
+ hungry:"We were hungry after the long meeting.",
+ island:"The company trip is to an island in the south.",
+ quiet:"Please be quiet in the library.",
+ river:"The new office faces the river.",
+ bake:"The café bakes fresh bread every morning.",
+ belong:"This laptop belongs to the IT department.",
+ courage:"It took courage to speak up in the meeting.",
+ discuss:"Let's discuss the plan after lunch.",
+ excellent:"Thank you for your excellent work this year.",
+ honest:"Please give us your honest opinion.",
+ imagine:"I can't imagine working without the internet.",
+ invite:"We would like to invite you to our opening party.",
+ lend:"Could you lend me your charger?",
+ modern:"The new building has a modern design.",
+ absence:"He managed the team during her absence.",
+ admire:"I admire the way she handles customers.",
+ arrangement:"We have made arrangements for your hotel.",
+ assist:"Our staff will assist you with check-in.",
+ convenient:"Is Thursday afternoon convenient for you?",
+ deny:"The company denied the reports.",
+ entire:"The entire staff attended the training.",
+ firm:"She works for a law firm in Taipei.",
+ generous:"Thank you for your generous donation.",
+ impression:"He made a good impression at the interview.",
+ inspect:"Inspectors will inspect the factory next month.",
+ interrupt:"Sorry to interrupt, but you have a call.",
+ investigate:"The police are investigating the accident.",
+ mature:"He is very mature for his age.",
+ occasion:"This dress is perfect for a special occasion.",
+ portion:"A large portion of the budget goes to marketing.",
+ sincere:"Please accept our sincere apologies.",
+ vacant:"There are two vacant rooms on the third floor.",
+ contract:"Please sign the contract and return it to us.",
+ appreciate:"I really appreciate your help.",
+ equipment:"All equipment must be returned by Friday.",
+ sign:"Please sign at the bottom of the page.",
+ accomplish:"We accomplished our goals ahead of schedule.",
+ anxious:"She was anxious about the job interview.",
+ associate:"Many people associate the brand with quality.",
+ absorb:"The new carpet absorbs noise.",
+ alert:"The system will alert you if the price changes.",
+ barrier:"Language can be a barrier to business.",
+ capacity:"The hall has a capacity of 500 people.",
+ clarify:"Could you clarify the deadline?",
+ collapse:"The old bridge collapsed in the storm.",
+ consume:"These machines consume a lot of power.",
+ cooperate:"Both companies agreed to cooperate.",
+ draft:"Please send me the first draft by Monday.",
+ forecast:"The sales forecast for next year is positive.",
+ genuine:"The bag is made of genuine leather.",
+ insurance:"Does the price include travel insurance?",
+ preserve:"The old building has been carefully preserved.",
+ priority:"Customer safety is our top priority.",
+ register:"You must register before the event.",
+ urgent:"This is an urgent matter.",
+ intense:"Competition in the market is intense.",
+ occupation:"Please write your occupation on the form.",
+ resolve:"The issue was resolved within a day.",
+ abstract:"The idea is too abstract for most customers.",
+ auction:"The painting was sold at auction.",
+ concrete:"We need concrete examples, not ideas.",
+ endure:"The team endured long hours before the launch.",
+ hostile:"The audience was hostile to the proposal.",
+ rational:"Let's make a rational decision.",
+ acknowledge:"Please acknowledge receipt of this letter.",
+ architect:"The architect presented the new design.",
+ bulletin:"The schedule is posted on the bulletin board.",
+ commission:"Sales staff earn a 5% commission.",
+ confront:"We must confront these problems directly.",
+ convert:"The warehouse was converted into offices.",
+ impose:"The city imposed a new tax on hotels.",
+ persist:"If the problem persists, call support.",
+ prospect:"The prospects for growth are good.",
+ qualify:"You qualify for a free upgrade.",
+ competent:"She is a highly competent engineer.",
+ component:"The factory makes components for cars.",
+ comprise:"The committee comprises six members.",
+ coordinate:"She coordinates events for the company.",
+ explicit:"The instructions were clear and explicit.",
+ mechanism:"There is no mechanism for customer feedback.",
+ reinforce:"The ad campaign reinforced our brand image.",
+ pragmatic:"We need a pragmatic approach to the problem.",
+ redundant:"Fifty workers were made redundant.",
+ consensus:"The board reached a consensus on the budget.",
+ memo:"Did you read the memo about the holiday?",
+ "résumé":"Please attach your résumé to the email.",
+ questionnaire:"Please fill out the questionnaire.",
+ renovation:"The lobby is closed for renovation.",
+ utility:"Rent does not include utilities.",
+ patron:"The library thanks all its patrons.",
+ proprietor:"The proprietor of the café is very friendly.",
+ consignment:"The consignment was delayed at customs.",
+ tariff:"New tariffs raised the price of imports.",
+ letterhead:"Please print the letter on company letterhead.",
+ severance:"Laid-off workers received severance pay.",
+ prototype:"The engineers tested the prototype.",
+ trademark:"The logo is a registered trademark.",
+ patent:"The company holds a patent on the design.",
+ ledger:"All payments are recorded in the ledger.",
+ caterer:"The caterer will arrive at 5 p.m.",
+ attendee:"Each attendee will receive a name tag.",
+ defect:"Products with defects will be replaced.",
+ bulk:"We get a discount for buying in bulk.",
+ showroom:"Visit our showroom to see the new models.",
+ clientele:"The hotel has a wealthy clientele.",
+ conglomerate:"The company is part of a large conglomerate.",
+ liquidation:"The store is in liquidation; everything must go.",
+ stipend:"Interns receive a monthly stipend.",
+ bookkeeping:"She handles the bookkeeping for a small firm."
 };
 
 /* ============ 狀態與儲存 ============ */
@@ -3030,7 +3145,7 @@ async function tFinish(){
   const total=levels.filter(l=>l.k!=="BIZ").reduce((s,l)=>s+l.est,0);
   const gap=levels.filter(l=>["L3","L4","BIZ"].includes(l.k)).reduce((s,l)=>s+(l.size-l.est),0);
   const d=new Date();
-  const res={date:`${d.getMonth()+1}/${d.getDate()}`,levels,fakes:fy,total,biz:levels.find(l=>l.k==="BIZ").est,gap,added:0};
+  const res={date:`${d.getMonth()+1}/${d.getDate()}`,levels,fakes:fy,fakeN:LT_FAKES.length,total,biz:levels.find(l=>l.k==="BIZ").est,gap,added:0};
   // 不會的字加入單字卡
   const have=new Set(testWords.map(w=>w.en));
   unknown.forEach(it=>{
@@ -3045,7 +3160,7 @@ async function tFinish(){
   showResult(res,true);
 }
 function testSummaryLine(r){
-  return `單字量測驗(${r.date})：`+r.levels.map(l=>`${l.k} ${l.pct}%`).join("、")+`｜假字按會 ${r.fakes}/8｜估計總量約 ${r.total} 字，商務字約 ${r.biz}｜L3+L4+商務待補約 ${r.gap} 字`;
+  return `單字量測驗(${r.date})：`+r.levels.map(l=>`${l.k} ${l.pct}%`).join("、")+`｜假字按會 ${r.fakes}/${r.fakeN||8}｜估計總量約 ${r.total} 字，商務字約 ${r.biz}｜L3+L4+商務待補約 ${r.gap} 字`;
 }
 function showResult(r,fresh){
   $("tStart").classList.add("hidden");$("tRun").classList.add("hidden");$("tResult").classList.remove("hidden");
