@@ -516,9 +516,11 @@ applyNight();
     <button class="chip on" data-m="vocab">單字填空</button>
     <button class="chip" data-m="pc">介連兩步驟特訓</button>
   </div>
-  <div class="chips" id="czScope" style="margin-bottom:12px"></div>
+  <div class="chips" id="czScope" style="margin-bottom:6px"></div>
+  <div class="chips" style="margin-bottom:12px"><button class="chip" id="czTimed">⏱ 計時（單字 12 秒／介連 20 秒）</button></div>
   <div class="qcard">
     <div class="qmeta"><span id="czType"></span><span id="czProg"></span></div>
+    <div class="tbar hidden" id="czTimer"><div></div><span></span></div>
     <div class="qtext" id="czText"></div>
     <div class="cz-step hidden" id="czStep">
       <div class="lbl">第 1 步：空格後面接的是？</div>
@@ -538,8 +540,8 @@ applyNight();
   <div id="tStart">
     <div class="qcard t-intro">
       <h3 style="margin-bottom:8px">單字量測驗（填空・計時）</h3>
-      每次從題庫隨機抽：Level 3、Level 4、多益商務字各 25 個，Level 1、2、5、6 各 15 個，共 135 題，大約 12～15 分鐘。<br><br>
-      看到英文字，在 <b>10 秒內打出中文意思</b>，按 Enter 送出；時間到會直接用你打到一半的字批改。<br>
+      每次從題庫隨機抽：Level 3、Level 4、多益商務字各 25 個，Level 1、2、5、6 各 15 個，共 135 題，大約 15～20 分鐘。<br><br>
+      看到英文字，在 <b>15 秒內打出中文意思</b>，按 Enter 送出；時間到的時候如果你還在打字，會等你打完（最多多 4 秒），再用你打的字批改。<br>
       不會就按「不會」（或 Esc），不要硬猜。字有好幾個意思時，打對其中一個就算對。<br>
       被判錯但你打的是同義詞，可以按「我其實對」，按了幾次會寫在結果裡。<br><br>
       測完你不會的字會自動加進單字卡的「測驗不會的字」組別，並標成需複習。
@@ -2958,7 +2960,42 @@ function czFind(w){
   return m?{at:m.index,tok:m[0]}:null;
 }
 function czPos(w){return (w.pos||"").split("/")[0].replace(/\s/g,"");}
-let czMode="vocab",czScopeV="all",czList=[],czIdx=0,czItem=null,czSess={r:0,w:0},czStepDone=false,czAnswered=false;
+let czMode="vocab",czScopeV="all",czList=[],czIdx=0,czItem=null,czSess={r:0,w:0,to:0},czStepDone=false,czAnswered=false;
+// 計時（預設開；單字題 12 秒，介連題兩步驟合計 20 秒；切走分頁會暫停）
+let czTimedOn=true,czTick=null;
+try{czTimedOn=lsGet("toeic-cz-timed")!=="0";}catch(e){}
+const czLim=()=>czMode==="pc"?20:12;
+function czStopTimer(){if(czTick){clearInterval(czTick);czTick=null;}}
+function czStartTimer(){
+  czStopTimer();
+  const bar=$("czTimer");bar.classList.toggle("hidden",!czTimedOn||!czItem);
+  if(!czTimedOn||!czItem)return;
+  const LIM=czLim(),fill=bar.firstElementChild,lab=bar.lastElementChild;
+  let t0=performance.now(),prev=t0;
+  const tick=()=>{
+    if(czAnswered){czStopTimer();return;}
+    const now=performance.now();
+    if(document.hidden||$("sec-cloze").classList.contains("hidden"))t0+=now-prev;
+    prev=now;
+    const left=Math.max(0,LIM-(now-t0)/1000);
+    fill.style.width=(left/LIM*100)+"%";fill.classList.toggle("low",left<=4);lab.textContent=left.toFixed(1)+" 秒";
+    if(left<=0){czStopTimer();czTimeout();}
+  };
+  tick();czTick=setInterval(tick,100);
+}
+function czTimeout(){
+  if(czAnswered||!czItem)return;
+  czSess.to++;
+  if(czItem.q&&!czStepDone){  // 第 1 步就超時：亮出正確的判斷，再顯示答案
+    czStepDone=true;
+    $(czItem.kind==="n"?"czN":"czC").classList.add("correct");
+    $("czN").disabled=$("czC").disabled=true;
+    $("czStepMsg").innerHTML="⏰ 時間到。"+(czItem.kind==="n"?"空格後面是<b>名詞／V-ing</b> → <b>介系詞</b>。":"空格後面是<b>完整句子</b> → <b>連接詞</b>。");
+    czShowOpts(czItem.q.o);
+  }
+  czAnswer(-1);
+}
+function czSetTimed(v){czTimedOn=v;try{lsSet("toeic-cz-timed",v?"1":"0");}catch(e){}$("czTimed").classList.toggle("on",v);if(!czAnswered)czStartTimer();else $("czTimer").classList.toggle("hidden",!v);}
 function czAllWords(){return WORDS.concat(testWords).map((w,i)=>({...w,i:w.dyn?"t:"+w.en:i}));}
 function czScopes(){
   if(czMode==="pc")return [["all",`全部 ${PCQ.length} 題`],["wrong","錯過的"],["new","還沒做過的"]];
@@ -2999,10 +3036,10 @@ function czDistractors(w){
 }
 function czEnter(){czRenderScopes();if(!czList.length)czBuild();czRender();}
 function czRender(){
-  czAnswered=false;czStepDone=false;
+  czAnswered=false;czStepDone=false;czItem=null;czStopTimer();$("czTimer").classList.add("hidden");
   $("czExplain").style.display="none";$("czExplain").innerHTML="";
   const box=$("czOpts");box.innerHTML="";
-  $("czScore").textContent=czSess.r+czSess.w?`這次：對 ${czSess.r}／錯 ${czSess.w}`:"";
+  $("czScore").textContent=czSess.r+czSess.w?czScoreTxt():"";
   $("count").textContent=czMode==="pc"?`介連特訓 ${czList.length} 題`:`填空 ${czList.length} 題`;
   const it=czList[czIdx];
   $("czStep").classList.add("hidden");
@@ -3020,6 +3057,7 @@ function czRender(){
     $("czStep").classList.remove("hidden");
     ["czN","czC"].forEach(id=>{$(id).className="opt";$(id).disabled=false;});
     $("czStepMsg").textContent="";
+    czStartTimer();
     return;  // 第 1 步答完才出選項
   }
   const f=czFind(it);
@@ -3029,7 +3067,9 @@ function czRender(){
   $("czType").textContent=`單字填空・${gLabel(it.g).replace(/（.*/,"")}${infl?"　（空格是變化形，選原形）":""}`;
   $("czText").textContent=it.ex.slice(0,f.at)+"______"+it.ex.slice(f.at+f.tok.length);
   czShowOpts(opts.map(o=>o.en));
+  czStartTimer();
 }
+function czScoreTxt(){return `這次：對 ${czSess.r}／錯 ${czSess.w}`+(czSess.to?`（其中超時 ${czSess.to}）`:"");}
 function czShowOpts(labels){
   const box=$("czOpts");box.innerHTML="";
   const L=["A","B","C","D"];
@@ -3056,19 +3096,19 @@ function czStep(kind){
 async function czAnswer(i){
   if(czAnswered||!czItem)return;
   if(czItem.q&&!czStepDone)return;
-  czAnswered=true;
-  const box=$("czOpts"),ex=$("czExplain");
+  czAnswered=true;czStopTimer();
+  const box=$("czOpts"),ex=$("czExplain"),tout=i<0?"⏰ 時間到。":"";
   if(czItem.q){
     const q=czItem.q,ok=i===q.a;
-    record(q.id,ok,i);ok?czSess.r++:czSess.w++;
+    if(i<0)record(q.id,false);else record(q.id,ok,i);ok?czSess.r++:czSess.w++;
     [...box.children].forEach((b,k)=>{
       b.disabled=true;
       const r=czRole(q.o[k]);
       if(r)b.insertAdjacentHTML("beforeend",`<span class="cz-tag ${r}">${r==="p"?"介系詞":"連接詞"}</span>`);
       else if(/^(however|therefore|meanwhile|nevertheless|moreover|furthermore|otherwise)$/i.test(q.o[k]))b.insertAdjacentHTML("beforeend",'<span class="cz-tag">副詞</span>');
     });
-    box.children[i].classList.add(ok?"correct":"wrong");if(!ok)box.children[q.a].classList.add("correct");if(ok)sakuraCheer(box.children[i]);
-    ex.textContent=q.e;
+    if(i>=0)box.children[i].classList.add(ok?"correct":"wrong");if(!ok)box.children[q.a].classList.add("correct");if(ok)sakuraCheer(box.children[i]);
+    ex.textContent=tout+q.e;
   }else{
     const {w,f,opts,a}=czItem,ok=i===a;
     recWord(w.i,ok);noteDailyWord(w.i);ok?czSess.r++:czSess.w++;
@@ -3076,18 +3116,20 @@ async function czAnswer(i){
     if(ok&&marks[w.i]){delete marks[w.i];await saveMarks();}
     if(!ok){marks[w.i]=1;await saveMarks();}
     [...box.children].forEach(b=>b.disabled=true);
-    box.children[i].classList.add(ok?"correct":"wrong");if(!ok)box.children[a].classList.add("correct");if(ok)sakuraCheer(box.children[i]);
+    if(i>=0)box.children[i].classList.add(ok?"correct":"wrong");if(!ok)box.children[a].classList.add("correct");if(ok)sakuraCheer(box.children[i]);
     const sent=czHtml(w.ex.slice(0,f.at))+`<b class="k">${czHtml(f.tok)}</b>`+czHtml(w.ex.slice(f.at+f.tok.length));
-    ex.innerHTML=`<b>${czHtml(w.en)}</b> ${czHtml(w.pos||"")}　${czHtml(w.zh)}<br>${sent}${w.exz?`<div style="margin-top:4px">${czHtml(w.exz)}</div>`:""}`
+    ex.innerHTML=tout+`<b>${czHtml(w.en)}</b> ${czHtml(w.pos||"")}　${czHtml(w.zh)}<br>${sent}${w.exz?`<div style="margin-top:4px">${czHtml(w.exz)}</div>`:""}`
       +`<div style="margin-top:6px;color:var(--mute);font-size:13px">其他選項：${opts.filter((_,k)=>k!==a).map(o=>`${czHtml(o.en)} ${czHtml(o.zh)}`).join("、")}</div>`
       +(ok?"":'<div style="margin-top:4px;color:var(--wrong-ink);font-size:13px">已標成「需複習」，單字卡會再出現。</div>');
   }
   ex.style.display="block";
-  $("czScore").textContent=`這次：對 ${czSess.r}／錯 ${czSess.w}`;
+  $("czScore").textContent=czScoreTxt();
 }
 function czNext(){if(czIdx<czList.length-1)czIdx++;else{shuffleArr(czList);czIdx=0;}czRender();}
 $("czNext").onclick=czNext;
 $("czShuffle").onclick=()=>{czBuild();czRender();};
+$("czTimed").onclick=()=>czSetTimed(!czTimedOn);
+$("czTimed").classList.toggle("on",czTimedOn);
 $("czN").onclick=()=>czStep("n");
 $("czC").onclick=()=>czStep("c");
 [...$("czMode").children].forEach(b=>b.onclick=()=>{
@@ -3111,7 +3153,7 @@ document.addEventListener("keydown",e=>{
 
 /* ============ 單字量測驗（填空・計時） ============ */
 const T_PICK={L1:15,L2:15,L3:25,L4:25,L5:15,L6:15,BIZ:25};
-const T_SEC=10;
+const T_SEC=15,T_GRACE=4;  // 時間到時還在打字：最後一次按鍵後再等 1.2 秒，最多多給 4 秒
 let tItems=[],tPos=0,tAns=[],tState="idle",tT0=0,tPrev=0,tTick=null,tAuto=null;
 function shuffleArr(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function tEsc(x){return String(x==null?"":x).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
@@ -3126,6 +3168,10 @@ function tCheck(input,zh){
     return false;
   });
 }
+let tLastIn=0,tComposing=false;
+$("tInput").addEventListener("input",()=>{tLastIn=performance.now();});
+$("tInput").addEventListener("compositionstart",()=>{tComposing=true;tLastIn=performance.now();});
+$("tInput").addEventListener("compositionend",()=>{tComposing=false;tLastIn=performance.now();});
 function tStopTimer(){if(tTick){clearInterval(tTick);tTick=null;}if(tAuto){clearTimeout(tAuto);tAuto=null;}}
 function renderTestHome(){
   tStopTimer();tState="idle";
@@ -3160,9 +3206,11 @@ function tRender(){
     tPrev=now;
     const left=Math.max(0,T_SEC-(now-tT0)/1000);
     $("tTimer").style.width=(left/T_SEC*100)+"%";
-    $("tTimer").classList.toggle("low",left<=3);
-    $("tClock").textContent=left.toFixed(1)+" 秒";
-    if(left<=0)tSubmit(false,true);
+    $("tTimer").classList.toggle("low",left<=4);
+    if(left>0){$("tClock").textContent=left.toFixed(1)+" 秒";return;}
+    const over=(now-tT0)/1000-T_SEC,typing=tComposing||(inp.value.trim()&&now-tLastIn<1200);
+    if(typing&&over<T_GRACE){$("tClock").textContent="打完它…";return;}
+    tSubmit(false,true);
   },100);
   try{inp.focus({preventScroll:true});}catch(e){inp.focus();}
 }
@@ -3171,7 +3219,7 @@ function tSubmit(skip,timeout){
   tStopTimer();
   const it=tItems[tPos],inp=$("tInput");
   const val=skip?"":inp.value.trim();
-  const dt=Math.min(T_SEC,(performance.now()-tT0)/1000);
+  const dt=Math.min(T_SEC+T_GRACE,(performance.now()-tT0)/1000);
   const ok=!!val&&tCheck(val,it.zh);
   tAns[tPos]={ok,val,dt,to:!!timeout&&!ok,ov:false};
   tState="after";inp.readOnly=true;inp.classList.add(ok?"ok":"bad");
@@ -3220,7 +3268,7 @@ async function tFinish(){
   const total=levels.filter(l=>l.k!=="BIZ").reduce((s,l)=>s+l.est,0);
   const gap=levels.filter(l=>["L3","L4","BIZ"].includes(l.k)).reduce((s,l)=>s+(l.size-l.est),0);
   const d=new Date();
-  const res={mode:"type",date:`${d.getMonth()+1}/${d.getDate()}`,levels,n:tItems.length,avg:tn?Math.round(tsum/tn*10)/10:0,timeouts,ov,
+  const res={mode:"type",sec:T_SEC,date:`${d.getMonth()+1}/${d.getDate()}`,levels,n:tItems.length,avg:tn?Math.round(tsum/tn*10)/10:0,timeouts,ov,
     wrong:wrong.slice(0,60),skipped:skipped.slice(0,135),total,biz:levels.find(l=>l.k==="BIZ").est,gap,added:0};
   // 不會的字加入單字卡
   const have=new Set(testWords.map(w=>w.en));
