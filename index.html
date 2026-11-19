@@ -197,6 +197,18 @@ applyNight();
   .t-intro b{color:var(--red)}
   .t-est{font-size:28px;font-weight:900;margin:4px 0 2px}
   .t-warn{font-size:13.5px;color:var(--red);line-height:1.6;margin-top:8px}
+  .t-timer{height:4px;background:var(--print-tint);border-radius:2px;overflow:hidden;margin:0 0 14px}
+  .t-timer>div{height:100%;background:var(--ok);transition:width .1s linear}
+  .t-timer>div.low{background:var(--red)}
+  .t-input{display:block;width:100%;box-sizing:border-box;font-size:20px;padding:12px 14px;border:1.5px solid var(--line);border-radius:5px;background:var(--sheet);color:var(--ink);text-align:center;outline:none;font-family:inherit}
+  .t-input:focus{border-color:var(--print)}
+  .t-input.ok{border-color:var(--ok);background:var(--ok-tint)}
+  .t-input.bad{border-color:var(--red);background:var(--red-tint)}
+  .t-fb{min-height:24px;margin-top:10px;font-size:15px;text-align:center;line-height:1.6;color:var(--ink2)}
+  .t-fb.ok{color:var(--ok)}.t-fb.bad{color:var(--wrong-ink)}
+  .t-pos{font-size:12px;color:var(--mute);font-weight:400}
+  .t-wrong{margin-top:8px;font-size:13.5px;line-height:1.8;color:var(--ink2)}
+  .t-wrong i{font-style:normal;color:var(--red)}
   /* 今日任務：今天要塗的答案格 */
   .d-hero{color:var(--ink);margin-bottom:18px}
   .d-date{font-size:13px;color:var(--mute)}
@@ -525,25 +537,35 @@ applyNight();
 <section id="sec-test" class="hidden">
   <div id="tStart">
     <div class="qcard t-intro">
-      <h3 style="margin-bottom:8px">單字量測驗</h3>
-      Level 3、Level 4、多益商務字各抽 40 個，Level 1、2、5、6 各抽 25 個，加上 12 個<b>不存在的假字</b>，共 232 題，大約 8～10 分鐘。<br><br>
-      看到字，<b>一秒內想得出中文意思</b>才按「會」。想不出來、只覺得眼熟、不確定，一律按「不會」。<br>
-      對假字按「會」的次數會用來校正結果，亂按分數反而會被扣。<br><br>
+      <h3 style="margin-bottom:8px">單字量測驗（填空・計時）</h3>
+      每次從題庫隨機抽：Level 3、Level 4、多益商務字各 25 個，Level 1、2、5、6 各 15 個，共 135 題，大約 12～15 分鐘。<br><br>
+      看到英文字，在 <b>10 秒內打出中文意思</b>，按 Enter 送出；時間到會直接用你打到一半的字批改。<br>
+      不會就按「不會」（或 Esc），不要硬猜。字有好幾個意思時，打對其中一個就算對。<br>
+      被判錯但你打的是同義詞，可以按「我其實對」，按了幾次會寫在結果裡。<br><br>
       測完你不會的字會自動加進單字卡的「測驗不會的字」組別，並標成需複習。
     </div>
     <button class="copybtn" id="tBegin" style="margin-top:12px">開始測驗</button>
     <div id="tLast" style="margin-top:12px"></div>
   </div>
   <div id="tRun" class="hidden">
-    <div class="t-meta"><span id="tCount"></span><span>按鍵：<span id="tKeys"></span></span></div>
+    <div class="t-meta"><span id="tCount"></span><span id="tClock"></span></div>
     <div class="t-prog"><div id="tBar" style="width:0%"></div></div>
-    <div class="qcard"><div class="t-word" id="tWord"></div></div>
-    <div class="actions">
-      <button class="btn again" id="tNo">不會</button>
-      <button class="btn speak" id="tSpeak" aria-label="朗讀"><svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true"><path fill="currentColor" d="M4 9v6h4l5 4V5L8 9H4z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M16.5 9a4.2 4.2 0 0 1 0 6"/></svg></button>
-      <button class="btn know" id="tYes">會</button>
+    <div class="qcard">
+      <div class="t-word" id="tWord"></div>
+      <div class="t-timer"><div id="tTimer"></div></div>
+      <form id="tForm" autocomplete="off"><input id="tInput" class="t-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" placeholder="打中文意思，Enter 送出"></form>
+      <div class="t-fb" id="tFb"></div>
     </div>
-    <div class="nav"><button id="tUndo">上一題</button><span></span><button id="tQuit">放棄</button></div>
+    <div class="actions" id="tAsk">
+      <button class="btn again" id="tNo" type="button">不會</button>
+      <button class="btn speak" id="tSpeak" type="button" aria-label="朗讀"><svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true"><path fill="currentColor" d="M4 9v6h4l5 4V5L8 9H4z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M16.5 9a4.2 4.2 0 0 1 0 6"/></svg></button>
+      <button class="btn know" id="tYes" type="button">送出</button>
+    </div>
+    <div class="actions hidden" id="tAfter">
+      <button class="btn speak" id="tOverride" type="button" style="flex:1">我其實對</button>
+      <button class="btn know" id="tNext" type="button">下一題</button>
+    </div>
+    <div class="nav"><span>Enter 送出／下一題　Esc 不會</span><button id="tQuit" type="button">放棄</button></div>
   </div>
   <div id="tResult" class="hidden"></div>
 </section>
@@ -2884,12 +2906,10 @@ document.addEventListener("keydown",async e=>{
   }
   // 測驗分頁
   if(!$("sec-test").classList.contains("hidden")&&!$("tRun").classList.contains("hidden")){
-    if(e.repeat)return;
-    const a=Object.keys(keymap).find(k=>keymap[k]===e.code);
-    if(!a)return;
-    e.preventDefault();
-    if(document.activeElement&&document.activeElement!==document.body)document.activeElement.blur();
-    if(a==="know")tAnswer(true);else if(a==="again")tAnswer(false);else if(a==="speak")tSay();else if(a==="prev")tUndoFn();
+    if(e.isComposing||e.keyCode===229||e.repeat)return;
+    if(e.key==="Escape"){e.preventDefault();if(tState==="ask")tSubmit(true);return;}
+    // 輸入框裡的 Enter 交給 form submit；焦點在按鈕上就讓按鈕自己處理
+    if(e.key==="Enter"&&e.target!==$("tInput")&&e.target.tagName!=="BUTTON"){e.preventDefault();if(tState==="ask")tSubmit(false);else tNextFn();}
     return;
   }
   // 只在單字卡分頁、且卡片有顯示時生效
@@ -2903,7 +2923,7 @@ document.addEventListener("keydown",async e=>{
   doAction(act);
 });
 document.addEventListener("keyup",e=>{
-  if((!$("sec-cards").classList.contains("hidden")||!$("sec-test").classList.contains("hidden"))&&Object.values(keymap).includes(e.code))e.preventDefault();
+  if(!$("sec-cards").classList.contains("hidden")&&Object.values(keymap).includes(e.code))e.preventDefault();
 });
 
 /* ============ 填空 ============ */
@@ -3089,21 +3109,38 @@ document.addEventListener("keydown",e=>{
   }
 });
 
-/* ============ 單字量測驗 ============ */
-let tItems=[],tPos=0,tAns=[];
+/* ============ 單字量測驗（填空・計時） ============ */
+const T_PICK={L1:15,L2:15,L3:25,L4:25,L5:15,L6:15,BIZ:25};
+const T_SEC=10;
+let tItems=[],tPos=0,tAns=[],tState="idle",tT0=0,tPrev=0,tTick=null,tAuto=null;
 function shuffleArr(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function tEsc(x){return String(x==null?"":x).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function tNorm(x){return String(x||"").replace(/[（(][^）)]*[）)]/g,"").replace(/[\s。，,．.!！?？~～…\-－"'「」]/g,"").replace(/^(.{2,})[的地]$/,"$1");}
+// 自動批改：zh 用「；、，/」分成好幾個意思，打中其中一個就算對
+function tCheck(input,zh){
+  const t=tNorm(input);if(!t)return false;
+  return String(zh||"").split(/[；;、，,／/]/).map(tNorm).filter(Boolean).some(k=>{
+    if(t===k||t.includes(k))return true;
+    if(k.includes(t)&&(t.length>=2||k.length<=2))return true;
+    for(let i=0;i+2<=k.length;i++)if(t.includes(k.slice(i,i+2)))return true;
+    return false;
+  });
+}
+function tStopTimer(){if(tTick){clearInterval(tTick);tTick=null;}if(tAuto){clearTimeout(tAuto);tAuto=null;}}
 function renderTestHome(){
+  tStopTimer();tState="idle";
   $("tStart").classList.remove("hidden");$("tRun").classList.add("hidden");$("tResult").classList.add("hidden");
-  $("tLast").innerHTML=lastTest?`<div class="note" style="opacity:.75">上次測驗（${lastTest.date}）：估計總字彙量約 ${lastTest.total.toLocaleString()} 字。<br><a href="#" id="tShowLast" style="color:#E8DFC8">看上次結果</a></div>`:"";
+  $("tLast").innerHTML=lastTest?`<div class="note" style="opacity:.75">上次測驗（${lastTest.date}${lastTest.mode==="type"?"，填空版":"，舊的會／不會版"}）：估計總字彙量約 ${lastTest.total.toLocaleString()} 字。<br><a href="#" id="tShowLast" style="color:#E8DFC8">看上次結果</a></div>`:"";
   const s=$("tShowLast");if(s)s.onclick=ev=>{ev.preventDefault();showResult(lastTest,false);};
 }
 $("tBegin").onclick=()=>{
   tItems=[];
-  LT_LEVELS.forEach(L=>LT_WORDS[L.k].forEach(([en,pos,zh])=>tItems.push({en,pos,zh,lv:L.k})));
-  LT_FAKES.forEach(en=>tItems.push({en,lv:"FAKE"}));
+  LT_LEVELS.forEach(L=>{
+    const pool=LT_WORDS[L.k].map(([en,pos,zh])=>({en,pos,zh,lv:L.k}));
+    tItems.push(...shuffleArr(pool).slice(0,T_PICK[L.k]||pool.length));
+  });
   shuffleArr(tItems);tPos=0;tAns=[];
   $("tStart").classList.add("hidden");$("tResult").classList.add("hidden");$("tRun").classList.remove("hidden");
-  $("tKeys").textContent=`${keyName(keymap.know)} 會 / ${keyName(keymap.again)} 不會 / ${keyName(keymap.speak)} 發音`;
   tRender();
 };
 function tRender(){
@@ -3111,41 +3148,80 @@ function tRender(){
   $("tWord").textContent=it.en;
   $("tCount").textContent=`${tPos+1} / ${tItems.length}`;
   $("tBar").style.width=(tPos/tItems.length*100)+"%";
+  const inp=$("tInput");inp.value="";inp.readOnly=false;inp.classList.remove("ok","bad");
+  $("tFb").className="t-fb";$("tFb").innerHTML="";
+  $("tAsk").classList.remove("hidden");$("tAfter").classList.add("hidden");
+  tStopTimer();
+  tState="ask";tT0=tPrev=performance.now();
+  $("tTimer").style.width="100%";$("tTimer").classList.remove("low");$("tClock").textContent=T_SEC.toFixed(1)+" 秒";
+  tTick=setInterval(()=>{
+    const now=performance.now();
+    if(document.hidden||$("sec-test").classList.contains("hidden"))tT0+=now-tPrev; // 切走時暫停計時
+    tPrev=now;
+    const left=Math.max(0,T_SEC-(now-tT0)/1000);
+    $("tTimer").style.width=(left/T_SEC*100)+"%";
+    $("tTimer").classList.toggle("low",left<=3);
+    $("tClock").textContent=left.toFixed(1)+" 秒";
+    if(left<=0)tSubmit(false,true);
+  },100);
+  try{inp.focus({preventScroll:true});}catch(e){inp.focus();}
 }
-function tSay(){
-  const it=tItems[tPos];if(!it)return;
-  sayEn(it.en);
+function tSubmit(skip,timeout){
+  if(tState!=="ask")return;
+  tStopTimer();
+  const it=tItems[tPos],inp=$("tInput");
+  const val=skip?"":inp.value.trim();
+  const dt=Math.min(T_SEC,(performance.now()-tT0)/1000);
+  const ok=!!val&&tCheck(val,it.zh);
+  tAns[tPos]={ok,val,dt,to:!!timeout&&!ok,ov:false};
+  tState="after";inp.readOnly=true;inp.classList.add(ok?"ok":"bad");
+  const fb=$("tFb");
+  const mean=`<b>${tEsc(it.zh)}</b> <span class="t-pos">${tEsc(it.pos)}</span>`;
+  if(ok){
+    fb.className="t-fb ok";fb.innerHTML="✓ "+mean;
+    tAuto=setTimeout(tNextFn,700);
+  }else{
+    fb.className="t-fb bad";
+    fb.innerHTML=(val?`✗ 你打「${tEsc(val)}」　`:timeout?"⏱ 超時　":"— 不會　")+"正解："+mean;
+    $("tAsk").classList.add("hidden");$("tAfter").classList.remove("hidden");
+    $("tOverride").classList.toggle("hidden",!val);
+  }
 }
-async function tAnswer(yes){
-  if(tPos>=tItems.length)return;
-  tAns[tPos]=yes;tPos++;
-  if(tPos>=tItems.length){await tFinish();return;}
+function tNextFn(){
+  if(tState!=="after")return;
+  tStopTimer();tPos++;
+  if(tPos>=tItems.length){tState="idle";tFinish();return;}
   tRender();
 }
-function tUndoFn(){if(tPos>0){tPos--;tRender();}}
-$("tYes").onclick=()=>tAnswer(true);
-$("tNo").onclick=()=>tAnswer(false);
-$("tSpeak").onclick=tSay;
-$("tUndo").onclick=tUndoFn;
+function tSay(){const it=tItems[tPos];if(it)sayEn(it.en);}
+$("tForm").onsubmit=e=>{e.preventDefault();if(tState==="ask")tSubmit(false);else tNextFn();};
+$("tYes").onclick=()=>tSubmit(false);
+$("tNo").onclick=()=>tSubmit(true);
+$("tSpeak").onclick=()=>{tSay();if(tState==="ask")$("tInput").focus();};
+$("tNext").onclick=tNextFn;
+$("tOverride").onclick=()=>{if(tState!=="after")return;const a=tAns[tPos];if(a&&!a.ok){a.ok=true;a.ov=true;}tNextFn();};
 $("tQuit").onclick=()=>{if(confirm("放棄這次測驗？"))renderTestHome();};
 
 async function tFinish(){
-  const by={};LT_LEVELS.forEach(L=>by[L.k]={yes:0,n:0});
-  let fy=0;const unknown=[];
+  const by={};LT_LEVELS.forEach(L=>by[L.k]={ok:0,n:0});
+  const unknown=[],wrong=[],skipped=[];let tsum=0,tn=0,timeouts=0,ov=0;
   tItems.forEach((it,i)=>{
-    if(it.lv==="FAKE"){if(tAns[i])fy++;return;}
-    by[it.lv].n++;if(tAns[i])by[it.lv].yes++;else unknown.push(it);
+    const a=tAns[i]||{ok:false,val:"",dt:T_SEC};
+    by[it.lv].n++;
+    if(a.ov)ov++;
+    if(a.to)timeouts++;
+    if(a.ok){by[it.lv].ok++;tsum+=a.dt;tn++;}
+    else{unknown.push(it);if(a.val)wrong.push([it.en,a.val,it.zh]);else skipped.push(it.en);}
   });
-  const f=fy/LT_FAKES.length;
   const levels=LT_LEVELS.map(L=>{
-    const h=by[L.k].yes/by[L.k].n;
-    const adj=f<1?Math.max(0,(h-f)/(1-f)):0;
-    return {k:L.k,label:L.label,raw:Math.round(h*100),pct:Math.round(adj*100),est:Math.round(adj*L.size),size:L.size};
+    const h=by[L.k].n?by[L.k].ok/by[L.k].n:0;
+    return {k:L.k,label:L.label,raw:Math.round(h*100),pct:Math.round(h*100),est:Math.round(h*L.size),size:L.size,ok:by[L.k].ok,n:by[L.k].n};
   });
   const total=levels.filter(l=>l.k!=="BIZ").reduce((s,l)=>s+l.est,0);
   const gap=levels.filter(l=>["L3","L4","BIZ"].includes(l.k)).reduce((s,l)=>s+(l.size-l.est),0);
   const d=new Date();
-  const res={date:`${d.getMonth()+1}/${d.getDate()}`,levels,fakes:fy,fakeN:LT_FAKES.length,total,biz:levels.find(l=>l.k==="BIZ").est,gap,added:0};
+  const res={mode:"type",date:`${d.getMonth()+1}/${d.getDate()}`,levels,n:tItems.length,avg:tn?Math.round(tsum/tn*10)/10:0,timeouts,ov,
+    wrong:wrong.slice(0,60),skipped:skipped.slice(0,135),total,biz:levels.find(l=>l.k==="BIZ").est,gap,added:0};
   // 不會的字加入單字卡
   const have=new Set(testWords.map(w=>w.en));
   unknown.forEach(it=>{
@@ -3160,15 +3236,29 @@ async function tFinish(){
   showResult(res,true);
 }
 function testSummaryLine(r){
-  return `單字量測驗(${r.date})：`+r.levels.map(l=>`${l.k} ${l.pct}%`).join("、")+`｜假字按會 ${r.fakes}/${r.fakeN||8}｜估計總量約 ${r.total} 字，商務字約 ${r.biz}｜L3+L4+商務待補約 ${r.gap} 字`;
+  const lv=r.levels.map(l=>`${l.k} ${l.pct}%`).join("、");
+  if(r.mode==="type")return `單字量測驗・填空計時(${r.date})：${lv}｜${r.n} 題，答對平均 ${r.avg} 秒，超時 ${r.timeouts}，自判對 ${r.ov}｜估計總量約 ${r.total} 字，商務字約 ${r.biz}｜L3+L4+商務待補約 ${r.gap} 字`;
+  return `單字量測驗(${r.date})：`+lv+`｜假字按會 ${r.fakes}/${r.fakeN||8}｜估計總量約 ${r.total} 字，商務字約 ${r.biz}｜L3+L4+商務待補約 ${r.gap} 字`;
 }
 function showResult(r,fresh){
   $("tStart").classList.add("hidden");$("tRun").classList.add("hidden");$("tResult").classList.remove("hidden");
-  const bars=r.levels.map(l=>`<div class="statline"><span>${l.label}</span><span>${l.pct}%（約 ${l.est.toLocaleString()} / ${l.size.toLocaleString()}）</span></div><div class="bar"><div style="width:${l.pct}%"></div></div>`).join("");
+  const isT=r.mode==="type";
+  const bars=r.levels.map(l=>`<div class="statline"><span>${l.label}</span><span>${l.pct}%（${isT?`答對 ${l.ok}/${l.n}，`:""}約 ${l.est.toLocaleString()} / ${l.size.toLocaleString()}）</span></div><div class="bar"><div style="width:${l.pct}%"></div></div>`).join("");
   // 找第一個低於 70% 的等級當起點
   const weak=r.levels.filter(l=>l.k!=="BIZ").find(l=>l.pct<70);
   const advice=weak?`建議從 <b>${weak.label}</b> 開始補，這層以下沒穩，商務字背了也讀不順。`:`高中 Level 1～6 都在七成以上，主力放商務字就好。`;
-  const warn=r.fakes>=2?`<div class="t-warn">你對 ${r.fakes} 個假字按了「會」，代表有些字只是眼熟就按了。結果已經校正，但誤差會變大，建議之後照「一秒內想得出中文」的標準重測。</div>`:"";
+  const warn=isT
+    ?(r.ov>=Math.max(5,Math.round(r.n*0.08))?`<div class="t-warn">按了 ${r.ov} 次「我其實對」。如果都是同義詞沒關係；如果有些其實是猜的，分數會偏高。</div>`:"")
+    :(r.fakes>=2?`<div class="t-warn">你對 ${r.fakes} 個假字按了「會」，代表有些字只是眼熟就按了。結果已經校正，但誤差會變大，建議之後照「一秒內想得出中文」的標準重測。</div>`:"");
+  const detail=isT?`
+    <div class="statbox">
+      <h3>作答情況</h3>
+      <div class="statline"><span>答對的字平均反應時間</span><span>${r.avg} 秒</span></div>
+      <div class="statline"><span>超時</span><span>${r.timeouts} 題</span></div>
+      <div class="statline"><span>按「我其實對」</span><span>${r.ov} 次</span></div>
+      ${r.wrong&&r.wrong.length?`<div class="t-wrong"><b>打錯的字</b>（你打的 → 正解）<br>`+r.wrong.map(([en,v,zh])=>`${tEsc(en)}：<i>${tEsc(v)}</i> → ${tEsc(zh)}`).join("<br>")+`</div>`:""}
+      ${r.skipped&&r.skipped.length?`<div class="t-wrong"><b>不會／超時</b>（${r.skipped.length}）<br>${r.skipped.map(tEsc).join("、")}</div>`:""}
+    </div>`:"";
   $("tResult").innerHTML=`
     <div class="statbox">
       <h3>估計總字彙量（高中 7000 範圍內）</h3>
@@ -3176,7 +3266,8 @@ function showResult(r,fresh){
       <div style="font-size:13px;color:var(--ink2)">多益商務字約 ${r.biz.toLocaleString()} / 1,000</div>
       ${warn}
     </div>
-    <div class="statbox"><h3>各等級掌握度（已校正）</h3>${bars}</div>
+    <div class="statbox"><h3>各等級掌握度${isT?"（填空答對率）":"（已校正）"}</h3>${bars}</div>
+    ${detail}
     <div class="statbox">
       <h3>700 分真正要補的量</h3>
       <div class="t-est">約 ${r.gap.toLocaleString()} 字</div>
@@ -3185,10 +3276,14 @@ function showResult(r,fresh){
     ${fresh?`<div class="note" style="opacity:.8">這次不會的 ${r.added} 個新字已加進單字卡「測驗不會的字」組別。</div>`:""}
     <button class="copybtn" id="tCopy" style="margin-top:10px">複製結果給 Claude</button>
     <button class="copybtn" id="tAgain" style="background:var(--btn2);color:var(--btn2-ink);margin-top:10px">回測驗首頁</button>
-    <div class="note">這是用抽樣估的，誤差大概正負一成，當方向參考就好。</div>`;
+    <div class="note">${isT?"填空版要真的寫得出意思才算，比舊的「會／不會」嚴格，比上次低是正常的。":""}這是用抽樣估的，誤差大概正負一成，當方向參考就好。</div>`;
   $("tAgain").onclick=renderTestHome;
   $("tCopy").onclick=async()=>{
-    const txt="【多益練習室成績回報】\n"+testSummaryLine(r);
+    let txt="【多益練習室成績回報】\n"+testSummaryLine(r);
+    if(isT){
+      if(r.wrong&&r.wrong.length)txt+="\n打錯（你打的→正解）："+r.wrong.slice(0,30).map(([en,v,zh])=>`${en}(${v}→${zh})`).join("、");
+      if(r.skipped&&r.skipped.length)txt+="\n不會/超時："+r.skipped.slice(0,50).join("、");
+    }
     try{await navigator.clipboard.writeText(txt);}catch(e){const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();}
     $("tCopy").textContent="已複製！貼到聊天室給我";setTimeout(()=>{const b=$("tCopy");if(b)b.textContent="複製結果給 Claude";},2500);
   };
