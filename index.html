@@ -3027,8 +3027,29 @@ function czBuild(){
   }
   shuffleArr(czList);czIdx=0;
 }
+// 同義字不能當干擾選項（例：sufficient／adequate 都是「足夠的」，兩個都填得進去）
+const CZ_SYN=[["sufficient","adequate","ample","enough","plenty"],["insufficient","inadequate","scarce","lacking"],
+  ["obtain","acquire","gain","get"],["vital","essential","crucial","critical","indispensable"],["precise","accurate","exact"],
+  ["substitute","replace","alternative"],["resolve","settle","solve"],["urgent","pressing","immediate"],["genuine","authentic","real"],
+  ["purchase","buy"],["assist","help","aid"],["commence","begin","start","initiate"],["terminate","end","cease"],
+  ["sufficiently","adequately"],["approximately","roughly","about"],["frequently","often"],["prior","previous","former"]];
+function czZhKeys(zh){
+  const keys=new Set();
+  String(zh||"").replace(/[（(]≠[^）)]*[）)]/g,"").split(/[；;、，,／\/（）()\s]+/).forEach(part=>{
+    const t=part.replace(/[的地得之]/g,"").replace(/^(使|被|很)/,"");
+    if(t.length<2)return;
+    for(let i=0;i<t.length-1;i++)keys.add(t.slice(i,i+2));
+  });
+  return keys;
+}
+function czIsSyn(a,b){
+  const x=a.en.toLowerCase(),y=b.en.toLowerCase();
+  if(CZ_SYN.some(g=>g.includes(x)&&g.includes(y)))return true;
+  const ka=czZhKeys(a.zh);for(const k of czZhKeys(b.zh))if(ka.has(k))return true;
+  return false;
+}
 function czDistractors(w){
-  const pool=czAllWords().filter(x=>x.en.toLowerCase()!==w.en.toLowerCase()&&!w.ex.toLowerCase().includes(x.en.toLowerCase()));
+  const pool=czAllWords().filter(x=>x.en.toLowerCase()!==w.en.toLowerCase()&&!w.ex.toLowerCase().includes(x.en.toLowerCase())&&!czIsSyn(w,x));
   const same=shuffleArr(pool.filter(x=>czPos(x)===czPos(w)));
   const out=[],seen=new Set([w.en.toLowerCase()]);
   for(const x of same.concat(shuffleArr(pool.slice()))){if(out.length>=3)break;const k=x.en.toLowerCase();if(seen.has(k))continue;seen.add(k);out.push(x);}
