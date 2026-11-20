@@ -3048,8 +3048,11 @@ function czIsSyn(a,b){
   const ka=czZhKeys(a.zh);for(const k of czZhKeys(b.zh))if(ka.has(k))return true;
   return false;
 }
+// 使用者按過「我覺得也對」的組合：{答案(小寫): [干擾字(小寫)...]}，之後不再一起出
+let czOkPairs={};try{czOkPairs=JSON.parse(lsGet("toeic-cz-ok")||"{}")||{};}catch(e){czOkPairs={};}
+function czOkPair(a,b){const x=a.en.toLowerCase(),y=b.en.toLowerCase();return (czOkPairs[x]||[]).includes(y)||(czOkPairs[y]||[]).includes(x);}
 function czDistractors(w){
-  const pool=czAllWords().filter(x=>x.en.toLowerCase()!==w.en.toLowerCase()&&!w.ex.toLowerCase().includes(x.en.toLowerCase())&&!czIsSyn(w,x));
+  const pool=czAllWords().filter(x=>x.en.toLowerCase()!==w.en.toLowerCase()&&!w.ex.toLowerCase().includes(x.en.toLowerCase())&&!czIsSyn(w,x)&&!czOkPair(w,x));
   const same=shuffleArr(pool.filter(x=>czPos(x)===czPos(w)));
   const out=[],seen=new Set([w.en.toLowerCase()]);
   for(const x of same.concat(shuffleArr(pool.slice()))){if(out.length>=3)break;const k=x.en.toLowerCase();if(seen.has(k))continue;seen.add(k);out.push(x);}
@@ -3089,6 +3092,23 @@ function czRender(){
   $("czText").textContent=it.ex.slice(0,f.at)+"______"+it.ex.slice(f.at+f.tok.length);
   czShowOpts(opts.map(o=>o.en));
   czStartTimer();
+}
+let czUndo=null;
+async function czAlsoOk(){
+  const u=czUndo;if(!u)return;czUndo=null;
+  const k=u.w.i;
+  // 單字統計：撤回剛剛那筆錯，改記一筆對
+  if(u.ws)wstat[k]=u.ws;else delete wstat[k];
+  const st=wstat[k]||(wstat[k]={r:0,w:0,h:""});st.r++;st.h=(st.h+"1").slice(-WIN);saveWstat();
+  if(daily&&daily.date===todayKey()&&daily.log){const L=daily.log;
+    if(L.vW>0){L.vW--;L.vR++;} if(L.czW>0){L.czW--;L.czR=(L.czR||0)+1;} saveDaily();}
+  delete marks[k];await saveMarks();  // 答對本來就會清掉「需複習」
+  czSess.w--;czSess.r++;$("czScore").textContent=czScoreTxt();
+  const x=u.w.en.toLowerCase(),y=u.pick.en.toLowerCase();
+  (czOkPairs[x]=czOkPairs[x]||[]).includes(y)||czOkPairs[x].push(y);
+  lsSet("toeic-cz-ok",JSON.stringify(czOkPairs));
+  const b=$("czAlsoOk");if(b){b.disabled=true;b.textContent=`✔ 已改成算對，${u.pick.en} 之後不會再當 ${u.w.en} 的干擾選項`;}
+  const n=$("czMarkNote");if(n)n.remove();
 }
 function czScoreTxt(){return `這次：對 ${czSess.r}／錯 ${czSess.w}`+(czSess.to?`（其中超時 ${czSess.to}）`:"");}
 function czShowOpts(labels){
@@ -3132,6 +3152,7 @@ async function czAnswer(i){
     ex.textContent=tout+q.e;
   }else{
     const {w,f,opts,a}=czItem,ok=i===a;
+    czUndo=(!ok&&i>=0)?{w,pick:opts[i],ws:wstat[w.i]?{...wstat[w.i]}:null,mk:!!marks[w.i]}:null;
     recWord(w.i,ok);noteDailyWord(w.i);ok?czSess.r++:czSess.w++;
     if(daily&&daily.date===todayKey()&&daily.log){const k=ok?"czR":"czW";daily.log[k]=(daily.log[k]||0)+1;saveDaily();}
     if(ok&&marks[w.i]){delete marks[w.i];await saveMarks();}
@@ -3141,7 +3162,9 @@ async function czAnswer(i){
     const sent=czHtml(w.ex.slice(0,f.at))+`<b class="k">${czHtml(f.tok)}</b>`+czHtml(w.ex.slice(f.at+f.tok.length));
     ex.innerHTML=tout+`<b>${czHtml(w.en)}</b> ${czHtml(w.pos||"")}　${czHtml(w.zh)}<br>${sent}${w.exz?`<div style="margin-top:4px">${czHtml(w.exz)}</div>`:""}`
       +`<div style="margin-top:6px;color:var(--mute);font-size:13px">其他選項：${opts.filter((_,k)=>k!==a).map(o=>`${czHtml(o.en)} ${czHtml(o.zh)}`).join("、")}</div>`
-      +(ok?"":'<div style="margin-top:4px;color:var(--wrong-ink);font-size:13px">已標成「需複習」，單字卡會再出現。</div>');
+      +(ok?"":'<div id="czMarkNote" style="margin-top:4px;color:var(--wrong-ink);font-size:13px">已標成「需複習」，單字卡會再出現。</div>')
+      +(czUndo?`<button class="chip" id="czAlsoOk" style="margin-top:10px">🤔 我覺得 ${czHtml(czUndo.pick.en)} 也對（這次算對，之後不再一起出）</button>`:"");
+    if(czUndo)$("czAlsoOk").onclick=czAlsoOk;
   }
   ex.style.display="block";
   $("czScore").textContent=czScoreTxt();
