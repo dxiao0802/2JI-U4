@@ -465,7 +465,7 @@ applyNight();
 <section id="sec-grammar" class="hidden">
   <div class="chips" id="gFilter" style="margin-bottom:6px"></div>
   <div class="chips" id="gBatch" style="margin-bottom:6px"></div>
-  <div class="chips" style="margin-bottom:12px"><button class="chip" id="gTimed">⏱ 限時模式（每題 20 秒）</button></div>
+  <div class="chips" style="margin-bottom:12px"><button class="chip" id="gTimed">⏱ 限時模式</button><button class="chip on" id="gSec" title="點一下切換每題秒數">每題 20 秒</button></div>
   <div class="qcard">
     <div class="qmeta"><span id="gType"></span><span id="gProg"></span></div>
     <div class="tbar hidden" id="gTimer"><div></div><span></span></div>
@@ -4151,6 +4151,11 @@ function setTimed(v){
   renderG();renderR();
 }
 $("gTimed").onclick=()=>setTimed(!timed);
+// 文法每題秒數：20（正式考試節奏）→30→45 循環，記在本機
+var G_SECS=[20,30,45],gSec=+(lsGet("toeic-gsec")||20);if(!G_SECS.includes(gSec))gSec=20;
+function showGSec(){$("gSec").textContent="每題 "+gSec+" 秒";}
+showGSec();
+$("gSec").onclick=()=>{gSec=G_SECS[(G_SECS.indexOf(gSec)+1)%G_SECS.length];lsSet("toeic-gsec",String(gSec));showGSec();if(timed)renderG();};
 $("rTimed").onclick=()=>setTimed(!timed);
 $("gTimed").classList.toggle("on",timed);$("rTimed").classList.toggle("on",timed);
 // 文法：每題 20 秒，時間到算錯並顯示答案
@@ -4158,7 +4163,7 @@ function gStartTimer(q){
   clearInterval(gTimerId);
   const bar=$("gTimer");bar.classList.toggle("hidden",!timed||!q);
   if(!timed||!q)return;
-  const LIM=20,box=$("gOpts"),t0=Date.now();
+  const LIM=gSec,box=$("gOpts"),t0=Date.now();
   const fill=bar.firstElementChild,lab=bar.lastElementChild;
   const tick=()=>{
     if(box.dataset.done){clearInterval(gTimerId);return;}
