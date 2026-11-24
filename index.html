@@ -465,7 +465,7 @@ applyNight();
 <section id="sec-grammar" class="hidden">
   <div class="chips" id="gFilter" style="margin-bottom:6px"></div>
   <div class="chips" id="gBatch" style="margin-bottom:6px"></div>
-  <div class="chips" style="margin-bottom:12px"><button class="chip" id="gTimed">⏱ 限時模式</button><button class="chip on" id="gSec" title="點一下切換每題秒數">每題 20 秒</button></div>
+  <div class="chips" style="margin-bottom:12px"><button class="chip" id="gTimed">⏱ 限時模式</button><button class="chip on" id="gSec" title="點一下切換每題秒數">每題 20 秒</button><button class="chip on" id="gCp" title="點一下切換：每幾題回頭複習剛剛錯的">🔁 每 10 題複習錯題</button></div>
   <div class="qcard">
     <div class="qmeta"><span id="gType"></span><span id="gProg"></span></div>
     <div class="tbar hidden" id="gTimer"><div></div><span></span></div>
@@ -2540,6 +2540,13 @@ $("reviewOnly").onclick=()=>{reviewOnly=!reviewOnly;$("reviewOnly").classList.to
 
 /* ============ 文法 ============ */
 let gFilterType="全部",gFilterBatch="全部",gIdx=0,gList=[];
+// 斷點複習：每答 gCp 題，就把這一段答錯／超時的題目再考一次（不限時），考完回到原本進度
+var G_CPS=[10,5,0],gCp=lsGet("toeic-gcp");gCp=gCp==null?10:+gCp;if(!G_CPS.includes(gCp))gCp=10;
+let gSeg=[],gSegN=0,gRev=null;  // gRev={list,i,re:{}}
+function gNote(q,ok){
+  if(gRev){if(!ok&&!gRev.re[q.id]){gRev.re[q.id]=1;gRev.list.push(q);}return;}
+  gSegN++;if(!ok&&!gSeg.includes(q))gSeg.push(q);
+}
 const GTYPES=["全部","詞性","介連","搭配","文法"];
 const GBATCH=[
  {k:"全部",label:"全部批次"},
@@ -2589,12 +2596,13 @@ GTYPES.forEach(t=>{
   $("gFilter").appendChild(b);
 });
 function buildG(){
+  gRev=null;gSeg=[];gSegN=0;
   gList=GQ.filter(q=>(gFilterType==="全部"||q.t===gFilterType)&&(
     gFilterBatch==="全部"?true:gFilterBatch==="今日"?(daily&&daily.gq.indexOf(q.id)>=0):gFilterBatch==="錯題"?gRecentBad(q.id):q.id.startsWith(gFilterBatch+"-")));
   if(gIdx>=gList.length)gIdx=0;
 }
 function renderG(){
-  const q=gList[gIdx];
+  const q=gRev?gRev.list[gRev.i]:gList[gIdx];
   if(!q){
     $("gType").textContent="";$("gProg").textContent="0 / 0";
     $("gText").textContent="這個組合沒有題目（例如某批次裡沒有這個題型）。換一個篩選試試。";
@@ -2603,7 +2611,7 @@ function renderG(){
     return;
   }
   $("gType").textContent=`題型：${q.t==="介連"?"介系詞/連接詞":q.t}　(${q.id})`;
-  $("gProg").textContent=`${gIdx+1} / ${gList.length}`;
+  $("gProg").textContent=gRev?`🔁 斷點複習 ${gRev.i+1} / ${gRev.list.length}（不限時）`:`${gIdx+1} / ${gList.length}`;
   $("gText").textContent=q.q;
   $("gExplain").style.display="none";
   const box=$("gOpts");box.innerHTML="";
@@ -2615,7 +2623,7 @@ function renderG(){
       if(box.dataset.done)return;
       box.dataset.done="1";
       const ok=i===q.a;
-      record(q.id,ok,i);
+      record(q.id,ok,i);gNote(q,ok);
       b.classList.add(ok?"correct":"wrong");
       if(!ok)box.children[q.a].classList.add("correct");
       if(ok)sakuraCheer(b);
@@ -2626,10 +2634,24 @@ function renderG(){
     box.appendChild(b);
   });
   delete box.dataset.done;
-  gStartTimer(q);
+  gStartTimer(gRev?null:q);
 }
-$("gPrev").onclick=()=>{if(gIdx>0){gIdx--;renderG();}};
-$("gNext").onclick=()=>{if(gIdx<gList.length-1){gIdx++;renderG();}};
+$("gPrev").onclick=()=>{if(gRev){if(gRev.i>0){gRev.i--;renderG();}return;}if(gIdx>0){gIdx--;renderG();}};
+$("gNext").onclick=()=>{
+  if(gRev){  // 複習中：做完這一輪就回到原本進度的下一題
+    if(gRev.i<gRev.list.length-1){gRev.i++;renderG();return;}
+    gRev=null;if(gIdx<gList.length-1)gIdx++;renderG();return;
+  }
+  const atEnd=gIdx>=gList.length-1;
+  if(gCp&&gSeg.length&&(gSegN>=gCp||atEnd)){  // 到斷點：先回頭考剛剛錯的
+    gRev={list:gSeg.slice().sort(()=>Math.random()-.5),i:0,re:{}};gSeg=[];gSegN=0;renderG();return;
+  }
+  if(gSegN>=gCp)gSegN=0;
+  if(!atEnd){gIdx++;renderG();}
+};
+function showGCp(){const b=$("gCp");b.textContent=gCp?`🔁 每 ${gCp} 題複習錯題`:"🔁 斷點複習：關";b.classList.toggle("on",!!gCp);}
+showGCp();
+$("gCp").onclick=()=>{gCp=G_CPS[(G_CPS.indexOf(gCp)+1)%G_CPS.length];lsSet("toeic-gcp",String(gCp));showGCp();};
 
 /* ============ 閱讀 ============ */
 let rIdx=0;
@@ -4171,7 +4193,7 @@ function gStartTimer(q){
     fill.style.width=(left/LIM*100)+"%";fill.classList.toggle("low",left<6);lab.textContent=Math.ceil(left)+" 秒";
     if(left<=0){
       clearInterval(gTimerId);box.dataset.done="1";
-      record(q.id,false);
+      record(q.id,false);gNote(q,false);
       box.children[q.a].classList.add("correct");[...box.children].forEach(c=>c.disabled=true);
       $("gExplain").textContent="⏰ 時間到。"+q.e;gAddZh(q);$("gExplain").style.display="block";
     }
