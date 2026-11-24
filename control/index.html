@@ -95,6 +95,16 @@ svg .fb{stroke:var(--accent);stroke-width:1.5;fill:none}
 .vids a b{color:var(--accent)}
 .vids small{color:var(--muted);display:block}
 footer{margin-top:40px;color:var(--muted);font-size:.85rem}
+/* 手機：不讓整頁左右晃 */
+html{touch-action:manipulation}
+.wrap{overflow-x:clip}
+@media (max-width:620px){
+  .m{white-space:normal}
+  .fig.scroll{overflow-x:visible}
+  .fig svg{min-width:0!important}
+  .fig{padding:10px 6px}
+  table{display:block;max-width:100%;overflow-x:auto}
+}
 </style>
 
 <div class="wrap">
