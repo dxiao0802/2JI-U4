@@ -224,6 +224,40 @@ applyNight();
   .d-today b{color:var(--ink)}
   .d-streak{display:inline-block;font-size:13px;font-weight:700;color:var(--ink)}
   #dTasks{border-top:2px solid var(--print)}
+  .cal{margin-top:22px;padding-top:16px;border-top:1px solid var(--line);color:var(--ink)}
+  .cal-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .cal-title{font-family:var(--serif);font-size:18px;font-weight:700}
+  .cal-nav{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:20px;line-height:1;cursor:pointer}
+  .cal-nav:disabled{opacity:.3;cursor:default}
+  .cal-sum{font-size:13px;color:var(--mute);margin:6px 0 10px;text-align:center}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+  .cal-wd{font-size:11.5px;color:var(--mute);text-align:center;padding-bottom:2px}
+  .cal-c{position:relative;aspect-ratio:1/1;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--ink);font:inherit;font-size:13px;padding:3px 0 0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+  .cal-c.blank{border:none;cursor:default}
+  .cal-c.future{opacity:.35;cursor:default}
+  .cal-c.full{background:var(--ok-tint);border-color:var(--ok)}
+  .cal-c.part{background:var(--print-tint);border-color:var(--print)}
+  .cal-c.none{background:transparent}
+  .cal-c.miss{color:var(--mute)}
+  .cal-c.unk{color:var(--mute);border-style:dashed}
+  .cal-c.today{outline:2px solid var(--chip-on);outline-offset:1px}
+  .cal-c.sel{box-shadow:0 0 0 2px var(--ink) inset}
+  .cal-c.seed::after{content:"";position:absolute;top:4px;right:4px;width:5px;height:5px;border-radius:50%;background:var(--mute)}
+  .cal-dots{display:flex;gap:2px}
+  .cal-dots i{width:6px;height:6px;border-radius:50%;border:1px solid var(--mute)}
+  .cal-dots i.on{background:var(--ok);border-color:var(--ok)}
+  .cal-dots i.half{background:var(--print);border-color:var(--print)}
+  .cal-mark{font-size:11px;line-height:1}
+  .cal-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 12px;font-size:11.5px;color:var(--mute);margin-top:10px}
+  .cal-legend span{display:inline-flex;align-items:center;gap:4px}
+  .cl{width:11px;height:11px;border-radius:3px;border:1px solid var(--line);display:inline-block}
+  .cl.full{background:var(--ok-tint);border-color:var(--ok)}
+  .cl.part{background:var(--print-tint);border-color:var(--print)}
+  .cl.seed{border-radius:50%;background:var(--mute);width:6px;height:6px;border:none}
+  .cal-day{margin-top:12px;font-size:13.5px;line-height:1.75;background:var(--sheet);border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+  .cal-day:empty{display:none}
+  .cal-day b{font-family:var(--serif)}
+  .cal-day .miss{color:var(--wrong-ink)}
   .d-task{color:var(--ink);padding:13px 0;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line)}
   .d-check{flex:0 0 28px;height:28px;border-radius:50%;border:1.5px solid var(--print);display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--mark-ink);font-weight:700}
   .d-task.done .d-check{background:var(--mark);border-color:var(--mark)}
@@ -414,6 +448,13 @@ applyNight();
   </div>
   <div id="dTasks"></div>
   <div class="note" id="dNote"></div>
+  <div class="cal" id="dCal">
+    <div class="cal-head"><button type="button" class="cal-nav" id="calPrev" aria-label="上個月">‹</button><div class="cal-title" id="calTitle"></div><button type="button" class="cal-nav" id="calNext" aria-label="下個月">›</button></div>
+    <div class="cal-sum" id="calSum"></div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="cal-legend"><span><i class="cl full"></i>完成</span><span><i class="cl part"></i>有做但沒做完</span><span><i class="cl none"></i>沒做</span><span><i class="cl seed"></i>從回報補的</span></div>
+    <div class="cal-day" id="calDay"></div>
+  </div>
 </section>
 
 <section id="sec-cards" class="hidden">
@@ -2327,8 +2368,11 @@ if(!window.storage){
     __local:true
   };
 }
-const STORE_KEYS=["toeic-marks","toeic-quiz","toeic-testwords","toeic-leveltest","toeic-keys","toeic-wstat","toeic-daily"];
-let marks={}, quiz={}, testWords=[], lastTest=null, daily=null, wstat={};
+const STORE_KEYS=["toeic-marks","toeic-quiz","toeic-testwords","toeic-leveltest","toeic-keys","toeic-wstat","toeic-daily","toeic-history"];
+let marks={}, quiz={}, testWords=[], lastTest=null, daily=null, wstat={}, hist={};
+// 每天的紀錄：hist["2026-11-27"]={v:[完成,總數],g:[..],r:[..],rounds,done,log:{vR,vW,gR,gW,rR,rW,czR,czW,pcR,pcW,lR,lW}}
+// HIST_SEED：功能上線前，從貼回聊天室的「今日回報」補回來的日子（只有作答數，沒有任務完成度）
+const HIST_SEED={"2026-10-27":{"vR":83,"vW":54,"gR":6,"gW":5,"rR":2,"rW":1,"rounds":1},"2026-10-28":{"vR":48,"vW":11,"gR":2,"gW":6,"rR":3,"rW":2,"rounds":1},"2026-10-29":{"vR":101,"vW":46,"gR":2,"gW":6,"rR":3,"rW":1,"rounds":1},"2026-11-03":{"vR":100,"vW":58,"gR":7,"gW":4,"rR":5,"rW":0,"rounds":1},"2026-11-12":{"vR":77,"vW":29,"gR":6,"gW":3,"rR":2,"rW":1,"rounds":1},"2026-11-16":{"vR":129,"vW":41,"gR":14,"gW":16,"rR":1,"rW":2,"rounds":1},"2026-11-24":{"vR":105,"vW":32,"gR":11,"gW":11,"rR":0,"rW":1,"rounds":0}};
 
 /* ============ 雲端同步（GitHub 私密 Gist） ============ */
 // 只在 localStorage 模式（GitHub Pages）啟用。整份資料 last-writer-wins，用 toeic-sync-at 比新舊；
@@ -2420,6 +2464,10 @@ function mergeData(a,b){
   const done=d=>d?(d.rounds||0)*1000+(d.vDone||[]).length+(d.gDone||[]).length+(d.rDone||[]).length:-1;
   const dd=!da?db:!db?da:da.date!==db.date?(da.date>db.date?da:db):(done(db)>done(da)?db:da);
   if(dd)out["toeic-daily"]=JSON.stringify(dd);
+  const ha=J(a,"toeic-history",{}),hb=J(b,"toeic-history",{}),hm={...ha};
+  const act=h=>h?Object.values(h.log||{}).reduce((s,n)=>s+(+n||0),0)+(h.rounds||0)*1000:-1;
+  for(const[k,v]of Object.entries(hb))if(act(v)>act(hm[k]))hm[k]=v;
+  out["toeic-history"]=JSON.stringify(hm);
   return out;
 }
 async function syncLink(token){
@@ -2449,6 +2497,8 @@ async function load(){
   try{const l=await window.storage.get("toeic-leveltest");if(l&&l.value)lastTest=JSON.parse(l.value);}catch(e){}
   try{const d=await window.storage.get("toeic-daily");if(d&&d.value)daily=JSON.parse(d.value);}catch(e){}
   try{const s=await window.storage.get("toeic-wstat");if(s&&s.value)wstat=JSON.parse(s.value);}catch(e){}
+  try{const h=await window.storage.get("toeic-history");if(h&&h.value)hist=JSON.parse(h.value)||{};}catch(e){}
+  for(const[k,v]of Object.entries(HIST_SEED))if(!hist[k])hist[k]={log:{vR:v.vR,vW:v.vW,gR:v.gR,gW:v.gW,rR:v.rR,rW:v.rW},rounds:v.rounds,done:v.rounds>0,seed:1};
   // 舊版累計紀錄（toeic-wordstats）搬進 wstat，只帶累計次數
   if(!Object.keys(wstat).length){try{const o=await window.storage.get("toeic-wordstats");if(o&&o.value){for(const [k,v] of Object.entries(JSON.parse(o.value)))wstat[k]={r:v.r||0,w:v.w||0,h:""};}}catch(e){}}
 }
@@ -3688,7 +3738,19 @@ function buildDaily(){
   daily={date:key,vocab,gq,rid,vDone:[],gDone:[],rDone:[],streak:streak||0,rounds:0,completed:false,log:{vR:0,vW:0,gR:0,gW:0,rR:0,rW:0}};
   saveDaily();
 }
-async function saveDaily(){try{await window.storage.set("toeic-daily",JSON.stringify(daily));}catch(e){}}
+async function saveDaily(){try{await window.storage.set("toeic-daily",JSON.stringify(daily));}catch(e){}histSnap();}
+function histSnap(){
+  if(!daily||!daily.date)return;
+  let parts=[];try{parts=dailyParts();}catch(e){}
+  const pr=k=>{const x=parts.find(p=>p.k===k);return x?[Math.min(x.done,x.total),x.total]:[0,0];};
+  const L={...(daily.log||{})};delete L.gA;
+  const old=hist[daily.date]||{};
+  // 同一天重出新的一份時，完成度記最好的那次
+  const best=(a,b)=>(!a||(b[1]&&b[0]/b[1]>=a[0]/(a[1]||1)))?b:a;
+  hist[daily.date]={v:daily.completed?pr("v"):best(old.v,pr("v")),g:daily.completed?pr("g"):best(old.g,pr("g")),r:daily.completed?pr("r"):best(old.r,pr("r")),
+    rounds:daily.rounds||0,done:!!(daily.completed||(daily.rounds||0)>0),log:L,wrongG:(daily.log&&daily.log.gA||[]).length};
+  try{window.storage.set("toeic-history",JSON.stringify(hist));}catch(e){}
+}
 function ensureDaily(){if(!daily||daily.date!==todayKey())buildDaily();}
 function noteDailyWord(i){
   if(!daily||daily.date!==todayKey())return;
@@ -3743,6 +3805,67 @@ function syncGChips(){
   [...$("gBatch").children].forEach(c=>c.classList.toggle("on",c.textContent.indexOf("今日")>=0));
   [...$("gFilter").children].forEach(c=>c.classList.toggle("on",c.textContent==="全部"));}
 
+let calY=null,calM=null,calSel=null;
+const CAL_START="2026-11-27";  // 每日自動存檔從這天開始；之前沒紀錄的日子不算「沒做」
+function calKey(y,m,d){return `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;}
+function calAct(h){return h?Object.values(h.log||{}).reduce((s,n)=>s+(+n||0),0):0;}
+function calState(h){if(!h||!calAct(h)&&!h.rounds)return"none";return h.done?"full":"part";}
+function calMissing(h){
+  const out=[];if(!h)return out;
+  const nm={v:"單字卡",g:"文法",r:"閱讀"};
+  if(h.v){for(const k of["v","g","r"]){const x=h[k];if(x&&x[1]&&x[0]<x[1])out.push(x[0]?`${nm[k]}只做了 ${x[0]}/${x[1]}`:`${nm[k]}沒做`);}}
+  else{const L=h.log||{};if(!(L.vR+L.vW))out.push("單字卡沒做");if(!(L.gR+L.gW))out.push("文法沒做");if(!(L.rR+L.rW))out.push("閱讀沒做");}
+  return out;
+}
+function renderCal(){
+  const now=new Date(),tk=todayKey();
+  if(calY==null){calY=now.getFullYear();calM=now.getMonth();}
+  const keys=Object.keys(hist).sort();
+  const first=keys.length?keys[0]:tk;
+  const [fy,fm]=first.split("-").map(Number);
+  $("calTitle").textContent=`${calY} 年 ${calM+1} 月`;
+  $("calPrev").disabled=(calY*12+calM)<=(fy*12+fm-1);
+  $("calNext").disabled=(calY*12+calM)>=(now.getFullYear()*12+now.getMonth());
+  const days=new Date(calY,calM+1,0).getDate(),lead=new Date(calY,calM,1).getDay();
+  let html="日一二三四五六".split("").map(w=>`<div class="cal-wd">${w}</div>`).join("");
+  for(let i=0;i<lead;i++)html+='<div class="cal-c blank"></div>';
+  let nDone=0,nPart=0,nNone=0;
+  for(let d=1;d<=days;d++){
+    const k=calKey(calY,calM,d),h=hist[k],st=calState(h),fut=k>tk,before=k<first;
+    const unk=!h&&k<CAL_START;
+    if(!fut&&!before&&k!==tk){st==="full"?nDone++:st==="part"?nPart++:unk?0:nNone++;}
+    else if(k===tk){st==="full"?nDone++:st==="part"?nPart++:0;}
+    let inner=`<span>${d}</span>`;
+    if(h&&h.v){inner+='<span class="cal-dots">'+["v","g","r"].map(x=>{const a=h[x]||[0,0];return`<i class="${a[1]&&a[0]>=a[1]?"on":a[0]?"half":""}"></i>`;}).join("")+"</span>";}
+    else if(st==="full")inner+='<span class="cal-mark">✓</span>';
+    else if(st==="part")inner+='<span class="cal-mark">△</span>';
+    else if(unk&&!before)inner+='<span class="cal-mark">·</span>';
+    else if(!fut&&!before&&k!==tk)inner+='<span class="cal-mark">✕</span>';
+    const cls=["cal-c",fut?"future":st,(!h&&!fut&&!before&&k!==tk)?(unk?"unk":"miss"):"",k===tk?"today":"",k===calSel?"sel":"",h&&h.seed?"seed":""].filter(Boolean).join(" ");
+    html+=`<button type="button" class="${cls}" data-k="${k}"${fut?" disabled":""} aria-label="${calM+1}月${d}日">${inner}</button>`;
+  }
+  $("calGrid").innerHTML=html;
+  $("calSum").textContent=`這個月：完成 ${nDone} 天、有做沒做完 ${nPart} 天、沒做 ${nNone} 天`+((calY*12+calM)<=(2026*12+10)?"（11/27 以前只有貼過今日回報的日子有紀錄）":"");
+  $("calGrid").querySelectorAll("button[data-k]").forEach(b=>b.onclick=()=>{calSel=b.dataset.k;renderCal();});
+  renderCalDay();
+}
+function renderCalDay(){
+  const box=$("calDay");if(!calSel){box.innerHTML="";return;}
+  const [y,m,d]=calSel.split("-").map(Number),h=hist[calSel],wd="日一二三四五六"[new Date(y,m-1,d).getDay()];
+  const head=`<b>${m} 月 ${d} 日（${wd}）</b>`;
+  if(!h||(!calAct(h)&&!h.rounds)){box.innerHTML=head+(calSel<CAL_START?'<br><span style="color:var(--mute)">這天沒有紀錄（日曆 11/27 才開始自動記錄，之前只有貼過今日回報的日子有資料）</span>':calSel<todayKey()?'<br><span class="miss">這天沒有練習紀錄</span>':"<br>今天還沒開始");return;}
+  const L=h.log||{},pc=(r,w)=>r+w?`（${Math.round(r/(r+w)*100)}%）`:"";
+  const rows=[];
+  if(L.vR+L.vW)rows.push(`單字 ${L.vR+L.vW} 張，認得 ${L.vR}、需複習 ${L.vW}`);
+  if(L.gR+L.gW)rows.push(`文法 對 ${L.gR} 錯 ${L.gW}${pc(L.gR,L.gW)}`);
+  if(L.rR+L.rW)rows.push(`閱讀 對 ${L.rR} 錯 ${L.rW}${pc(L.rR,L.rW)}`);
+  const cz=(L.czR||0)+(L.czW||0)+(L.pcR||0)+(L.pcW||0);if(cz)rows.push(`填空 對 ${(L.czR||0)+(L.pcR||0)} 錯 ${(L.czW||0)+(L.pcW||0)}`);
+  if((L.lR||0)+(L.lW||0))rows.push(`聽力 對 ${L.lR||0} 錯 ${L.lW||0}${pc(L.lR||0,L.lW||0)}`);
+  const task=h.v?`今日任務：單字卡 ${h.v[0]}/${h.v[1]}、文法 ${h.g[0]}/${h.g[1]}、閱讀 ${h.r[0]}/${h.r[1]}`:"";
+  const miss=h.done?[]:calMissing(h);
+  box.innerHTML=head+`　${h.done?`✓ 完成${h.rounds>1?` ${h.rounds} 輪`:""}`:"△ 沒做完"}<br>`+rows.join("<br>")+(task?"<br>"+task:"")+
+    (miss.length?`<br><span class="miss">缺：${miss.join("、")}</span>`:"")+(h.seed?'<br><span style="color:var(--mute)">（這天是從你貼的今日回報補回來的）</span>':"");
+}
 function renderDaily(){
   ensureDaily();
   const parts=dailyParts();
@@ -3785,6 +3908,10 @@ function renderDaily(){
       :'<a href="#" id="dReroll" style="color:var(--ink2)">這份不想做 → 重抽（進度歸零）</a><br>')
     +`每天 0 點自動換一份。單字先排紅字（目前 ${nRed} 個），文法先排你答錯過的題。<br>連續天數一天只算一次，多做幾輪不會重複累加。`;
   const nb=$("dNew"); if(nb)nb.onclick=newRound;
+  histSnap();if(!calSel)calSel=todayKey();
+  $("calPrev").onclick=()=>{if(--calM<0){calM=11;calY--;}renderCal();};
+  $("calNext").onclick=()=>{if(++calM>11){calM=0;calY++;}renderCal();};
+  renderCal();
   const rb=$("dReroll");
   if(rb)rb.onclick=e=>{e.preventDefault();if(confirm("重抽今天的任務？目前進度會歸零。"))newRound();};
 }
@@ -4149,6 +4276,7 @@ function lRecord(id,ok){
   if(!quiz[id])quiz[id]={r:0,w:0,h:""};
   const s=quiz[id];ok?s.r++:s.w++;s.h=((s.h||"")+(ok?"1":"0")).slice(-4);saveQuiz();
   ok?lSess.r++:lSess.w++;
+  if(daily&&daily.date===todayKey()){if(!daily.log)daily.log={vR:0,vW:0,gR:0,gW:0,rR:0,rW:0};const k=ok?"lR":"lW";daily.log[k]=(daily.log[k]||0)+1;saveDaily();}
 }
 function lBuild(){
   lList=lMode==="p2"?LQ2.map((q,i)=>({k:"L2-"+(i+1),q})):WORDS.map((w,i)=>({k:"LS-"+i,w})).filter(x=>x.w.ex&&x.w.exz);
